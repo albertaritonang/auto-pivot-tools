@@ -171,7 +171,7 @@
                 let weekVal = getCol(row, 'week');
                 let tsCallVal = getCol(row, 'ts_call');
 
-                // Tentukan CTP Group dari unit_type2
+                // Pemetaan unit_type2 ke CTP Group (call center, grapari, socmed)
                 let ctpGroup = "Call Center";
                 if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
                     ctpGroup = "GraPARI";
@@ -183,7 +183,7 @@
                     ctpGroup = unitType2 ? unitType2 : "Call Center";
                 }
 
-                // Periode Bulan / Minggu
+                // Ekstraksi Periode Minggu & Bulan
                 let weekStr = weekVal ? `Week ${weekVal}` : 'Week 1';
                 let monthStr = 'Bulan Ini';
                 if (tsCallVal) {
@@ -194,7 +194,7 @@
                     }
                 }
 
-                // Filter Reason CS People
+                // Filter Reason Desc untuk People CS
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -214,10 +214,10 @@
                     Parsed_Month: monthStr,
                     Mapped_CTP: ctpGroup,
                     Is_CS: isCS,
-                    Promotor: isPromotor,
+                    Promoter: isPromotor,
                     Detractor: isDetractor,
                     Passive: isPassive,
-                    Total: 1
+                    Total: 1 // Berperan sebagai hitungan responden ts_call per baris
                 };
             });
 
@@ -245,13 +245,13 @@
                     group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_total: 0 };
                 }
 
-                group[k].promotor += item.Promotor;
+                group[k].promotor += item.Promoter;
                 group[k].detractor += item.Detractor;
                 group[k].passive += item.Passive;
                 group[k].total += item.Total;
 
                 if (item.Is_CS) {
-                    group[k].cs_promotor += item.Promotor;
+                    group[k].cs_promotor += item.Promoter;
                     group[k].cs_detractor += item.Detractor;
                     group[k].cs_total += item.Total;
                 }
