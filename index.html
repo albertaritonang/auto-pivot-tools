@@ -360,25 +360,31 @@
                     // Grand Total Mobile dihitung dari baris dengan MSISDN terisi.
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    let npsVal = getCol(row, 'nps').toLowerCase();
-                    let categoryVal = getCol(row, 'category').toLowerCase();
+                    // Kolom sumber klasifikasi skor Mobile adalah 'tNPS' (bukan 'nps' atau 'category').
+                    let tNpsVal = getCol(row, 'tnps').toLowerCase();
                     let column2Val = getCol(row, 'column2').toLowerCase();
                     let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
                     let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = npsVal || categoryVal;
+                    let targetNps = tNpsVal;
 
+                    // Setiap kategori dihitung sebagai 1 MSISDN valid berdasarkan nilai pada kolom tNPS.
+                    // Mendukung nilai label (Promotor/Passive/Detractor) maupun skor numerik 0-10.
                     if (hasMsisdn && targetNps !== '') {
-                        let numScore = Number(targetNps);
-                        if (!isNaN(numScore) && targetNps.trim() !== '') {
-                            if (numScore >= 9) isPromotor = 1;
-                            else if (numScore >= 7) isPassive = 1;
-                            else if (numScore >= 0) isDetractor = 1;
+                        if (targetNps.includes('promot')) {
+                            isPromotor = 1;
+                        } else if (targetNps.includes('detract')) {
+                            isDetractor = 1;
+                        } else if (targetNps.includes('passiv')) {
+                            isPassive = 1;
                         } else {
-                            if (targetNps.includes('promot')) isPromotor = 1;
-                            else if (targetNps.includes('detract')) isDetractor = 1;
-                            else if (targetNps.includes('passiv')) isPassive = 1;
+                            let numScore = Number(targetNps.replace(',', '.'));
+                            if (!isNaN(numScore)) {
+                                if (numScore >= 9 && numScore <= 10) isPromotor = 1;
+                                else if (numScore >= 7 && numScore < 9) isPassive = 1;
+                                else if (numScore >= 0 && numScore < 7) isDetractor = 1;
+                            }
                         }
                     }
 
