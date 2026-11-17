@@ -341,31 +341,30 @@
 
             let fileName = file.name.toLowerCase();
 
-            if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        let text = e.target.result;
-                        // Parse teks sederhana (menggunakan pemisah koma, tab, atau titik koma)
-                        globalRawData = parseTextToJSON(text);
+            setTimeout(() => {
+                if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            let text = e.target.result;
+                            globalRawData = parseTextToJSON(text);
 
-                        document.getElementById('fileInfo').classList.remove('hidden');
-                        document.getElementById('placeholder').classList.add('hidden');
-                        document.getElementById('dashboardContent').classList.remove('hidden');
-                        document.getElementById('sheetSelectorContainer').classList.add('hidden');
+                            document.getElementById('fileInfo').classList.remove('hidden');
+                            document.getElementById('placeholder').classList.add('hidden');
+                            document.getElementById('dashboardContent').classList.remove('hidden');
+                            document.getElementById('sheetSelectorContainer').classList.add('hidden');
 
-                        buildWeekOptions();
-                        processAndRender();
-                    } catch (err) {
-                        alert("Gagal membaca file teks/CSV: " + err.message);
-                        document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
-                    }
-                };
-                reader.readAsText(file);
-            } else {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    setTimeout(() => {
+                            buildWeekOptions();
+                            processAndRender();
+                        } catch (err) {
+                            alert("Gagal membaca file teks/CSV: " + err.message);
+                            document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
+                        }
+                    };
+                    reader.readAsText(file);
+                } else {
+                    let reader = new FileReader();
+                    reader.onload = function(e) {
                         try {
                             let data = new Uint8Array(e.target.result);
                             currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
@@ -393,18 +392,16 @@
                             alert("Gagal membaca file Excel: " + err.message);
                             document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
                         }
-                    }, 50);
-                };
-                reader.readAsArrayBuffer(file);
-            }
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            }, 50);
         });
 
-        // Parser pembacaan file .txt / .csv mentah
         function parseTextToJSON(text) {
             let lines = text.split(/\r\n|\n/);
             if (lines.length === 0) return [];
             
-            // Deteksi delimiter (tab atau koma atau titik koma)
             let firstLine = lines[0];
             let delimiter = ',';
             if (firstLine.includes('\t')) delimiter = '\t';
@@ -570,16 +567,16 @@
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
                 processedData = globalRawData.map(row => {
-                    let unitType = getCol(row, 'unit_type').toLowerCase();
+                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_type2') || '';
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    let tNpsVal = getCol(row, 'tnps').toLowerCase();
-                    let column2Val = getCol(row, 'column2').toLowerCase();
+                    let tNpsVal = getCol(row, 'tnps') || getCol(row, 'nps') || '';
+                    let column2Val = getCol(row, 'column2') || '';
                     let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
                     let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = tNpsVal;
+                    let targetNps = tNpsVal.toLowerCase();
 
                     if (hasMsisdn && targetNps !== '') {
                         if (targetNps.includes('promot')) {
@@ -598,20 +595,21 @@
                         }
                     }
 
+                    let unitTypeLower = unitType.toLowerCase();
                     let ctpGroup = "Call Center";
                     let isGraPARI = false;
-                    if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
+                    if (unitTypeLower.includes('grapari') || unitTypeLower.includes('gerai') || unitTypeLower.includes('lite') || unitTypeLower.includes('plasa')) {
                         ctpGroup = "GraPARI";
                         isGraPARI = true;
-                    } else if (unitType.includes('webservice') || unitType.includes('web') || unitType.includes('socmed') || unitType.includes('digital')) {
+                    } else if (unitTypeLower.includes('webservice') || unitTypeLower.includes('web') || unitTypeLower.includes('socmed') || unitTypeLower.includes('digital')) {
                         ctpGroup = "Webservice";
-                    } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                    } else if (unitTypeLower.includes('call') || unitTypeLower.includes('cc') || unitTypeLower.includes('ivr')) {
                         ctpGroup = "Call Center";
                     } else {
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
+                    let isCS = column2Val.toLowerCase().includes('petugas layanan') || column2Val.toLowerCase().includes('service officer');
 
                     return {
                         IsValid: hasMsisdn,
@@ -896,7 +894,6 @@
                 });
             });
 
-            uniqueMomoCategories.getElementById = function(){}; // dummy safety
             uniqueMomoCategories.forEach(mtCat => {
                 let d = momoGrandTotals[mtCat];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
