@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Analytics Dashboard</title>
+    <title>IndiHome tNPS Analytics Dashboard (Week 40-43 & Momo/Tomo)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -21,8 +21,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • GraPARI Momo/Tomo & Week 40-43</p>
+                    <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard (Week 40 - 43)</h1>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP & Momo/Tomo GraPARI Analysis</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -42,19 +42,9 @@
                     <span id="rowCount" class="text-xs bg-emerald-200/70 px-2 py-0.5 rounded"></span>
                 </div>
 
-                <div class="flex items-center gap-4 flex-wrap">
-                    <div class="flex items-center gap-2">
-                        <label class="font-medium text-slate-600">Periode:</label>
-                        <select id="timeSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none">
-                            <option value="Parsed_Month">Bulan (Month)</option>
-                            <option value="Parsed_Week">Minggu (Week)</option>
-                        </select>
-                    </div>
-
-                    <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
-                        <label class="font-medium text-slate-600">Sheet:</label>
-                        <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none"></select>
-                    </div>
+                <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
+                    <label class="font-medium text-slate-600">Sheet:</label>
+                    <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none"></select>
                 </div>
             </div>
         </div>
@@ -67,27 +57,55 @@
 
         <!-- Dashboard Content -->
         <div id="dashboardContent" class="hidden space-y-6">
+            <!-- Grafik Utama tNPS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Berdasarkan unit_type2 (Call Center, GraPARI, Socmed)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Per CTP (Week 40 - Week 43)</h2>
                 <div class="relative h-80 w-full"><canvas id="npsChart"></canvas></div>
             </div>
 
+            <!-- Grafik People CS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) Berdasarkan reason_desc</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) Per CTP</h2>
                 <div class="relative h-80 w-full"><canvas id="csChart"></canvas></div>
             </div>
 
+            <!-- Grafik / Analisis Khusus Momo/Tomo GraPARI -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Momo / Tomo Khusus GraPARI (Week 40 - 43)</h2>
+                <div class="relative h-80 w-full"><canvas id="momoChart"></canvas></div>
+            </div>
+
+            <!-- Tabel Detail Rekapitulasi -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci Komponen & tNPS (%) [Grand Total Week 40-43]</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci tNPS (%) (Week 40 - 43)</h2>
                 <table id="summaryTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
-                            <th class="p-3">Periode</th>
+                            <th class="p-3">Periode (Week)</th>
                             <th class="p-3">unit_type2 (CTP)</th>
                             <th class="p-3 text-center">Detractor</th>
                             <th class="p-3 text-center">Passive</th>
                             <th class="p-3 text-center">Promotor</th>
                             <th class="p-3 text-center">Grand Total (ts_call)</th>
+                            <th class="p-3 text-right font-bold">tNPS (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
+                </table>
+            </div>
+
+            <!-- Tabel Khusus Momo/Tomo GraPARI -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Momo/Tomo GraPARI</h2>
+                <table id="momoTable" class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                            <th class="p-3">Periode (Week)</th>
+                            <th class="p-3">Kategori Momo / Tomo</th>
+                            <th class="p-3 text-center">Detractor</th>
+                            <th class="p-3 text-center">Passive</th>
+                            <th class="p-3 text-center">Promotor</th>
+                            <th class="p-3 text-center">Grand Total</th>
                             <th class="p-3 text-right font-bold">tNPS (%)</th>
                         </tr>
                     </thead>
@@ -102,22 +120,23 @@
         let globalProcessedData = [];
         let npsChartInstance = null;
         let csChartInstance = null;
+        let momoChartInstance = null;
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('fileName').textContent = file.name;
-            const reader = new FileReader();
+            let reader = new FileReader();
 
             reader.onload = function(e) {
                 try {
-                    const data = new Uint8Array(e.target.result);
+                    let data = new Uint8Array(e.target.result);
                     currentWorkbook = XLSX.read(data, { type: 'array' });
 
-                    const sheetNames = currentWorkbook.SheetNames;
-                    const sheetSelector = document.getElementById('sheetSelector');
-                    const sheetContainer = document.getElementById('sheetSelectorContainer');
+                    let sheetNames = currentWorkbook.SheetNames;
+                    let sheetSelector = document.getElementById('sheetSelector');
+                    let sheetContainer = document.getElementById('sheetSelectorContainer');
 
                     sheetSelector.innerHTML = '';
                     sheetNames.forEach(name => {
@@ -145,23 +164,14 @@
             processSheet(e.target.value);
         });
 
-        document.getElementById('timeSelector').addEventListener('change', function() {
-            if (globalProcessedData.length > 0) renderDashboard();
-        });
-
-        function getCol(row, possibleNames) {
+        function getCol(row, name) {
             let keys = Object.keys(row);
-            for (let name of possibleNames) {
-                let found = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());
-                if (found !== undefined && row[found] !== undefined) {
-                    return String(row[found]).trim();
-                }
-            }
-            return '';
+            let found = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());
+            return found !== undefined && row[found] !== undefined ? String(row[found]).trim() : '';
         }
 
         function processSheet(sheetName) {
-            const worksheet = currentWorkbook.Sheets[sheetName];
+            let worksheet = currentWorkbook.Sheets[sheetName];
             let rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
             if (rawData.length === 0) {
@@ -170,35 +180,17 @@
             }
 
             globalProcessedData = rawData.map(row => {
-                let unitType2 = getCol(row, ['unit_type2']).toLowerCase();
-                let npsVal = getCol(row, ['nps']).toLowerCase();
-                let categoryVal = getCol(row, ['category']).toLowerCase();
-                let reasonDesc = getCol(row, ['reason_desc']);
-                let weekVal = getCol(row, ['week']);
-                let tsCallVal = getCol(row, ['ts_call']);
-                let momoTomoVal = getCol(row, ['Momo/  Tomo', 'momo/tomo', 'momo_tomo']);
+                let unitType2 = getCol(row, 'unit_type2').toLowerCase();
+                let npsVal = getCol(row, 'nps').toLowerCase();
+                let categoryVal = getCol(row, 'category').toLowerCase();
+                let reasonDesc = getCol(row, 'reason_desc');
+                let weekVal = parseInt(getCol(row, 'week')) || 0;
+                let momoVal = getCol(row, 'momo/  tomo') || getCol(row, 'momo/tomo') || getCol(row, 'momo _ tomo') || '';
 
-                // Filter Week hanya antara 40 sampai 43
-                let weekNum = parseInt(weekVal);
-                let isValidWeek = (!isNaN(weekNum) && weekNum >= 40 && weekNum <= 43);
+                // Filter hanya Week 40 sampai 43
+                let isValidWeek = (weekVal >= 40 && weekVal <= 43);
 
-                // Pemetaan unit_type2 ke CTP Group (call center, grapari, socmed)
-                let ctpGroup = "Call Center";
-                if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
-                    ctpGroup = "GraPARI";
-                    // Khusus GraPARI, cek informasi Momo / Tomo jika diperlukan
-                    if (momoTomoVal) {
-                        ctpGroup = `GraPARI (${momoTomoVal})`;
-                    }
-                } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
-                    ctpGroup = "Socmed";
-                } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
-                    ctpGroup = "Call Center";
-                } else {
-                    ctpGroup = unitType2 ? unitType2 : "Call Center";
-                }
-
-                // Deteksi status NPS
+                // Status NPS
                 let isPromotor = 0, isDetractor = 0, isPassive = 0;
                 let targetNps = npsVal || categoryVal;
 
@@ -215,18 +207,19 @@
                     }
                 }
 
-                // Periode Minggu & Bulan
-                let weekStr = !isNaN(weekNum) ? `Week ${weekNum}` : 'Week 40-43';
-                let monthStr = 'Grand Total (W40-43)';
-                if (tsCallVal) {
-                    let d = new Date(tsCallVal);
-                    if (!isNaN(d.getTime()) && d.getFullYear() > 2015) {
-                        let mNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-                        monthStr = `${mNames[d.getMonth()]} ${d.getFullYear()} (W40-43)`;
-                    }
+                // CTP Mapping
+                let ctpGroup = "Call Center";
+                if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
+                    ctpGroup = "GraPARI";
+                } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
+                    ctpGroup = "Socmed";
+                } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
+                    ctpGroup = "Call Center";
+                } else {
+                    ctpGroup = unitType2 ? unitType2 : "Call Center";
                 }
 
-                // Filter Reason Desc untuk People CS
+                // Filter Reason CS People
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -238,17 +231,18 @@
                 let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
                 return {
-                    IsValidWeek: isValidWeek,
-                    Parsed_Week: weekStr,
-                    Parsed_Month: monthStr,
+                    IsValid: isValidWeek,
+                    WeekNum: weekVal ? `Week ${weekVal}` : 'Unknown Week',
                     Mapped_CTP: ctpGroup,
+                    Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
+                    MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
                     Is_CS: isCS,
                     Promoter: isPromotor,
                     Detractor: isDetractor,
                     Passive: isPassive,
                     Total: 1
                 };
-            }).filter(item => item.IsValidWeek); // Hanya ambil data yang masuk rentang Week 40 - 43
+            }).filter(item => item.IsValid); // Hanya ambil data Week 40 - 43
 
             document.getElementById('fileInfo').classList.remove('hidden');
             document.getElementById('placeholder').classList.add('hidden');
@@ -259,19 +253,14 @@
         }
 
         function renderDashboard() {
-            let timeDim = document.getElementById('timeSelector').value;
             let group = {};
+            let momoGroup = {};
             let periods = new Set();
-            let ctpListSet = new Set(["Call Center", "Socmed"]);
-
-            // Masukkan CTP utama & variasi GraPARI Momo/Tomo
-            globalProcessedData.forEach(item => {
-                ctpListSet.add(item.Mapped_CTP);
-            });
-            let ctpList = Array.from(ctpListSet).sort();
+            let momoPeriods = new Set();
+            let ctpList = ["Call Center", "GraPARI", "Socmed"];
 
             globalProcessedData.forEach(item => {
-                let p = item[timeDim];
+                let p = item.WeekNum;
                 let ctp = item.Mapped_CTP;
                 periods.add(p);
 
@@ -290,28 +279,33 @@
                     group[k].cs_detractor += item.Detractor;
                     group[k].cs_total += item.Total;
                 }
+
+                // Khusus Momo/Tomo GraPARI Full Month (Week 40 - 43)
+                if (item.Is_GraPARI) {
+                    let mt = item.MomoTomo;
+                    momoPeriods.add(p);
+                    let mk = `${p}_${mt}`;
+                    if (!momoGroup[mk]) {
+                        momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    }
+                    momoGroup[mk].promotor += item.Promoter;
+                    momoGroup[mk].detractor += item.Detractor;
+                    momoGroup[mk].passive += item.Passive;
+                    momoGroup[mk].total += item.Total;
+                }
             });
 
             let sortedPeriods = Array.from(periods).sort();
 
+            // 1. Chart Utama tNPS CTP
             let chartSets = ctpList.map((ctp, i) => {
-                let colors = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#06b6d4'];
+                let colors = ['#dc2626', '#2563eb', '#16a34a'];
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}_${ctp}`];
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return { label: ctp, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
-            });
-
-            let csSets = ctpList.map((ctp, i) => {
-                let colors = ['#f97316', '#8b5cf6', '#06b6d4', '#e11d48', '#10b981', '#6366f1'];
-                let vals = sortedPeriods.map(p => {
-                    let d = group[`${p}_${ctp}`];
-                    if (!d || d.cs_total === 0) return 0;
-                    return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
-                });
-                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
+                return { label: ctp, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
             });
 
             if (npsChartInstance) npsChartInstance.destroy();
@@ -321,6 +315,17 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
+            // 2. Chart People CS
+            let csSets = ctpList.map((ctp, i) => {
+                let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
+                let vals = sortedPeriods.map(p => {
+                    let d = group[`${p}_${ctp}`];
+                    if (!d || d.cs_total === 0) return 0;
+                    return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
+                });
+                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
+            });
+
             if (csChartInstance) csChartInstance.destroy();
             csChartInstance = new Chart(document.getElementById('csChart').getContext('2d'), {
                 type: 'line',
@@ -328,12 +333,34 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
+            // 3. Chart Momo/Tomo GraPARI
+            let momoKeys = Array.from(new Set(Object.values(momoGroup).map(x => Object.keys(momoGroup)).flat())).map(k => k.split('_')[1]).filter(Boolean);
+            let uniqueMomoCategories = Array.from(new Set(Object.keys(momoGroup).map(k => k.split('_')[1])));
+            let sortedMomoPeriods = Array.from(momoPeriods).sort();
+
+            let momoChartSets = uniqueMomoCategories.map((mtCat, i) => {
+                let colors = ['#e11d48', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6'];
+                let vals = sortedMomoPeriods.map(p => {
+                    let d = momoGroup[`${p}_${mtCat}`];
+                    if (!d || d.total === 0) return 0;
+                    return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
+                });
+                return { label: mtCat, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
+            });
+
+            if (momoChartInstance) momoChartInstance.destroy();
+            momoChartInstance = new Chart(document.getElementById('momoChart').getContext('2d'), {
+                type: 'line',
+                data: { labels: sortedMomoPeriods, datasets: momoChartSets },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+            });
+
+            // Render Tabel Utama
             let tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}_${ctp}`];
-                    if (!d || d.total === 0) return; // Hanya tampilkan baris yang ada datanya
+                    let d = group[`${p}_${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                     
                     let tr = document.createElement('tr');
@@ -348,6 +375,29 @@
                         <td class="p-3 text-right font-bold text-red-600">${npsVal}%</td>
                     `;
                     tbody.appendChild(tr);
+                });
+            });
+
+            // Render Tabel Momo/Tomo GraPARI
+            let momoTbody = document.querySelector('#momoTable tbody');
+            momoTbody.innerHTML = '';
+            sortedMomoPeriods.forEach(p => {
+                uniqueMomoCategories.forEach(mtCat => {
+                    let d = momoGroup[`${p}_${mtCat}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="p-3 font-medium text-slate-800">${p}</td>
+                        <td class="p-3">${mtCat}</td>
+                        <td class="p-3 text-center">${d.detractor}</td>
+                        <td class="p-3 text-center">${d.passive}</td>
+                        <td class="p-3 text-center">${d.promotor}</td>
+                        <td class="p-3 text-center">${d.total}</td>
+                        <td class="p-3 text-right font-bold text-indigo-600">${npsVal}%</td>
+                    `;
+                    momoTbody.appendChild(momoTbody.appendChild ? tr : tr);
                 });
             });
         }
