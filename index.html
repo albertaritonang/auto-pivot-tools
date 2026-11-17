@@ -14,25 +14,25 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+<body class="bg-slate-50 text-slate-800 min-h-screen p-2 sm:p-4 md:p-8">
 
     <div class="max-w-7xl mx-auto">
         <!-- Header -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 mb-4 sm:mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 id="mainTitle" class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
+                    <h1 id="mainTitle" class="text-xl sm:text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
                     <p id="subTitle" class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total • Fleksibel untuk Semua Periode</p>
                 </div>
                 
                 <!-- Pilihan Mode & Upload -->
-                <div class="flex items-center gap-3 flex-wrap">
-                    <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200">
-                        <button id="modeIndihome" onclick="switchMode('indihome')" class="px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm">IndiHome</button>
-                        <button id="modeMobile" onclick="switchMode('mobile')" class="px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition">Mobile</button>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
+                    <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto">
+                        <button id="modeIndihome" onclick="switchMode('indihome')" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm">IndiHome</button>
+                        <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition">Mobile</button>
                     </div>
 
-                    <label id="uploadBtnLabel" class="cursor-pointer inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+                    <label id="uploadBtnLabel" class="cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
                         <span id="uploadBtnText">📂 Upload File IndiHome</span>
                         <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
                     </label>
@@ -40,17 +40,17 @@
             </div>
 
             <!-- Status & Filter Kontrol -->
-            <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-sm">
+            <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 text-sm">
                 <div class="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md font-medium">
                     <span>✅ Data Dimuat:</span>
                     <span id="fileName"></span>
                     <span id="rowCount" class="text-xs bg-emerald-200/70 px-2 py-0.5 rounded"></span>
                 </div>
 
-                <div class="flex items-center gap-4 flex-wrap">
-                    <div id="weekFilterContainer" class="flex items-center gap-2">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap w-full sm:w-auto">
+                    <div id="weekFilterContainer" class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                         <label class="font-medium text-slate-600">Filter Minggu:</label>
-                        <select id="weekFilter" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none">
+                        <select id="weekFilter" class="w-full sm:w-auto border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none">
                             <option value="all">Semua Minggu di File</option>
                             <option value="w40_43">Week 40 - Week 43</option>
                             <option value="w44_48">Week 44 - Week 48</option>
@@ -58,16 +58,16 @@
                         </select>
                     </div>
 
-                    <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
+                    <div id="sheetSelectorContainer" class="hidden flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                         <label class="font-medium text-slate-600">Sheet:</label>
-                        <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none"></select>
+                        <select id="sheetSelector" class="w-full sm:w-auto border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none"></select>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Placeholder -->
-        <div id="placeholder" class="bg-white rounded-xl shadow-sm border border-slate-200 p-16 text-center text-slate-400">
+        <div id="placeholder" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-10 md:p-16 text-center text-slate-400">
             <p id="placeholderTitle" class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
             <p class="text-sm mt-1">Silakan klik tombol upload di kanan atas untuk mulai melihat dashboard.</p>
         </div>
@@ -75,27 +75,27 @@
         <!-- Dashboard Content -->
         <div id="dashboardContent" class="hidden space-y-6">
             <!-- Grafik Utama tNPS % -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Per CTP</h2>
-                <div class="relative h-80 w-full"><canvas id="npsChart"></canvas></div>
+                <div class="relative h-64 sm:h-80 w-full"><canvas id="npsChart"></canvas></div>
             </div>
 
             <!-- Grafik People CS % -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) Per CTP</h2>
-                <div class="relative h-80 w-full"><canvas id="csChart"></canvas></div>
+                <div class="relative h-64 sm:h-80 w-full"><canvas id="csChart"></canvas></div>
             </div>
 
             <!-- Grafik Analisis Momo/Tomo GraPARI -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Bisnis Model / Momo / Tomo</h2>
-                <div class="relative h-80 w-full"><canvas id="momoChart"></canvas></div>
+                <div class="relative h-64 sm:h-80 w-full"><canvas id="momoChart"></canvas></div>
             </div>
 
             <!-- Tabel Detail CTP + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci tNPS (%) & Grand Total CTP</h2>
-                <table id="summaryTable" class="w-full text-left border-collapse text-sm">
+                <div class="w-full overflow-x-auto"><table id="summaryTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th id="thPeriod1" class="p-3">Periode (Week)</th>
@@ -108,13 +108,13 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table>
+                </table></div>
             </div>
 
             <!-- Tabel People CS + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">👥 Tabel Rinci tNPS People Customer Service (%) & Grand Total</h2>
-                <table id="csTable" class="w-full text-left border-collapse text-sm">
+                <div class="w-full overflow-x-auto"><table id="csTable" class="min-w-[800px] w-full text-left border-collapse text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th id="thPeriod2" class="p-3">Periode (Week)</th>
@@ -127,13 +127,13 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table>
+                </table></div>
             </div>
 
             <!-- Tabel Momo/Tomo GraPARI + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Bisnis Model / Momo / Tomo & Grand Total</h2>
-                <table id="momoTable" class="w-full text-left border-collapse text-sm">
+                <div class="w-full overflow-x-auto"><table id="momoTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th id="thPeriod3" class="p-3">Periode (Week)</th>
@@ -146,7 +146,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>
@@ -171,21 +171,21 @@
             let weekFilterContainer = document.getElementById('weekFilterContainer');
 
             if (mode === 'indihome') {
-                btnIndi.className = "px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm";
-                btnMobile.className = "px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
-                uploadLabel.className = "cursor-pointer inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
+                btnIndi.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm";
+                btnMobile.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
+                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
                 uploadText.textContent = "📂 Upload File IndiHome";
                 mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
                 subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Fleksibel untuk Semua Periode";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
             } else {
-                btnMobile.className = "px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow-sm";
-                btnIndi.className = "px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
-                uploadLabel.className = "cursor-pointer inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
+                btnMobile.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow-sm";
+                btnIndi.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
+                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
                 uploadText.textContent = "📂 Upload File Mobile";
                 mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Call Center, GraPARI, Webservice & People";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total MSISDN • Call Center, GraPARI, Webservice & People";
                 placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
                 weekFilterContainer.style.display = "none";
             }
@@ -357,6 +357,9 @@
 
                 processedData = globalRawData.map(row => {
                     let unitType = getCol(row, 'unit_type').toLowerCase();
+                    // Grand Total Mobile dihitung dari baris dengan MSISDN terisi.
+                    let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
+                    let hasMsisdn = msisdn !== '';
                     let npsVal = getCol(row, 'nps').toLowerCase();
                     let categoryVal = getCol(row, 'category').toLowerCase();
                     let column2Val = getCol(row, 'column2').toLowerCase();
@@ -366,7 +369,7 @@
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
                     let targetNps = npsVal || categoryVal;
 
-                    if (targetNps !== '') {
+                    if (hasMsisdn && targetNps !== '') {
                         let numScore = Number(targetNps);
                         if (!isNaN(numScore) && targetNps.trim() !== '') {
                             if (numScore >= 9) isPromotor = 1;
@@ -397,7 +400,7 @@
                     let isCS = column2Val.includes('pelayanan') || column2Val.includes('service officer') || column2Val.includes('cs') || column2Val.includes('customer service');
 
                     return {
-                        IsValid: true,
+                        IsValid: hasMsisdn,
                         Period: bulanVal,
                         Mapped_CTP: ctpGroup,
                         Is_GraPARI: isGraPARI,
@@ -406,11 +409,12 @@
                         Promoter: isPromotor,
                         Detractor: isDetractor,
                         Passive: isPassive,
-                        Total: 1
+                        Total: hasMsisdn ? 1 : 0
                     };
                 });
             }
 
+            processedData = processedData.filter(item => item.IsValid);
             document.getElementById('rowCount').textContent = `${processedData.length} baris data aktif`;
             renderDashboard(processedData);
         }
