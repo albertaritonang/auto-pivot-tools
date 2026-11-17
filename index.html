@@ -88,7 +88,7 @@
 
             <!-- Grafik Analisis Momo/Tomo GraPARI -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Momo / Tomo Khusus GraPARI</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Bisnis Model / Momo / Tomo</h2>
                 <div class="relative h-80 w-full"><canvas id="momoChart"></canvas></div>
             </div>
 
@@ -132,12 +132,12 @@
 
             <!-- Tabel Momo/Tomo GraPARI + Grand Total -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Momo/Tomo GraPARI & Grand Total</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Bisnis Model / Momo / Tomo & Grand Total</h2>
                 <table id="momoTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th id="thPeriod3" class="p-3">Periode (Week)</th>
-                            <th class="p-3">Kategori Momo / Tomo</th>
+                            <th class="p-3">Kategori Bisnis Model / Momo</th>
                             <th class="p-3 text-center">Detractor</th>
                             <th class="p-3 text-center">Passive</th>
                             <th class="p-3 text-center">Promotor</th>
@@ -185,9 +185,9 @@
                 uploadLabel.className = "cursor-pointer inline-flex items-center px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
                 uploadText.textContent = "📂 Upload File Mobile";
                 mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Call Center, GraPARI, Webservice & People (Column2)";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Call Center, GraPARI, Webservice & People";
                 placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
-                weekFilterContainer.style.display = "none"; // Mobile menggunakan kolom Bulan/Bulan survey
+                weekFilterContainer.style.display = "none";
             }
 
             if (currentWorkbook) {
@@ -200,35 +200,41 @@
             if (!file) return;
 
             document.getElementById('fileName').textContent = file.name;
+            document.getElementById('placeholder').classList.remove('hidden');
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (14 MB), harap tunggu...";
+
             let reader = new FileReader();
-
             reader.onload = function(e) {
-                try {
-                    let data = new Uint8Array(e.target.result);
-                    currentWorkbook = XLSX.read(data, { type: 'array' });
+                setTimeout(() => {
+                    try {
+                        let data = new Uint8Array(e.target.result);
+                        // Menggunakan optimasi agar tidak freeze pada file besar
+                        currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
 
-                    let sheetNames = currentWorkbook.SheetNames;
-                    let sheetSelector = document.getElementById('sheetSelector');
-                    let sheetContainer = document.getElementById('sheetSelectorContainer');
+                        let sheetNames = currentWorkbook.SheetNames;
+                        let sheetSelector = document.getElementById('sheetSelector');
+                        let sheetContainer = document.getElementById('sheetSelectorContainer');
 
-                    sheetSelector.innerHTML = '';
-                    sheetNames.forEach(name => {
-                        let opt = document.createElement('option');
-                        opt.value = name;
-                        opt.textContent = name;
-                        sheetSelector.appendChild(opt);
-                    });
+                        sheetSelector.innerHTML = '';
+                        sheetNames.forEach(name => {
+                            let opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            sheetSelector.appendChild(opt);
+                        });
 
-                    if (sheetNames.length > 1) {
-                        sheetContainer.classList.remove('hidden');
-                    } else {
-                        sheetContainer.classList.add('hidden');
+                        if (sheetNames.length > 1) {
+                            sheetContainer.classList.remove('hidden');
+                        } else {
+                            sheetContainer.classList.add('hidden');
+                        }
+
+                        loadSheetData(sheetNames[0]);
+                    } catch (err) {
+                        alert("Gagal membaca file Excel: " + err.message);
+                        document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
                     }
-
-                    loadSheetData(sheetNames[0]);
-                } catch (err) {
-                    alert("Gagal membaca file Excel: " + err.message);
-                }
+                }, 50);
             };
             reader.readAsArrayBuffer(file);
         });
@@ -342,7 +348,7 @@
                 }).filter(item => item.IsValid);
 
             } else {
-                // Mode Mobile
+                // Mode Mobile (Menyesuaikan header msisdn, bulan, unit_type, column2, & bisnis Model)
                 document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
                 document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
                 document.getElementById('thPeriod3').textContent = "Periode (Bulan)";
@@ -355,7 +361,7 @@
                     let categoryVal = getCol(row, 'category').toLowerCase();
                     let column2Val = getCol(row, 'column2').toLowerCase();
                     let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
-                    let momoVal = getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || getCol(row, 'bisnis model') || '';
+                    let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
                     let targetNps = npsVal || categoryVal;
@@ -373,7 +379,7 @@
                         }
                     }
 
-                    // CTP Mobile: Call Center, GraPARI (gerai, grapari, grapari lite), Webservice
+                    // CTP Mobile Mapping
                     let ctpGroup = "Call Center";
                     let isGraPARI = false;
                     if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
@@ -387,15 +393,15 @@
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    // People CS dari Column2 (pelayanan pelanggan & service officer)
-                    let isCS = column2Val.includes('pelayanan') || column2Val.includes('service officer') || column2Val.includes('cs');
+                    // Deteksi People CS dari column2
+                    let isCS = column2Val.includes('pelayanan') || column2Val.includes('service officer') || column2Val.includes('cs') || column2Val.includes('customer service');
 
                     return {
                         IsValid: true,
                         Period: bulanVal,
                         Mapped_CTP: ctpGroup,
                         Is_GraPARI: isGraPARI,
-                        MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
+                        MomoTomo: bisnisModelVal,
                         Is_CS: isCS,
                         Promoter: isPromotor,
                         Detractor: isDetractor,
@@ -438,18 +444,17 @@
                     group[k].cs_total += item.Total;
                 }
 
-                if (item.Is_GraPARI) {
-                    let mt = item.MomoTomo;
-                    momoPeriods.add(p);
-                    let mk = `${p}_${mt}`;
-                    if (!momoGroup[mk]) {
-                        momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                    }
-                    momoGroup[mk].promotor += item.Promoter;
-                    momoGroup[mk].detractor += item.Detractor;
-                    momoGroup[mk].passive += item.Passive;
-                    momoGroup[mk].total += item.Total;
+                // Untuk analisis Momo/Tomo / Bisnis Model
+                let mt = item.MomoTomo;
+                momoPeriods.add(p);
+                let mk = `${p}_${mt}`;
+                if (!momoGroup[mk]) {
+                    momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
                 }
+                momoGroup[mk].promotor += item.Promoter;
+                momoGroup[mk].detractor += item.Detractor;
+                momoGroup[mk].passive += item.Passive;
+                momoGroup[mk].total += item.Total;
             });
 
             let sortedPeriods = Array.from(periods).sort((a,b) => {
@@ -616,7 +621,7 @@
                 csTbody.appendChild(tr);
             });
 
-            // 3. Render Tabel Momo/Tomo + Grand Total
+            // 3. Render Tabel Bisnis Model / Momo / Tomo + Grand Total
             let momoTbody = document.querySelector('#momoTable tbody');
             momoTbody.innerHTML = '';
             let momoGrandTotals = {};
