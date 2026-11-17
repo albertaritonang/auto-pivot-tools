@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 id="mainTitle" class="text-xl sm:text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p id="subTitle" class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total • Fleksibel untuk Semua Periode</p>
+                    <p id="subTitle" class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
                 </div>
                 
                 <!-- Pilihan Mode & Upload -->
@@ -51,10 +51,10 @@
                     <div id="weekFilterContainer" class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                         <label class="font-medium text-slate-600">Filter Minggu:</label>
                         <select id="weekFilter" class="w-full sm:w-auto border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none">
-                            <option value="all">Semua Minggu di File</option>
-                            <option value="w40_43">Week 40 - Week 43</option>
-                            <option value="w44_48">Week 44 - Week 48</option>
-                            <option value="w49_52">Week 49 - Week 52</option>
+                            <option value="all">Semua Minggu di File (Full Month)</option>
+                            <option value="w40_43">Week 40 - Week 43 (Rolling 4W)</option>
+                            <option value="w44_48">Week 44 - Week 48 (Rolling 4W)</option>
+                            <option value="w49_52">Week 49 - Week 52 (Rolling 4W)</option>
                         </select>
                     </div>
 
@@ -159,6 +159,27 @@
         let csChartInstance = null;
         let momoChartInstance = null;
 
+        // Rentang minggu laporan untuk mode weekly IndiHome (rolling 4 minggu).
+        const WEEK_RANGES = {
+            w40_43: [40, 43],
+            w44_48: [44, 48],
+            w49_52: [49, 52]
+        };
+        const ROLLING_WINDOW = 4; // Week N = Week (N-3) s/d Week N
+
+        // true jika tampilan saat ini adalah IndiHome weekly (rolling).
+        let isRollingView = false;
+
+        // Label periode untuk ditampilkan. Nilai Period asli (mis. "W41") tetap dipakai
+        // sebagai key & untuk sorting; label hanya untuk tampilan.
+        function formatPeriod(p) {
+            if (!isRollingView) return p;
+            let n = parseInt(String(p).replace(/\D/g, ''));
+            if (isNaN(n)) return p;
+            let start = Math.max(1, n - (ROLLING_WINDOW - 1));
+            return `${p} (W${start}–W${n})`;
+        }
+
         function switchMode(mode) {
             currentMode = mode;
             let btnIndi = document.getElementById('modeIndihome');
@@ -176,7 +197,7 @@
                 uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
                 uploadText.textContent = "📂 Upload File IndiHome";
                 mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Fleksibel untuk Semua Periode";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
             } else {
@@ -269,95 +290,120 @@
             processAndRender();
         }
 
+        // Klasifikasi 1 baris IndiHome menjadi objek dasar (tanpa Period).
+        function mapIndihomeRow(row) {
+            let unitType2 = getCol(row, 'unit_type2').toLowerCase();
+            let npsVal = getCol(row, 'nps').toLowerCase();
+            let categoryVal = getCol(row, 'category').toLowerCase();
+            let reasonDesc = getCol(row, 'reason_desc');
+            let rawWeek = getCol(row, 'week');
+            let momoVal = getCol(row, 'momo/  tomo') || getCol(row, 'momo/tomo') || getCol(row, 'momo _ tomo') || '';
+
+            let weekMatch = rawWeek.match(/\d+/);
+            let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
+
+            let isPromotor = 0, isDetractor = 0, isPassive = 0;
+            let targetNps = npsVal || categoryVal;
+
+            if (targetNps !== '') {
+                let numScore = Number(targetNps);
+                if (!isNaN(numScore) && targetNps.trim() !== '') {
+                    if (numScore >= 9) isPromotor = 1;
+                    else if (numScore >= 7) isPassive = 1;
+                    else if (numScore >= 0) isDetractor = 1;
+                } else {
+                    if (targetNps.includes('promot')) isPromotor = 1;
+                    else if (targetNps.includes('detract')) isDetractor = 1;
+                    else if (targetNps.includes('passiv')) isPassive = 1;
+                }
+            }
+
+            let ctpGroup = "Call Center";
+            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
+                ctpGroup = "GraPARI";
+            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
+                ctpGroup = "Socmed";
+            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
+                ctpGroup = "Call Center";
+            } else {
+                ctpGroup = unitType2 ? unitType2 : "Call Center";
+            }
+
+            let targetReasons = [
+                "CUSTOMER SERVICE",
+                "Customer service cukup responsif",
+                "Customer service kurang responsif",
+                "Customer service responsif",
+                "Customer service tidak responsif",
+                "PELAYANAN PELANGGAN"
+            ];
+            let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
+
+            return {
+                IsValid: weekNum > 0,
+                WeekNum: weekNum,
+                Mapped_CTP: ctpGroup,
+                Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
+                MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
+                Is_CS: isCS,
+                Promoter: isPromotor,
+                Detractor: isDetractor,
+                Passive: isPassive,
+                Total: 1
+            };
+        }
+
         function processAndRender() {
             let filterMode = document.getElementById('weekFilter').value;
             let processedData = [];
+            let rowInfoText = '';
 
             if (currentMode === 'indihome') {
-                document.getElementById('thPeriod1').textContent = "Periode (Week)";
-                document.getElementById('thPeriod2').textContent = "Periode (Week)";
-                document.getElementById('thPeriod3').textContent = "Periode (Week)";
+                isRollingView = filterMode !== 'all';
+
+                let periodHeader = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
+                document.getElementById('thPeriod1').textContent = periodHeader;
+                document.getElementById('thPeriod2').textContent = periodHeader;
+                document.getElementById('thPeriod3').textContent = periodHeader;
                 document.getElementById('thCtp1').textContent = "unit_type2 (CTP)";
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
 
-                processedData = globalRawData.flatMap(row => {
-                    let unitType2 = getCol(row, 'unit_type2').toLowerCase();
-                    let npsVal = getCol(row, 'nps').toLowerCase();
-                    let categoryVal = getCol(row, 'category').toLowerCase();
-                    let reasonDesc = getCol(row, 'reason_desc');
-                    let rawWeek = getCol(row, 'week');
-                    let momoVal = getCol(row, 'momo/  tomo') || getCol(row, 'momo/tomo') || getCol(row, 'momo _ tomo') || '';
+                let baseRows = globalRawData.map(mapIndihomeRow).filter(r => r.IsValid);
 
-                    let weekMatch = rawWeek.match(/\d+/);
-                    let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
+                if (!isRollingView) {
+                    // FULL MONTH: perhitungan lama, setiap baris hanya dihitung di minggu sumbernya.
+                    processedData = baseRows.map(r => ({ ...r, Period: `W${r.WeekNum}` }));
+                    rowInfoText = `${processedData.length} baris data aktif`;
+                } else {
+                    // WEEKLY: rolling 4 minggu.
+                    // Week N = gabungan data Week (N-3), (N-2), (N-1), dan N.
+                    // Contoh: Week 41 = Week 38 + Week 39 + Week 40 + Week 41.
+                    // Caranya: setiap baris minggu S ikut dihitung ke laporan minggu S, S+1, S+2, S+3.
+                    let [minWeek, maxWeek] = WEEK_RANGES[filterMode];
 
-                    // Filter periode laporan diterapkan setelah rolling 4 minggu terbentuk,
-                    // agar minggu sumber sebelumnya tetap ikut masuk ke perhitungan.
-                    let isValid = weekNum > 0;
+                    // Hanya tampilkan minggu laporan yang datanya benar-benar ada di file,
+                    // supaya tidak muncul minggu "bayangan" yang isinya cuma limpahan minggu sebelumnya.
+                    let availableWeeks = new Set(baseRows.map(r => r.WeekNum));
 
-                    let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = npsVal || categoryVal;
-
-                    if (targetNps !== '') {
-                        let numScore = Number(targetNps);
-                        if (!isNaN(numScore) && targetNps.trim() !== '') {
-                            if (numScore >= 9) isPromotor = 1;
-                            else if (numScore >= 7) isPassive = 1;
-                            else if (numScore >= 0) isDetractor = 1;
-                        } else {
-                            if (targetNps.includes('promot')) isPromotor = 1;
-                            else if (targetNps.includes('detract')) isDetractor = 1;
-                            else if (targetNps.includes('passiv')) isPassive = 1;
+                    let usedSourceRows = 0;
+                    baseRows.forEach(r => {
+                        let used = false;
+                        for (let offset = 0; offset < ROLLING_WINDOW; offset++) {
+                            let reportWeek = r.WeekNum + offset;
+                            if (reportWeek < minWeek || reportWeek > maxWeek) continue;
+                            if (!availableWeeks.has(reportWeek)) continue;
+                            processedData.push({ ...r, Period: `W${reportWeek}` });
+                            used = true;
                         }
-                    }
+                        if (used) usedSourceRows++;
+                    });
 
-                    let ctpGroup = "Call Center";
-                    if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
-                        ctpGroup = "GraPARI";
-                    } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
-                        ctpGroup = "Socmed";
-                    } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
-                        ctpGroup = "Call Center";
-                    } else {
-                        ctpGroup = unitType2 ? unitType2 : "Call Center";
-                    }
-
-                    let targetReasons = [
-                        "CUSTOMER SERVICE",
-                        "Customer service cukup responsif",
-                        "Customer service kurang responsif",
-                        "Customer service responsif",
-                        "Customer service tidak responsif",
-                        "PELAYANAN PELANGGAN"
-                    ];
-                    let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
-
-                    // Mode Semua Minggu (full month/full data) tetap memakai perhitungan lama:
-                    // setiap baris hanya dihitung pada minggu sumbernya.
-                    // Rolling 4 minggu hanya dipakai saat memilih rentang minggu tertentu.
-                    let offsets = filterMode === 'all' ? [0] : [0, 1, 2, 3];
-                    return offsets.map(offset => ({
-                        IsValid: isValid,
-                        Period: `W${weekNum + offset}`,
-                        Mapped_CTP: ctpGroup,
-                        Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
-                        MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
-                        Is_CS: isCS,
-                        Promoter: isPromotor,
-                        Detractor: isDetractor,
-                        Passive: isPassive,
-                        Total: 1
-                    }));
-                }).flat().filter(item => {
-                    if (!item.IsValid) return false;
-                    let reportWeek = parseInt(item.Period.replace(/\\D/g, '')) || 0;
-                    if (filterMode === 'w40_43') return reportWeek >= 40 && reportWeek <= 43;
-                    if (filterMode === 'w44_48') return reportWeek >= 44 && reportWeek <= 48;
-                    if (filterMode === 'w49_52') return reportWeek >= 49 && reportWeek <= 52;
-                    return true;
-                });
+                    rowInfoText = `${usedSourceRows} baris sumber • rolling 4 minggu`;
+                }
 
             } else {
+                isRollingView = false;
+
                 // Mode Mobile (Menyesuaikan header msisdn, bulan, unit_type, column2, & bisnis Model)
                 document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
                 document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
@@ -428,11 +474,12 @@
                         Passive: isPassive,
                         Total: hasMsisdn ? 1 : 0
                     };
-                });
+                }).filter(item => item.IsValid);
+
+                rowInfoText = `${processedData.length} baris data aktif`;
             }
 
-            processedData = processedData.filter(item => item.IsValid);
-            document.getElementById('rowCount').textContent = `${processedData.length} baris data aktif`;
+            document.getElementById('rowCount').textContent = rowInfoText;
             renderDashboard(processedData);
         }
 
@@ -497,7 +544,7 @@
             if (npsChartInstance) npsChartInstance.destroy();
             npsChartInstance = new Chart(document.getElementById('npsChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedPeriods, datasets: chartSets },
+                data: { labels: sortedPeriods.map(formatPeriod), datasets: chartSets },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
@@ -514,7 +561,7 @@
             if (csChartInstance) csChartInstance.destroy();
             csChartInstance = new Chart(document.getElementById('csChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedPeriods, datasets: csSets },
+                data: { labels: sortedPeriods.map(formatPeriod), datasets: csSets },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
@@ -538,9 +585,13 @@
             if (momoChartInstance) momoChartInstance.destroy();
             momoChartInstance = new Chart(document.getElementById('momoChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedMomoPeriods, datasets: momoChartSets },
+                data: { labels: sortedMomoPeriods.map(formatPeriod), datasets: momoChartSets },
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
+
+            // Catatan: pada mode rolling, satu responden bisa muncul di beberapa minggu laporan,
+            // sehingga baris "Grand Total" adalah penjumlahan dari minggu-minggu rolling tersebut.
+            let grandTotalLabel = isRollingView ? "Grand Total (Akumulasi Rolling)" : "Grand Total (Periode Ini)";
 
             // 1. Render Tabel Utama CTP + Grand Total
             let tbody = document.querySelector('#summaryTable tbody');
@@ -561,7 +612,7 @@
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${p}</td>
+                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
                         <td class="p-3">${ctp}</td>
                         <td class="p-3 text-center">${d.detractor}</td>
                         <td class="p-3 text-center">${d.passive}</td>
@@ -579,7 +630,7 @@
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
                 tr.innerHTML = `
-                    <td class="p-3">Grand Total (Periode Ini)</td>
+                    <td class="p-3">${grandTotalLabel}</td>
                     <td class="p-3">${ctp}</td>
                     <td class="p-3 text-center">${d.detractor}</td>
                     <td class="p-3 text-center">${d.passive}</td>
@@ -613,7 +664,7 @@
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${p}</td>
+                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
                         <td class="p-3">${ctp} (CS People)</td>
                         <td class="p-3 text-center">${detr}</td>
                         <td class="p-3 text-center">${pass}</td>
@@ -631,7 +682,7 @@
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
                 tr.innerHTML = `
-                    <td class="p-3">Grand Total (Periode Ini)</td>
+                    <td class="p-3">${grandTotalLabel}</td>
                     <td class="p-3">${ctp} (CS People)</td>
                     <td class="p-3 text-center">${d.detractor}</td>
                     <td class="p-3 text-center">${d.passive}</td>
@@ -661,7 +712,7 @@
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${p}</td>
+                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
                         <td class="p-3">${mtCat}</td>
                         <td class="p-3 text-center">${d.detractor}</td>
                         <td class="p-3 text-center">${d.passive}</td>
@@ -679,7 +730,7 @@
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
                 tr.innerHTML = `
-                    <td class="p-3">Grand Total (Periode Ini)</td>
+                    <td class="p-3">${grandTotalLabel}</td>
                     <td class="p-3">${mtCat}</td>
                     <td class="p-3 text-center">${d.detractor}</td>
                     <td class="p-3 text-center">${d.passive}</td>
