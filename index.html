@@ -69,7 +69,7 @@
                 <div class="relative h-80 w-full"><canvas id="csChart"></canvas></div>
             </div>
 
-            <!-- Grafik / Analisis Khusus Momo/Tomo GraPARI -->
+            <!-- Grafik Analisis Momo/Tomo GraPARI -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Momo / Tomo Khusus GraPARI (Week 40 - 43)</h2>
                 <div class="relative h-80 w-full"><canvas id="momoChart"></canvas></div>
@@ -94,7 +94,7 @@
                 </table>
             </div>
 
-            <!-- Tabel Khusus Momo/Tomo GraPARI -->
+            <!-- Tabel Momo/Tomo GraPARI -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
                 <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Momo/Tomo GraPARI</h2>
                 <table id="momoTable" class="w-full text-left border-collapse text-sm">
@@ -184,10 +184,14 @@
                 let npsVal = getCol(row, 'nps').toLowerCase();
                 let categoryVal = getCol(row, 'category').toLowerCase();
                 let reasonDesc = getCol(row, 'reason_desc');
-                let weekVal = parseInt(getCol(row, 'week')) || 0;
+                let rawWeek = getCol(row, 'week');
                 let momoVal = getCol(row, 'momo/  tomo') || getCol(row, 'momo/tomo') || getCol(row, 'momo _ tomo') || '';
 
-                // Filter hanya Week 40 sampai 43
+                // Ekstraksi angka minggu secara fleksibel (misal: "Week 40", "40.0", dll)
+                let weekMatch = rawWeek.match(/\d+/);
+                let weekVal = weekMatch ? parseInt(weekMatch[0]) : 0;
+
+                // Filter Week 40 sampai 43
                 let isValidWeek = (weekVal >= 40 && weekVal <= 43);
 
                 // Status NPS
@@ -232,7 +236,7 @@
 
                 return {
                     IsValid: isValidWeek,
-                    WeekNum: weekVal ? `Week ${weekVal}` : 'Unknown Week',
+                    WeekNum: `Week ${weekVal}`,
                     Mapped_CTP: ctpGroup,
                     Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
                     MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
@@ -242,7 +246,7 @@
                     Passive: isPassive,
                     Total: 1
                 };
-            }).filter(item => item.IsValid); // Hanya ambil data Week 40 - 43
+            }).filter(item => item.IsValid);
 
             document.getElementById('fileInfo').classList.remove('hidden');
             document.getElementById('placeholder').classList.add('hidden');
@@ -280,7 +284,6 @@
                     group[k].cs_total += item.Total;
                 }
 
-                // Khusus Momo/Tomo GraPARI Full Month (Week 40 - 43)
                 if (item.Is_GraPARI) {
                     let mt = item.MomoTomo;
                     momoPeriods.add(p);
@@ -295,9 +298,8 @@
                 }
             });
 
-            let sortedPeriods = Array.from(periods).sort();
+            let sortedPeriods = Array.from(periods).sort((a,b) => parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,'')));
 
-            // 1. Chart Utama tNPS CTP
             let chartSets = ctpList.map((ctp, i) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
                 let vals = sortedPeriods.map(p => {
@@ -315,7 +317,6 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
-            // 2. Chart People CS
             let csSets = ctpList.map((ctp, i) => {
                 let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
                 let vals = sortedPeriods.map(p => {
@@ -333,10 +334,8 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
-            // 3. Chart Momo/Tomo GraPARI
-            let momoKeys = Array.from(new Set(Object.values(momoGroup).map(x => Object.keys(momoGroup)).flat())).map(k => k.split('_')[1]).filter(Boolean);
             let uniqueMomoCategories = Array.from(new Set(Object.keys(momoGroup).map(k => k.split('_')[1])));
-            let sortedMomoPeriods = Array.from(momoPeriods).sort();
+            let sortedMomoPeriods = Array.from(momoPeriods).sort((a,b) => parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,'')));
 
             let momoChartSets = uniqueMomoCategories.map((mtCat, i) => {
                 let colors = ['#e11d48', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6'];
@@ -355,7 +354,6 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
-            // Render Tabel Utama
             let tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
             sortedPeriods.forEach(p => {
@@ -378,7 +376,6 @@
                 });
             });
 
-            // Render Tabel Momo/Tomo GraPARI
             let momoTbody = document.querySelector('#momoTable tbody');
             momoTbody.innerHTML = '';
             sortedMomoPeriods.forEach(p => {
@@ -397,7 +394,7 @@
                         <td class="p-3 text-center">${d.total}</td>
                         <td class="p-3 text-right font-bold text-indigo-600">${npsVal}%</td>
                     `;
-                    momoTbody.appendChild(momoTbody.appendChild ? tr : tr);
+                    momoTbody.appendChild(tr);
                 });
             });
         }
