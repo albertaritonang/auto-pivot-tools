@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndiHome tNPS Auto-Pivot Tool</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    
+    <!-- jQuery & jQuery UI -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    
+    <!-- SheetJS (Excel & CSV Reader) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- PivotTable.js CSS & JS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
+
+    <style>
+        .pvtUi { width: 100%; font-family: inherit; }
+        .pvtAxisContainer, .pvtVals { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; }
+        .pvtAttr { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        table.pvtTable { font-size: 13px; border-collapse: collapse; width: 100%; margin-top: 10px; }
+        table.pvtTable thead tr th, table.pvtTable tbody tr th { background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 10px; }
+        table.pvtTable tbody tr td { border: 1px solid #e2e8f0; padding: 6px 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Auto-Pivot Tool</h1>
+                    <p class="text-sm text-slate-500 mt-1">Upload file multi-source (IVR, Dyandra, Saltik) untuk kalkulasi otomatis tNPS & CTP.</p>
+                </div>
+                
+                <!-- Upload Input -->
+                <div class="flex items-center gap-3">
+                    <label class="cursor-pointer inline-flex items-center px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
+                        <span>📂 Upload File IndiHome</span>
+                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
+                    </label>
+                </div>
+            </div>
+
+            <!-- Status & Info Sheet -->
+            <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-sm">
+                <div class="flex items-center gap-2 text-emerald-700 bg-emerald-
