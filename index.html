@@ -280,7 +280,7 @@
                 document.getElementById('thCtp1').textContent = "unit_type2 (CTP)";
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
 
-                processedData = globalRawData.map(row => {
+                processedData = globalRawData.flatMap(row => {
                     let unitType2 = getCol(row, 'unit_type2').toLowerCase();
                     let npsVal = getCol(row, 'nps').toLowerCase();
                     let categoryVal = getCol(row, 'category').toLowerCase();
@@ -291,10 +291,9 @@
                     let weekMatch = rawWeek.match(/\d+/);
                     let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
 
-                    let isValid = true;
-                    if (filterMode === 'w40_43') isValid = (weekNum >= 40 && weekNum <= 43);
-                    else if (filterMode === 'w44_48') isValid = (weekNum >= 44 && weekNum <= 48);
-                    else if (filterMode === 'w49_52') isValid = (weekNum >= 49 && weekNum <= 52);
+                    // Filter periode laporan diterapkan setelah rolling 4 minggu terbentuk,
+                    // agar minggu sumber sebelumnya tetap ikut masuk ke perhitungan.
+                    let isValid = weekNum > 0;
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
                     let targetNps = npsVal || categoryVal;
@@ -333,9 +332,13 @@
                     ];
                     let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
-                    return {
+                    // Mode Semua Minggu (full month/full data) tetap memakai perhitungan lama:
+                    // setiap baris hanya dihitung pada minggu sumbernya.
+                    // Rolling 4 minggu hanya dipakai saat memilih rentang minggu tertentu.
+                    let offsets = filterMode === 'all' ? [0] : [0, 1, 2, 3];
+                    return offsets.map(offset => ({
                         IsValid: isValid,
-                        Period: weekNum > 0 ? `W${weekNum}` : 'W-Other',
+                        Period: `W${weekNum + offset}`,
                         Mapped_CTP: ctpGroup,
                         Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
                         MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
@@ -344,8 +347,15 @@
                         Detractor: isDetractor,
                         Passive: isPassive,
                         Total: 1
-                    };
-                }).filter(item => item.IsValid);
+                    }));
+                }).flat().filter(item => {
+                    if (!item.IsValid) return false;
+                    let reportWeek = parseInt(item.Period.replace(/\\D/g, '')) || 0;
+                    if (filterMode === 'w40_43') return reportWeek >= 40 && reportWeek <= 43;
+                    if (filterMode === 'w44_48') return reportWeek >= 44 && reportWeek <= 48;
+                    if (filterMode === 'w49_52') return reportWeek >= 49 && reportWeek <= 52;
+                    return true;
+                });
 
             } else {
                 // Mode Mobile (Menyesuaikan header msisdn, bulan, unit_type, column2, & bisnis Model)
