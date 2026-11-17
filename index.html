@@ -337,7 +337,7 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (38MB+), harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar, harap tunggu...";
 
             let fileName = file.name.toLowerCase();
 
@@ -455,6 +455,9 @@
             processAndRender();
         }
 
+        // ==========================================
+        // LOGIKA INDIHOME DIKEMBALIKAN 100% SEPERTI SEMULA
+        // ==========================================
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
@@ -566,14 +569,13 @@
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
-                // DIUTAMAKAN SESUAI HEADER MOBILE BARU:
-                // msisdn, tnps type, unit_type, Column2, survey_date, category/sub_category, dsb.
+                // Mapping khusus untuk file Mobile berdasarkan header kamu:
+                // id_trx, msisdn, survey_date, category, sub_category, detail, journey, service, area, new regional, unit_name, unit_type, channel, Column1, Column2, tnps type, dll.
                 processedData = globalRawData.map(row => {
                     let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_name') || getCol(row, 'channel') || '';
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
                     
-                    // Membaca kolom tNPS type / category / q1_ans sesuai header Mobile kamu
                     let tNpsVal = getCol(row, 'tnps type') || getCol(row, 'tnps') || getCol(row, 'category') || getCol(row, 'q1_ans') || '';
                     let column2Val = getCol(row, 'Column2') || getCol(row, 'sub_category') || '';
                     let bulanVal = getCol(row, 'survey_date') || getCol(row, 'event_date') || getCol(row, 'bulan') || 'General Period';
