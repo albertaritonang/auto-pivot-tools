@@ -402,8 +402,9 @@
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    // Deteksi People CS dari column2
-                    let isCS = column2Val.includes('pelayanan') || column2Val.includes('service officer') || column2Val.includes('cs') || column2Val.includes('customer service');
+                    // People CS Mobile hanya mengambil dua kategori dari Column2:
+                    // Petugas Layanan dan Service Officer.
+                    let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
 
                     return {
                         IsValid: hasMsisdn,
