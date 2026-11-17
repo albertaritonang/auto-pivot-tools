@@ -61,11 +61,11 @@
                         <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
                     </div>
 
-                    <!-- Upload Button -->
+                    <!-- Upload Button (Mendukung .xlsx, .xls, .csv, .txt) -->
                     <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
                         <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span id="uploadBtnText">Upload File IndiHome</span>
-                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
+                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" class="hidden" />
                     </label>
                 </div>
             </div>
@@ -88,6 +88,12 @@
                             <option value="w44_48">Week 44 - Week 48 (Rolling 4W)</option>
                             <option value="w49_52">Week 49 - Week 52 (Rolling 4W)</option>
                         </select>
+                    </div>
+
+                    <!-- [MOBILE] Info master Bisnis Model (unit_name → MOMO/TOMO) -->
+                    <div id="masterInfoContainer" class="hidden items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <span id="masterInfo" class="text-xs font-semibold text-blue-800"></span>
+                        <button onclick="resetBisnisModelMaster()" class="text-xs font-bold text-blue-600 hover:text-blue-800 underline">Reset</button>
                     </div>
 
                     <div id="sheetSelectorContainer" class="hidden flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
@@ -242,6 +248,87 @@
         const ROLLING_WINDOW = 4;
         let isRollingView = false;
 
+        // =====================================================================
+        // [MOBILE] Master Bisnis Model: unit_name → MOMO / TOMO
+        // Seed diambil dari raw data Mobile Oktober 2026 (464 unit).
+        // Setiap upload file Mobile yang punya kolom "bisnis Model" akan
+        // otomatis memperbarui master ini (disimpan di browser).
+        // =====================================================================
+        const SEED_BISNIS_MODEL = {"GraPARI Abepura":"TOMO","GraPARI Airmadidi":"TOMO","GraPARI Ambon":"TOMO","GraPARI Amlapura":"TOMO","GraPARI Ampana":"TOMO","GraPARI Amuntai":"MOMO","GraPARI Amurang":"MOMO","GraPARI Atambua":"TOMO","GraPARI BSD":"TOMO","GraPARI Baa Rote":"MOMO","GraPARI Bagan Batu":"MOMO","GraPARI Bagan Siapiapi":"MOMO","GraPARI Bajawa":"TOMO","GraPARI Balaikarangan":"TOMO","GraPARI Balaraja":"MOMO","GraPARI Balige":"MOMO","GraPARI Balikpapan A Yani":"TOMO","GraPARI Banda Aceh":"TOMO","GraPARI Bandar Jaya":"MOMO","GraPARI Bandar Sribawono":"MOMO","GraPARI Bandung Elektronik Center":"MOMO","GraPARI Banggai":"MOMO","GraPARI Bangka":"MOMO","GraPARI Bangkalan":"MOMO","GraPARI Bangkinang":"MOMO","GraPARI Banjar":"TOMO","GraPARI Banjarbaru HM Noor":"TOMO","GraPARI Banjarmasin":"TOMO","GraPARI Banjarnegara":"MOMO","GraPARI Bantaeng":"TOMO","GraPARI Bantarkalong":"MOMO","GraPARI Bantul":"TOMO","GraPARI Banyumanik":"MOMO","GraPARI Banyuwangi":"TOMO","GraPARI Barabai":"MOMO","GraPARI Barito Selatan":"MOMO","GraPARI Barong Tongkok":"MOMO","GraPARI Barru":"TOMO","GraPARI Bassura City Mall Jakarta":"MOMO","GraPARI Batam Center":"TOMO","GraPARI Batang":"MOMO","GraPARI Batu":"TOMO","GraPARI Batu Sangkar":"MOMO","GraPARI Batulicin":"MOMO","GraPARI Baturaja":"MOMO","GraPARI Bau Bau":"MOMO","GraPARI Bekasi Cyber Park":"TOMO","GraPARI Belitang":"MOMO","GraPARI Belitung":"TOMO","GraPARI Bengkalis":"MOMO","GraPARI Bengkayang":"MOMO","GraPARI Bengkulu":"TOMO","GraPARI Betung":"MOMO","GraPARI Biak":"MOMO","GraPARI Bima":"MOMO","GraPARI Binjai Supermall":"TOMO","GraPARI Bintan":"MOMO","GraPARI Bintaro Jaya Xchange":"MOMO","GraPARI Bireun":"MOMO","GraPARI Bitung":"TOMO","GraPARI Blitar":"MOMO","GraPARI Blora":"TOMO","GraPARI Bogor":"TOMO","GraPARI Bojonegoro":"MOMO","GraPARI Bojongsoang":"MOMO","GraPARI Bondowoso":"MOMO","GraPARI Bone":"TOMO","GraPARI Bontang":"TOMO","GraPARI Boyolali":"TOMO","GraPARI Brebes":"MOMO","GraPARI Bukit Tinggi":"TOMO","GraPARI Bula":"MOMO","GraPARI Bulukumba":"TOMO","GraPARI Bumiayu":"TOMO","GraPARI Cengkareng":"MOMO","GraPARI Central Park Jakarta":"TOMO","GraPARI Ciamis":"MOMO","GraPARI Cianjur":"TOMO","GraPARI Cibinong":"TOMO","GraPARI Cicurug":"TOMO","GraPARI Cikampek":"MOMO","GraPARI Cikarang":"TOMO","GraPARI Cikupa":"MOMO","GraPARI Cilacap":"MOMO","GraPARI Ciledug Cirebon":"MOMO","GraPARI Cilegon":"TOMO","GraPARI Cimahi":"TOMO","GraPARI Ciputat":"TOMO","GraPARI Cirebon":"TOMO","GraPARI Cirebon Super Blok":"MOMO","GraPARI Curup":"MOMO","GraPARI Dabo Singkep":"MOMO","GraPARI Dago":"TOMO","GraPARI Demak":"MOMO","GraPARI Dobo":"MOMO","GraPARI Dompu":"MOMO","GraPARI Dramaga":"MOMO","GraPARI Dumai":"TOMO","GraPARI Duri":"MOMO","GraPARI Emporium Pluit Jakarta":"MOMO","GraPARI Ende":"TOMO","GraPARI Enrekang":"MOMO","GraPARI Flamboyan":"MOMO","GraPARI Garut":"MOMO","GraPARI Gatsu Tengah Denpasar":"MOMO","GraPARI Genteng":"MOMO","GraPARI Gorontalo":"TOMO","GraPARI Gowa":"MOMO","GraPARI Graha Merah Putih":"TOMO","GraPARI Grand Batam Mall":"TOMO","GraPARI Gresik":"TOMO","GraPARI Gunung Kidul":"MOMO","GraPARI Gunung Sitoli":"MOMO","GraPARI ITC Depok":"MOMO","GraPARI Indralaya":"MOMO","GraPARI Indramayu":"MOMO","GraPARI Jambi":"TOMO","GraPARI Jatibarang":"MOMO","GraPARI Jayapura":"TOMO","GraPARI Jember":"TOMO","GraPARI Jeneponto":"TOMO","GraPARI Jepara":"TOMO","GraPARI Jimbaran":"TOMO","GraPARI Jombang":"TOMO","GraPARI Kabanjahe":"MOMO","GraPARI Kaimana":"TOMO","GraPARI Kalabahi":"TOMO","GraPARI Kalianda":"MOMO","GraPARI Kalibata":"TOMO","GraPARI Kandangan":"MOMO","GraPARI Kapten Muslim":"MOMO","GraPARI Karanganyar":"TOMO","GraPARI Kasongan":"MOMO","GraPARI Kayu Agung":"MOMO","GraPARI Kebumen":"MOMO","GraPARI Kediri":"TOMO","GraPARI Kefamenanu":"TOMO","GraPARI Kembangan":"MOMO","GraPARI Kendal":"TOMO","GraPARI Kendari":"TOMO","GraPARI Kepanjen":"MOMO","GraPARI Ketapang":"TOMO","GraPARI Kisaran":"TOMO","GraPARI Klaten":"TOMO","GraPARI Kolaka":"MOMO","GraPARI Kosambi":"MOMO","GraPARI Kota Bangun":"MOMO","GraPARI Kota Pinang":"MOMO","GraPARI Kotabaru":"MOMO","GraPARI Kotabumi":"MOMO","GraPARI Kotamobagu":"TOMO","GraPARI Kraksaan":"MOMO","GraPARI Kroya":"MOMO","GraPARI Kuala Kapuas":"TOMO","GraPARI Kubu Raya":"MOMO","GraPARI Kudus":"TOMO","GraPARI Kulonprogo":"MOMO","GraPARI Kuningan":"MOMO","GraPARI Kupang":"TOMO","GraPARI Kuranji":"MOMO","GraPARI Kuta":"TOMO","GraPARI Kutacane":"MOMO","GraPARI Kwandang":"TOMO","GraPARI Labuan Bajo":"MOMO","GraPARI Labuan Pandeglang":"MOMO","GraPARI Labuan pandeglang":"MOMO","GraPARI Labuha":"MOMO","GraPARI Lahat":"MOMO","GraPARI Lambaro":"MOMO","GraPARI Lamongan":"MOMO","GraPARI Lampung Majapahit":"TOMO","GraPARI Langowan":"TOMO","GraPARI Langsa":"MOMO","GraPARI Larantuka":"TOMO","GraPARI Lembang":"MOMO","GraPARI Lembong":"TOMO","GraPARI Lhokseumawe":"TOMO","GraPARI Living World Pekanbaru":"TOMO","GraPARI Loajanan":"MOMO","GraPARI Lombok Timur":"MOMO","GraPARI Lombok Utara":"MOMO","GraPARI Lubuk Alung":"MOMO","GraPARI Lubuk Basung":"MOMO","GraPARI Lubuk Linggau":"TOMO","GraPARI Lubuk Pakam":"MOMO","GraPARI Lubuk Sikaping":"MOMO","GraPARI Lumajang":"MOMO","GraPARI MDP Palembang":"MOMO","GraPARI Madiun Pahlawan":"TOMO","GraPARI Magelang":"TOMO","GraPARI Magetan":"TOMO","GraPARI Majalaya":"MOMO","GraPARI Majalengka":"MOMO","GraPARI Majenang":"MOMO","GraPARI Majene":"TOMO","GraPARI Makale":"MOMO","GraPARI Makassar":"TOMO","GraPARI Makassar Balaikota":"TOMO","GraPARI Malaka":"MOMO","GraPARI Malang":"TOMO","GraPARI Malang Blimbing":"MOMO","GraPARI Malili":"MOMO","GraPARI Malinau":"MOMO","GraPARI Mall Ambassador Jakarta":"MOMO","GraPARI Mall Balikpapan Baru":"TOMO","GraPARI Mall Cijantung Jakarta":"MOMO","GraPARI Mall Cinere":"MOMO","GraPARI Mall Grand Cibubur":"TOMO","GraPARI Mall Kelapa Gading Jakarta":"TOMO","GraPARI Mall Kota Kasablanka Jakarta":"TOMO","GraPARI Mall Nagoya Hill Batam":"MOMO","GraPARI Mall Panakukang Makassar":"MOMO","GraPARI Mall Panbill Batam":"MOMO","GraPARI Mall Sarinah":"TOMO","GraPARI Mall Technomart Karawang":"TOMO","GraPARI Maluk":"MOMO","GraPARI Mamasa":"MOMO","GraPARI Mamuju":"MOMO","GraPARI Manado":"TOMO","GraPARI Manna":"MOMO","GraPARI Manokwari":"TOMO","GraPARI Margorejo":"TOMO","GraPARI Marisa":"TOMO","GraPARI Maros":"TOMO","GraPARI Masamba":"TOMO","GraPARI Masohi":"MOMO","GraPARI Mataram":"TOMO","GraPARI Maumere":"TOMO","GraPARI Medan":"TOMO","GraPARI Medan Karyajasa":"MOMO","GraPARI Medan Marelan":"MOMO","GraPARI Merangin":"MOMO","GraPARI Merauke":"MOMO","GraPARI Meteorologi":"MOMO","GraPARI Metro Lampung":"MOMO","GraPARI Metro Trade Center Bandung":"MOMO","GraPARI Meulaboh":"TOMO","GraPARI Miko Mall Bandung":"MOMO","GraPARI Mojokerto":"TOMO","GraPARI Morowali":"MOMO","GraPARI Muara Bungo":"MOMO","GraPARI Muara Enim":"MOMO","GraPARI Muara Jawa":"MOMO","GraPARI Muara Teweh":"TOMO","GraPARI Muko Muko":"MOMO","GraPARI Mungkid":"TOMO","GraPARI Nabire":"MOMO","GraPARI Namlea":"TOMO","GraPARI Nanga Pinoh":"TOMO","GraPARI Natar":"MOMO","GraPARI Natuna":"MOMO","GraPARI Negara":"MOMO","GraPARI Ngabang":"TOMO","GraPARI Nganjuk":"MOMO","GraPARI Ngawi":"TOMO","GraPARI Nunukan":"MOMO","GraPARI Obi":"MOMO","GraPARI PGC Jakarta":"MOMO","GraPARI Pacitan":"MOMO","GraPARI Padalarang":"MOMO","GraPARI Padang":"TOMO","GraPARI Padang Panjang":"TOMO","GraPARI Padang Sidempuan":"TOMO","GraPARI Pahlawan Semarang":"TOMO","GraPARI Painan":"TOMO","GraPARI Pakning":"MOMO","GraPARI Palangka Raya":"TOMO","GraPARI Palembang":"TOMO","GraPARI Palmerah":"TOMO","GraPARI Palopo":"MOMO","GraPARI Palu":"TOMO","GraPARI Pamanukan":"MOMO","GraPARI Pamekasan":"TOMO","GraPARI Pandaan":"MOMO","GraPARI Pandeglang":"MOMO","GraPARI Pangandaran":"MOMO","GraPARI Pangkajene":"TOMO","GraPARI Pangkal Pinang":"TOMO","GraPARI Pangkalan":"MOMO","GraPARI Pangkalan Bun":"MOMO","GraPARI Pangkalan Kerinci":"MOMO","GraPARI Pantai Indah Kapuk":"MOMO","GraPARI Panyabungan":"MOMO","GraPARI ParePare":"TOMO","GraPARI Parigi Moutong":"MOMO","GraPARI Parung":"TOMO","GraPARI Pasaman":"MOMO","GraPARI Passo":"TOMO","GraPARI Pasuruan":"TOMO","GraPARI Pati":"TOMO","GraPARI Payakumbuh":"TOMO","GraPARI Pekalongan":"TOMO","GraPARI Pekanbaru":"TOMO","GraPARI Pekanbaru Panam":"MOMO","GraPARI Pelabuhan Ratu":"TOMO","GraPARI Pelaihari":"MOMO","GraPARI Pemalang":"MOMO","GraPARI Pematang Siantar":"TOMO","GraPARI Penajam Propinsi":"TOMO","GraPARI Perawang Siak":"MOMO","GraPARI Perdagangan":"MOMO","GraPARI Pinrang":"MOMO","GraPARI Piru":"MOMO","GraPARI Plaza Medan Fair":"TOMO","GraPARI Polewali":"MOMO","GraPARI Pondok Indah":"TOMO","GraPARI Pondok Jati Sidoarjo":"TOMO","GraPARI Ponorogo":"MOMO","GraPARI Pontianak":"TOMO","GraPARI Poso":"MOMO","GraPARI Prabumulih":"MOMO","GraPARI Pringsewu":"MOMO","GraPARI Probolinggo":"TOMO","GraPARI Purbalingga":"TOMO","GraPARI Purwakarta":"TOMO","GraPARI Purwodadi":"TOMO","GraPARI Purwokerto":"TOMO","GraPARI Purworejo":"TOMO","GraPARI Putusibau":"MOMO","GraPARI Raha":"TOMO","GraPARI Raja Ampat":"TOMO","GraPARI Rancaekek":"TOMO","GraPARI Rangkasbitung":"MOMO","GraPARI Rantau Prapat":"TOMO","GraPARI Rantau Tapin":"MOMO","GraPARI Rawamangun":"TOMO","GraPARI Rembang":"MOMO","GraPARI Rengat":"MOMO","GraPARI Renon Denpasar":"TOMO","GraPARI Rimbo Bujang":"MOMO","GraPARI Ruteng":"MOMO","GraPARI Sabang":"TOMO","GraPARI Salatiga":"MOMO","GraPARI Samarinda":"TOMO","GraPARI Samarinda Awang Long":"TOMO","GraPARI Sambas":"MOMO","GraPARI Sampang":"MOMO","GraPARI Sampit":"MOMO","GraPARI Sangatta":"MOMO","GraPARI Sanggau":"TOMO","GraPARI Sarmi":"TOMO","GraPARI Sarolangun":"MOMO","GraPARI Saumlaki":"MOMO","GraPARI Sebrang Ulu":"MOMO","GraPARI Sei Danau":"MOMO","GraPARI Sei Rampah":"MOMO","GraPARI Sekayu":"MOMO","GraPARI Selat Panjang":"MOMO","GraPARI Selayar":"TOMO","GraPARI Sentani":"MOMO","GraPARI Serang":"TOMO","GraPARI Serui":"TOMO","GraPARI Sibolga":"TOMO","GraPARI Sidrap Pangkajene":"TOMO","GraPARI Sigli":"MOMO","GraPARI Singaparna":"MOMO","GraPARI Singaraja":"MOMO","GraPARI Singkawang":"MOMO","GraPARI Sinjai":"TOMO","GraPARI Sintang":"MOMO","GraPARI Situbondo":"MOMO","GraPARI Siwa":"TOMO","GraPARI Slawi":"TOMO","GraPARI Sleman":"TOMO","GraPARI Soe":"TOMO","GraPARI Solo":"TOMO","GraPARI Solok":"MOMO","GraPARI Solok Selatan":"MOMO","GraPARI Soppeng":"TOMO","GraPARI Soreang":"MOMO","GraPARI Soroako":"MOMO","GraPARI Sorong":"TOMO","GraPARI Sragen":"TOMO","GraPARI Stabat":"MOMO","GraPARI Subang":"TOMO","GraPARI Subulussalam":"MOMO","GraPARI Sudiang Makassar":"MOMO","GraPARI Sukabumi":"TOMO","GraPARI Sukanagara":"MOMO","GraPARI Sumarrecon Mall Serpong":"MOMO","GraPARI Sumbawa":"MOMO","GraPARI Sumber":"MOMO","GraPARI Sumedang":"MOMO","GraPARI Sumenep":"MOMO","GraPARI Sungai Penuh":"TOMO","GraPARI Sungai Rumbai":"MOMO","GraPARI Supermall Karawaci":"MOMO","GraPARI Supratman":"TOMO","GraPARI Surabaya Barat":"TOMO","GraPARI Surabaya Garuda":"TOMO","GraPARI Surabaya Manyar":"TOMO","GraPARI Surabaya Sudirman":"TOMO","GraPARI Tabanan":"MOMO","GraPARI Tahuna":"TOMO","GraPARI Takalar":"TOMO","GraPARI Takengon":"MOMO","GraPARI Taliwang":"MOMO","GraPARI Tambun":"MOMO","GraPARI Tanah Grogot":"MOMO","GraPARI Tangerang City":"MOMO","GraPARI Tanjung Balai Asahan":"MOMO","GraPARI Tanjung Balai Karimun":"MOMO","GraPARI Tanjung Batu Karimun":"MOMO","GraPARI Tanjung Morawa":"MOMO","GraPARI Tanjung Pinang":"TOMO","GraPARI Tanjung Redep":"MOMO","GraPARI Tanjung Selor":"MOMO","GraPARI Tanjung Tabalong":"MOMO","GraPARI Tarakan":"TOMO","GraPARI Tarutung":"MOMO","GraPARI Tasikmalaya":"TOMO","GraPARI Tawaeli":"TOMO","GraPARI Tebing Tinggi":"MOMO","GraPARI Tegal":"TOMO","GraPARI Teluk Kuantan":"MOMO","GraPARI Temanggung":"TOMO","GraPARI Tembagapura":"MOMO","GraPARI Tembilahan":"MOMO","GraPARI Tenggarong":"MOMO","GraPARI Terminal 3 Bandara Soetta":"TOMO","GraPARI Ternate":"MOMO","GraPARI Timika":"TOMO","GraPARI Tobelo":"TOMO","GraPARI Toboali":"MOMO","GraPARI Toli-Toli":"MOMO","GraPARI Tomohon":"MOMO","GraPARI Topoyo":"MOMO","GraPARI Toraja":"TOMO","GraPARI Trans Studio Mall Bandung":"MOMO","GraPARI Trenggalek":"MOMO","GraPARI Tropodo Sidoarjo":"MOMO","GraPARI Tual":"TOMO","GraPARI Tuban":"MOMO","GraPARI Tulang Bawang":"MOMO","GraPARI Tulungagung":"TOMO","GraPARI Tungkal Ilir":"MOMO","GraPARI Turen":"MOMO","GraPARI Ubud":"TOMO","GraPARI Ujung Batu":"MOMO","GraPARI Ujung Berung":"TOMO","GraPARI Unahaa":"TOMO","GraPARI Ungaran":"MOMO","GraPARI Waikabubak":"MOMO","GraPARI Waingapu":"MOMO","GraPARI Wajo":"TOMO","GraPARI Wamena":"MOMO","GraPARI Wanci":"MOMO","GraPARI Weda":"MOMO","GraPARI Wisma Alia Jakarta":"TOMO","GraPARI Wolter Monginsidi":"MOMO","GraPARI Wonogiri":"TOMO","GraPARI Wonosobo":"TOMO","GraPARI Yogyakarta":"TOMO","GraPARI Yos Sudarso":"TOMO","GraPARi Samarinda":"TOMO","GraPari Lembang":"MOMO","Grapari Malang":"TOMO","Grapari Nabire":"MOMO","Grapari Pasangkayu":"MOMO","Grapari Probolinggo":"TOMO","Grapari Raja Ampat":"TOMO","Grapari Sukoharjo":"MOMO","Grapari Tual":"TOMO","Grapari Unahaa":"TOMO"};
+        const MASTER_STORAGE_KEY = 'tnps_mobile_bisnis_model_master';
+        let bisnisModelMaster = loadBisnisModelMaster();
+
+        function loadBisnisModelMaster() {
+            let master = Object.assign({}, SEED_BISNIS_MODEL);
+            try {
+                let saved = localStorage.getItem(MASTER_STORAGE_KEY);
+                if (saved) Object.assign(master, JSON.parse(saved));
+            } catch (e) { /* storage tidak tersedia, pakai seed saja */ }
+            return master;
+        }
+
+        function saveBisnisModelMaster() {
+            try { localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(bisnisModelMaster)); } catch (e) {}
+        }
+
+        function resetBisnisModelMaster() {
+            if (!confirm('Kembalikan master Bisnis Model ke data bawaan (464 unit Okt 2026)?')) return;
+            try { localStorage.removeItem(MASTER_STORAGE_KEY); } catch (e) {}
+            bisnisModelMaster = Object.assign({}, SEED_BISNIS_MODEL);
+            if (globalRawData.length > 0) processAndRender();
+            updateMasterInfo();
+        }
+
+        function updateMasterInfo(extraText) {
+            let box = document.getElementById('masterInfoContainer');
+            let show = currentMode === 'mobile' && globalRawData.length > 0;
+            box.classList.toggle('hidden', !show);
+            box.classList.toggle('flex', show);
+            document.getElementById('masterInfo').textContent =
+                `Master Bisnis Model: ${Object.keys(bisnisModelMaster).length} unit` + (extraText ? ` • ${extraText}` : '');
+        }
+
+        // [MOBILE] Pencarian kolom yang toleran (abaikan spasi/underscore/huruf besar)
+        function normKey(s) { return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, ''); }
+        function getColAny(row, ...names) {
+            let keys = Object.keys(row);
+            for (let name of names) {
+                let k = keys.find(key => normKey(key) === normKey(name));
+                if (k !== undefined && row[k] !== undefined && String(row[k]).trim() !== '') return String(row[k]).trim();
+            }
+            return '';
+        }
+        function hasColAny(row, name) {
+            return Object.keys(row).some(key => normKey(key) === normKey(name));
+        }
+
+        // [MOBILE] Periode bulanan dari kolom Bulan, atau diturunkan dari survey_date
+        const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        function monthLabel(y, m) {
+            let mm = String(m).padStart(2, '0');
+            return `${y}-${mm} (${BULAN_ID[Number(m) - 1] || mm})`;
+        }
+        function deriveMobilePeriod(row) {
+            let bulan = getColAny(row, 'bulan');
+            if (bulan) return bulan;
+
+            let raw = getColAny(row, 'survey_date', 'event_date');
+            if (!raw) return 'General Period';
+
+            let m = raw.match(/^(\d{4})[-\/]?(\d{2})/);                       // 20261018 / 2026-10-18
+            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[1], +m[2]);
+
+            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // 18/10/2026
+            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[3], +m[2]);
+
+            let n = Number(raw.replace(',', '.'));                              // serial tanggal Excel
+            if (!isNaN(n) && n > 20000 && n < 80000) {
+                let d = new Date(Math.round((n - 25569) * 86400000));
+                return monthLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
+            }
+            return 'General Period';
+        }
+
         function formatPeriod(p) {
             if (!isRollingView) return p;
             let n = parseInt(String(p).replace(/\D/g, ''));
@@ -326,52 +413,142 @@
                 weekFilterContainer.style.display = "none";
             }
 
-            if (currentWorkbook) {
+            updateMasterInfo();
+
+            if (globalRawData.length > 0) {
                 processAndRender();
             }
+        }
+
+        // =====================================================================
+        // PEMBACAAN FILE (Web Worker, tanpa file worker.js terpisah)
+        // Semua format (.xlsx, .xls, .csv, .txt) dibaca SheetJS di background,
+        // sehingga halaman tidak membeku dan CSV dengan tanda kutip terbaca benar.
+        // Jika Worker tidak tersedia, otomatis fallback ke main thread.
+        // =====================================================================
+        const WORKER_CODE = `
+            importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+            let wb = null;
+            self.onmessage = async (e) => {
+                try {
+                    if (e.data.file) {
+                        const buf = await e.data.file.arrayBuffer();
+                        wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true, cellStyles: false });
+                        self.postMessage({ type: 'sheets', sheetNames: wb.SheetNames });
+                    }
+                    if (e.data.sheet) {
+                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[e.data.sheet], { defval: '' });
+                        self.postMessage({ type: 'rows', rows });
+                    }
+                } catch (err) {
+                    self.postMessage({ type: 'error', message: err.message });
+                }
+            };`;
+
+        let dataWorker = null;
+        let useMainThread = false;
+        let currentFile = null;
+
+        function setLoading(msg) {
+            document.getElementById('placeholder').classList.remove('hidden');
+            document.getElementById('dashboardContent').classList.add('hidden');
+            document.getElementById('placeholderTitle').textContent = msg;
+        }
+
+        function showLoadError(msg) {
+            alert("Gagal membaca file: " + msg);
+            document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
+        }
+
+        function populateSheetSelector(sheetNames) {
+            let sheetSelector = document.getElementById('sheetSelector');
+            let sheetContainer = document.getElementById('sheetSelectorContainer');
+            sheetSelector.innerHTML = '';
+            sheetNames.forEach(name => {
+                let opt = document.createElement('option');
+                opt.value = name;
+                opt.textContent = name;
+                sheetSelector.appendChild(opt);
+            });
+            if (sheetNames.length > 1) sheetContainer.classList.remove('hidden');
+            else sheetContainer.classList.add('hidden');
+        }
+
+        function onRowsLoaded(rows) {
+            globalRawData = rows;
+            if (globalRawData.length === 0) {
+                alert("Sheet ini kosong!");
+                document.getElementById('placeholderTitle').textContent = "Sheet kosong.";
+                return;
+            }
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+
+            buildWeekOptions();
+            processAndRender();
+        }
+
+        function parseOnMainThread(file) {
+            useMainThread = true;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                setTimeout(() => {
+                    try {
+                        currentWorkbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array', raw: true, cellStyles: false });
+                        populateSheetSelector(currentWorkbook.SheetNames);
+                        loadSheetData(currentWorkbook.SheetNames[0]);
+                    } catch (err) {
+                        showLoadError(err.message);
+                    }
+                }, 50);
+            };
+            reader.readAsArrayBuffer(file);
         }
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            currentFile = file;
 
             document.getElementById('fileName').textContent = file.name;
-            document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (38MB+), harap tunggu...";
+            setLoading(`Sedang memproses file (${(file.size / 1048576).toFixed(1)} MB), mohon tunggu...`);
 
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                setTimeout(() => {
-                    try {
-                        let data = new Uint8Array(e.target.result);
-                        currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
+            if (dataWorker) { dataWorker.terminate(); dataWorker = null; }
+            currentWorkbook = null;
+            useMainThread = false;
 
-                        let sheetNames = currentWorkbook.SheetNames;
-                        let sheetSelector = document.getElementById('sheetSelector');
-                        let sheetContainer = document.getElementById('sheetSelectorContainer');
+            try {
+                if (!window.Worker) throw new Error('Worker tidak didukung');
+                let blobUrl = URL.createObjectURL(new Blob([WORKER_CODE], { type: 'text/javascript' }));
+                dataWorker = new Worker(blobUrl);
+            } catch (err) {
+                console.warn('Web Worker tidak tersedia, pakai main thread:', err);
+                parseOnMainThread(file);
+                return;
+            }
 
-                        sheetSelector.innerHTML = '';
-                        sheetNames.forEach(name => {
-                            let opt = document.createElement('option');
-                            opt.value = name;
-                            opt.textContent = name;
-                            sheetSelector.appendChild(opt);
-                        });
-
-                        if (sheetNames.length > 1) {
-                            sheetContainer.classList.remove('hidden');
-                        } else {
-                            sheetContainer.classList.add('hidden');
-                        }
-
-                        loadSheetData(sheetNames[0]);
-                    } catch (err) {
-                        alert("Gagal membaca file Excel: " + err.message);
-                        document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
-                    }
-                }, 50);
+            dataWorker.onmessage = function(event) {
+                let msg = event.data;
+                if (msg.type === 'sheets') {
+                    populateSheetSelector(msg.sheetNames);
+                    dataWorker.postMessage({ sheet: msg.sheetNames[0] });
+                } else if (msg.type === 'rows') {
+                    onRowsLoaded(msg.rows);
+                } else {
+                    showLoadError(msg.message);
+                }
             };
-            reader.readAsArrayBuffer(file);
+
+            dataWorker.onerror = function(err) {
+                console.warn('Worker error, fallback ke main thread:', err.message);
+                err.preventDefault && err.preventDefault();
+                if (dataWorker) { dataWorker.terminate(); dataWorker = null; }
+                parseOnMainThread(currentFile);
+            };
+
+            dataWorker.postMessage({ file });
+            e.target.value = ''; // supaya file yang sama bisa diupload ulang
         });
 
         document.getElementById('sheetSelector').addEventListener('change', function(e) {
@@ -389,25 +566,17 @@
         }
 
         function loadSheetData(sheetName) {
-            let worksheet = currentWorkbook.Sheets[sheetName];
-            globalRawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-            if (globalRawData.length === 0) {
-                alert("Sheet ini kosong!");
-                return;
+            setLoading("Memuat sheet " + sheetName + "...");
+            if (useMainThread) {
+                setTimeout(() => {
+                    let worksheet = currentWorkbook.Sheets[sheetName];
+                    onRowsLoaded(XLSX.utils.sheet_to_json(worksheet, { defval: "" }));
+                }, 50);
+            } else if (dataWorker) {
+                dataWorker.postMessage({ sheet: sheetName });
             }
-
-            document.getElementById('fileInfo').classList.remove('hidden');
-            document.getElementById('placeholder').classList.add('hidden');
-            document.getElementById('dashboardContent').classList.remove('hidden');
-
-            buildWeekOptions();
-            processAndRender();
         }
 
-        // ==========================================
-        // INDIHOME DIJAMIN AMAN & TIDAK DIOTAK-ATIK
-        // ==========================================
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
@@ -470,6 +639,99 @@
             };
         }
 
+        // =====================================================================
+        // [MOBILE] Mapping baris Mobile
+        // =====================================================================
+        function mapMobileRows(rawData) {
+            let sample = rawData[0] || {};
+            let hasBisnisModelCol = hasColAny(sample, 'bisnis model') || hasColAny(sample, 'momo/tomo');
+
+            // Pelajari master unit_name → bisnis model dari file yang punya kolomnya
+            let learned = 0;
+            if (hasBisnisModelCol) {
+                rawData.forEach(row => {
+                    let unitName = getColAny(row, 'unit_name');
+                    let bm = getColAny(row, 'bisnis model', 'momo/tomo');
+                    if (unitName && bm && bisnisModelMaster[unitName] !== bm) {
+                        bisnisModelMaster[unitName] = bm;
+                        learned++;
+                    }
+                });
+                if (learned > 0) saveBisnisModelMaster();
+            }
+
+            let stats = { noCategory: 0, fromMaster: 0, unmatchedUnits: new Set() };
+
+            let rows = rawData.map(row => {
+                let unitType = getColAny(row, 'unit_type').toLowerCase();
+                let unitName = getColAny(row, 'unit_name');
+                let msisdn = getColAny(row, 'msisdn').replace(/\s+/g, '');
+                let hasMsisdn = msisdn !== '';
+                let tNpsVal = getColAny(row, 'tnps', 'tnps type', 'nps', 'tnps category').toLowerCase();
+                let column2Val = getColAny(row, 'column2').toLowerCase();
+                let bulanVal = deriveMobilePeriod(row);
+
+                let bisnisModelVal = getColAny(row, 'bisnis model', 'momo/tomo', 'momo', 'tomo');
+                if (!bisnisModelVal && !hasBisnisModelCol && unitName && bisnisModelMaster[unitName]) {
+                    bisnisModelVal = bisnisModelMaster[unitName];
+                    stats.fromMaster++;
+                }
+                if (!bisnisModelVal) bisnisModelVal = 'Unspecified';
+
+                let isPromotor = 0, isDetractor = 0, isPassive = 0;
+                let targetNps = tNpsVal;
+
+                if (hasMsisdn && targetNps !== '') {
+                    if (targetNps.includes('promot')) {
+                        isPromotor = 1;
+                    } else if (targetNps.includes('detract')) {
+                        isDetractor = 1;
+                    } else if (targetNps.includes('passiv') || targetNps.includes('pasif')) {
+                        isPassive = 1;
+                    } else {
+                        let numScore = Number(targetNps.replace(',', '.'));
+                        if (!isNaN(numScore)) {
+                            if (numScore >= 9 && numScore <= 10) isPromotor = 1;
+                            else if (numScore >= 7 && numScore < 9) isPassive = 1;
+                            else if (numScore >= 0 && numScore < 7) isDetractor = 1;
+                        }
+                    }
+                }
+                if (hasMsisdn && !isPromotor && !isDetractor && !isPassive) stats.noCategory++;
+
+                let ctpGroup = "Call Center";
+                let isGraPARI = false;
+                if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
+                    ctpGroup = "GraPARI";
+                    isGraPARI = true;
+                    if (bisnisModelVal === 'Unspecified' && unitName) stats.unmatchedUnits.add(unitName);
+                } else if (unitType.includes('webservice') || unitType.includes('web') || unitType.includes('socmed') || unitType.includes('digital')) {
+                    ctpGroup = "Webservice";
+                } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                    ctpGroup = "Call Center";
+                } else {
+                    ctpGroup = unitType ? unitType : "Call Center";
+                }
+
+                let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
+
+                return {
+                    IsValid: hasMsisdn,
+                    Period: bulanVal,
+                    Mapped_CTP: ctpGroup,
+                    Is_GraPARI: isGraPARI,
+                    MomoTomo: bisnisModelVal,
+                    Is_CS: isCS,
+                    Promoter: isPromotor,
+                    Detractor: isDetractor,
+                    Passive: isPassive,
+                    Total: hasMsisdn ? 1 : 0
+                };
+            }).filter(item => item.IsValid);
+
+            return { rows, stats, hasBisnisModelCol, learned };
+        }
+
         function processAndRender() {
             let filterMode = document.getElementById('weekFilter').value;
             let processedData = [];
@@ -511,87 +773,48 @@
                 }
 
             } else {
-                // ==========================================
-                // PEMETAAN KHUSUS MOBILE (SESUAI HEADER BARU)
-                // ==========================================
                 isRollingView = false;
 
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan / Survey Date)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan / Survey Date)";
-                document.getElementById('thPeriod3').textContent = "Periode (Bulan / Survey Date)";
+                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
+                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
+                document.getElementById('thPeriod3').textContent = "Periode (Bulan)";
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
-                processedData = globalRawData.map(row => {
-                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_name') || getCol(row, 'channel') || '';
-                    let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
-                    let hasMsisdn = msisdn !== '';
-                    
-                    // Membaca kolom tnps type, category, q1_ans sesuai struktur header kamu
-                    let tNpsVal = getCol(row, 'tnps type') || getCol(row, 'tnps') || getCol(row, 'category') || getCol(row, 'q1_ans') || '';
-                    let column2Val = getCol(row, 'Column2') || getCol(row, 'sub_category') || '';
-                    let bulanVal = getCol(row, 'survey_date') || getCol(row, 'event_date') || getCol(row, 'bulan') || 'General Period';
-                    let bisnisModelVal = getCol(row, 'category') || getCol(row, 'sub_category') || getCol(row, 'journey') || 'Unspecified';
+                let result = mapMobileRows(globalRawData);
+                processedData = result.rows;
 
-                    let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = tNpsVal.toLowerCase();
-
-                    if (hasMsisdn && targetNps !== '') {
-                        if (targetNps.includes('promot') || targetNps === 'p') {
-                            isPromotor = 1;
-                        } else if (targetNps.includes('detract') || targetNps === 'd') {
-                            isDetractor = 1;
-                        } else if (targetNps.includes('passiv') || targetNps === 'e' || targetNps === 's') {
-                            isPassive = 1;
-                        } else {
-                            let numScore = Number(targetNps.replace(',', '.'));
-                            if (!isNaN(numScore)) {
-                                if (numScore >= 9 && numScore <= 10) isPromotor = 1;
-                                else if (numScore >= 7 && numScore < 9) isPassive = 1;
-                                else if (numScore >= 0 && numScore < 7) isDetractor = 1;
-                            }
-                        }
-                    }
-
-                    let unitTypeLower = unitType.toLowerCase();
-                    let ctpGroup = "Call Center";
-                    let isGraPARI = false;
-                    if (unitTypeLower.includes('grapari') || unitTypeLower.includes('gerai') || unitTypeLower.includes('lite') || unitTypeLower.includes('plasa')) {
-                        ctpGroup = "GraPARI";
-                        isGraPARI = true;
-                    } else if (unitTypeLower.includes('webservice') || unitTypeLower.includes('web') || unitTypeLower.includes('socmed') || unitTypeLower.includes('digital')) {
-                        ctpGroup = "Webservice";
-                    } else if (unitTypeLower.includes('call') || unitTypeLower.includes('cc') || unitTypeLower.includes('ivr')) {
-                        ctpGroup = "Call Center";
-                    } else {
-                        ctpGroup = unitType ? unitType : "Call Center";
-                    }
-
-                    let column2Lower = column2Val.toLowerCase();
-                    let isCS = column2Lower.includes('petugas layanan') || column2Lower.includes('service officer') || column2Lower.includes('cs');
-
-                    return {
-                        IsValid: hasMsisdn,
-                        Period: bulanVal,
-                        Mapped_CTP: ctpGroup,
-                        Is_GraPARI: isGraPARI,
-                        MomoTomo: bisnisModelVal,
-                        Is_CS: isCS,
-                        Promoter: isPromotor,
-                        Detractor: isDetractor,
-                        Passive: isPassive,
-                        Total: hasMsisdn ? 1 : 0
-                    };
-                }).filter(item => item.IsValid);
+                if (processedData.length === 0) {
+                    alert("Mode Mobile: 0 baris valid (kolom msisdn tidak ditemukan / kosong).\n\nKolom terdeteksi:\n" +
+                          Object.keys(globalRawData[0] || {}).join(', ') +
+                          "\n\nKolom wajib: msisdn, tNPS / tnps type, unit_type");
+                } else if (result.stats.noCategory === processedData.length) {
+                    alert("Mode Mobile: kolom tNPS tidak ditemukan atau isinya tidak dikenali.\n" +
+                          "Pastikan ada kolom 'tNPS' atau 'tnps type' berisi Promotor / Passiver / Detractor.");
+                }
 
                 rowInfoText = `${processedData.length} baris data aktif`;
+
+                let masterNote = '';
+                if (result.hasBisnisModelCol) {
+                    masterNote = result.learned > 0 ? `${result.learned} unit diperbarui dari file ini` : 'pakai kolom Bisnis Model di file';
+                } else {
+                    masterNote = `${result.stats.fromMaster} baris diisi dari master`;
+                    if (result.stats.unmatchedUnits.size > 0) {
+                        masterNote += `, ${result.stats.unmatchedUnits.size} unit GraPARI belum ada di master`;
+                        console.warn('Unit GraPARI tanpa Bisnis Model:', Array.from(result.stats.unmatchedUnits));
+                    }
+                }
+                updateMasterInfo(masterNote);
             }
 
+            if (currentMode === 'indihome') updateMasterInfo();
             document.getElementById('rowCount').textContent = rowInfoText;
             renderDashboard(processedData);
         }
 
         function renderDashboard(data) {
+            const SEP = '|||'; // pemisah key periode/kategori (aman walau nilai mengandung "_")
             let group = {};
             let momoGroup = {};
             let periods = new Set();
@@ -603,7 +826,7 @@
                 let ctp = item.Mapped_CTP;
                 periods.add(p);
 
-                let k = `${p}_${ctp}`;
+                let k = `${p}${SEP}${ctp}`;
                 if (!group[k]) {
                     group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
                 }
@@ -622,7 +845,7 @@
 
                 let mt = item.MomoTomo;
                 momoPeriods.add(p);
-                let mk = `${p}_${mt}`;
+                let mk = `${p}${SEP}${mt}`;
                 if (!momoGroup[mk]) {
                     momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
                 }
@@ -641,7 +864,7 @@
             let chartSets = ctpList.map((ctp, i) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
                 let vals = sortedPeriods.map(p => {
-                    let d = group[`${p}_${ctp}`];
+                    let d = group[`${p}${SEP}${ctp}`];
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
@@ -666,7 +889,7 @@
             let csSets = ctpList.map((ctp, i) => {
                 let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
                 let vals = sortedPeriods.map(p => {
-                    let d = group[`${p}_${ctp}`];
+                    let d = group[`${p}${SEP}${ctp}`];
                     if (!d || d.cs_total === 0) return 0;
                     return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
                 });
@@ -688,7 +911,7 @@
                 }
             });
 
-            let uniqueMomoCategories = Array.from(new Set(Object.keys(momoGroup).map(k => k.split('_')[1])));
+            let uniqueMomoCategories = Array.from(new Set(Object.keys(momoGroup).map(k => k.split(SEP)[1])));
             let sortedMomoPeriods = Array.from(momoPeriods).sort((a,b) => {
                 let numA = parseInt(a.replace(/\D/g,'')) || 0;
                 let numB = parseInt(b.replace(/\D/g,'')) || 0;
@@ -698,7 +921,7 @@
             let momoChartSets = uniqueMomoCategories.map((mtCat, i) => {
                 let colors = ['#e11d48', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6'];
                 let vals = sortedMomoPeriods.map(p => {
-                    let d = momoGroup[`${p}_${mtCat}`];
+                    let d = momoGroup[`${p}${SEP}${mtCat}`];
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
@@ -730,7 +953,7 @@
 
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}_${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    let d = group[`${p}${SEP}${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                     
                     ctpGrandTotals[ctp].promotor += d.promotor;
@@ -778,7 +1001,7 @@
 
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}_${ctp}`] || { cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                    let d = group[`${p}${SEP}${ctp}`] || { cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
                     let prom = d.cs_promotor || 0;
                     let detr = d.cs_detractor || 0;
                     let pass = d.cs_passive || 0;
@@ -830,7 +1053,7 @@
 
             sortedMomoPeriods.forEach(p => {
                 uniqueMomoCategories.forEach(mtCat => {
-                    let d = momoGroup[`${p}_${mtCat}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    let d = momoGroup[`${p}${SEP}${mtCat}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
 
                     momoGrandTotals[mtCat].promotor += d.promotor;
