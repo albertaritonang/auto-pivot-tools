@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • Detractor, Passive, Promotor Breakdown</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total • Berdasarkan unit_type2 & reason_desc</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -69,7 +69,7 @@
         <div id="dashboardContent" class="hidden space-y-6">
             <!-- Grafik Tren tNPS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Berdasarkan CTP (Call Center, GraPARI, Socmed)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Berdasarkan unit_type2 (Call Center, GraPARI, Socmed)</h2>
                 <div class="relative h-80 w-full">
                     <canvas id="npsChart"></canvas>
                 </div>
@@ -77,7 +77,7 @@
 
             <!-- Grafik tNPS People CS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) per CTP</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) Berdasarkan reason_desc</h2>
                 <div class="relative h-80 w-full">
                     <canvas id="csChart"></canvas>
                 </div>
@@ -90,7 +90,7 @@
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th class="p-3">Periode</th>
-                            <th class="p-3">CTP Group</th>
+                            <th class="p-3">unit_type2 (CTP)</th>
                             <th class="p-3 text-center">Detractor</th>
                             <th class="p-3 text-center">Passive</th>
                             <th class="p-3 text-center">Promotor</th>
@@ -155,19 +155,11 @@
             }
         });
 
-        function extractValue(row, possibleKeys) {
+        function getColVal(row, colName) {
             let keys = Object.keys(row);
-            for (let pk of possibleKeys) {
-                let foundKey = keys.find(k => k.trim().toLowerCase() === pk.toLowerCase());
-                if (foundKey !== undefined && row[foundKey] !== undefined) {
-                    return String(row[foundKey]).trim();
-                }
-            }
-            for (let k of keys) {
-                let val = String(row[k]).trim().toLowerCase();
-                for (let pk of possibleKeys) {
-                    if (val.includes(pk.toLowerCase())) return val;
-                }
+            let found = keys.find(k => k.trim().toLowerCase() === colName.toLowerCase());
+            if (found !== undefined && row[found] !== undefined) {
+                return String(row[found]).trim();
             }
             return '';
         }
@@ -182,47 +174,38 @@
             }
 
             globalProcessedData = rawData.map(row => {
-                let allRowText = Object.values(row).join(" ").toLowerCase();
+                let tsCall = getColVal(row, 'ts_call');
+                let category = getColVal(row, 'category').toLowerCase();
+                let reasonDesc = getColVal(row, 'reason_desc');
+                let unitType2 = getColVal(row, 'unit_type2').toLowerCase();
+                let weekCol = getColVal(row, 'week');
+                let tsCall1 = getColVal(row, 'ts_call.1');
 
-                let dateVal = extractValue(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
-                let unitType = extractValue(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source', 'ts_call']);
-                let reasonDesc = extractValue(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan']);
-                let npsCategory = extractValue(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS', 'Column Labels']).toLowerCase();
-
-                if (!npsCategory) {
-                    if (allRowText.includes('promot')) npsCategory = 'promotor';
-                    else if (allRowText.includes('detract')) npsCategory = 'detractor';
-                    else if (allRowText.includes('passiv')) npsCategory = 'passive';
+                // Tentukan CTP Group dari unit_type2
+                let ctpGroup = "Call Center";
+                if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
+                    ctpGroup = "GraPARI";
+                } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType.includes('saltik')) {
+                    ctpGroup = "Socmed";
+                } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
+                    ctpGroup = "Call Center";
+                } else {
+                    ctpGroup = unitType2 ? unitType2 : "Other";
                 }
 
-                let weekStr = 'Week 1';
+                // Format Periode (Bulan / Minggu)
+                let weekStr = weekCol ? `Week ${weekCol}` : 'Week 1';
                 let monthStr = 'Bulan Ini';
-                if (dateVal) {
-                    let d = new Date(dateVal);
-                    if (!isNaN(d.getTime())) {
+                if (tsCall) {
+                    let d = new Date(tsCall);
+                    if (!isNaN(d.getTime()) && d.getFullYear() > 2015) {
                         let year = d.getFullYear();
                         let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
                         monthStr = `${monthNames[d.getMonth()]} ${year}`;
-                        
-                        let firstDay = new Date(d.getFullYear(), 0, 1);
-                        let pastDays = (d - firstDay) / 86400000;
-                        let weekNum = Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
-                        weekStr = `Week ${weekNum} (${year})`;
                     }
                 }
 
-                // CTP Mapping (Call Center, GraPARI, Socmed)
-                let ctpGroup = "Call Center";
-                let combinedUnit = (unitType + " " + allRowText).toLowerCase();
-                if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa') || combinedUnit.includes('dyandra')) {
-                    ctpGroup = "GraPARI";
-                } else if (combinedUnit.includes('socmed') || combinedUnit.includes('social') || combinedUnit.includes('medsos') || combinedUnit.includes('saltik')) {
-                    ctpGroup = "Socmed";
-                } else {
-                    ctpGroup = "Call Center";
-                }
-
-                // Reason Desc Filter untuk People CS
+                // Filter Reason Desc untuk People CS
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -231,12 +214,11 @@
                     "Customer service tidak responsif",
                     "PELAYANAN PELANGGAN"
                 ];
-                let isCS = targetReasons.some(r => reasonDesc.toLowerCase().includes(r.toLowerCase())) || 
-                           targetReasons.some(r => allRowText.includes(r.toLowerCase()));
+                let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
-                let isPromotor = npsCategory.includes('promot') ? 1 : 0;
-                let isDetractor = npsCategory.includes('detract') ? 1 : 0;
-                let isPassive = npsCategory.includes('passiv') ? 1 : 0;
+                let isPromotor = category.includes('promot') ? 1 : 0;
+                let isDetractor = category.includes('detract') ? 1 : 0;
+                let isPassive = category.includes('passiv') ? 1 : 0;
 
                 return {
                     Parsed_Week: weekStr,
@@ -246,7 +228,7 @@
                     Promoter: isPromotor,
                     Detractor: isDetractor,
                     Passive: isPassive,
-                    Total: 1 // Mewakili hitungan ts_call (Grand Total responden per baris)
+                    Total: 1 // Berperan sebagai hitungan responden ts_call
                 };
             });
 
@@ -277,7 +259,7 @@
                 groupData[key].promoter += item.Promoter;
                 groupData[key].detractor += item.Detractor;
                 groupData[key].passive += item.Passive;
-                groupData[key].total += item.Total; // Grand Total ts_call
+                groupData[key].total += item.Total;
 
                 if (item.Is_CS) {
                     groupData[key].cs_promotor += item.Promoter;
@@ -330,11 +312,7 @@
             npsChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: { labels: sortedPeriods, datasets: chartDatasets },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    scales: { y: { ticks: { callback: v => v + '%' } } } 
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
             if (csChartInstance) csChartInstance.destroy();
@@ -342,11 +320,7 @@
             csChartInstance = new Chart(ctxCs, {
                 type: 'line',
                 data: { labels: sortedPeriods, datasets: csDatasets },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    scales: { y: { ticks: { callback: v => v + '%' } } } 
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
             let tbody = document.querySelector('#summaryTable tbody');
