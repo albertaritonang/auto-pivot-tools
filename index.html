@@ -21,6 +21,7 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
+        /* Custom smooth scrollbar */
         ::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -61,11 +62,11 @@
                         <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
                     </div>
 
-                    <!-- Upload Button (Mendukung .xlsx, .xls, .csv, .txt) -->
+                    <!-- Upload Button -->
                     <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
                         <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span id="uploadBtnText">Upload File IndiHome</span>
-                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" class="hidden" />
+                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
                     </label>
                 </div>
             </div>
@@ -234,12 +235,14 @@
         let csChartInstance = null;
         let momoChartInstance = null;
 
+        // Rentang minggu laporan untuk mode weekly IndiHome (rolling 4 minggu).
         const WEEK_RANGES = {
             w40_43: [40, 43],
             w44_48: [44, 48],
             w49_52: [49, 52]
         };
-        const ROLLING_WINDOW = 4;
+        const ROLLING_WINDOW = 4; // Week N = Week (N-3) s/d Week N
+
         let isRollingView = false;
 
         function formatPeriod(p) {
@@ -326,7 +329,7 @@
                 weekFilterContainer.style.display = "none";
             }
 
-            if (globalRawData.length > 0) {
+            if (currentWorkbook) {
                 processAndRender();
             }
         }
@@ -337,95 +340,42 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file, harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar, harap tunggu...";
 
-            let fileName = file.name.toLowerCase();
-
-            if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                setTimeout(() => {
                     try {
-                        let text = e.target.result;
-                        // Parse teks sederhana (menggunakan pemisah koma, tab, atau titik koma)
-                        globalRawData = parseTextToJSON(text);
+                        let data = new Uint8Array(e.target.result);
+                        currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
 
-                        document.getElementById('fileInfo').classList.remove('hidden');
-                        document.getElementById('placeholder').classList.add('hidden');
-                        document.getElementById('dashboardContent').classList.remove('hidden');
-                        document.getElementById('sheetSelectorContainer').classList.add('hidden');
+                        let sheetNames = currentWorkbook.SheetNames;
+                        let sheetSelector = document.getElementById('sheetSelector');
+                        let sheetContainer = document.getElementById('sheetSelectorContainer');
 
-                        buildWeekOptions();
-                        processAndRender();
+                        sheetSelector.innerHTML = '';
+                        sheetNames.forEach(name => {
+                            let opt = document.createElement('option');
+                            opt.value = name;
+                            opt.textContent = name;
+                            sheetSelector.appendChild(opt);
+                        });
+
+                        if (sheetNames.length > 1) {
+                            sheetContainer.classList.remove('hidden');
+                        } else {
+                            sheetContainer.classList.add('hidden');
+                        }
+
+                        loadSheetData(sheetNames[0]);
                     } catch (err) {
-                        alert("Gagal membaca file teks/CSV: " + err.message);
+                        alert("Gagal membaca file Excel: " + err.message);
                         document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
                     }
-                };
-                reader.readAsText(file);
-            } else {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    setTimeout(() => {
-                        try {
-                            let data = new Uint8Array(e.target.result);
-                            currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
-
-                            let sheetNames = currentWorkbook.SheetNames;
-                            let sheetSelector = document.getElementById('sheetSelector');
-                            let sheetContainer = document.getElementById('sheetSelectorContainer');
-
-                            sheetSelector.innerHTML = '';
-                            sheetNames.forEach(name => {
-                                let opt = document.createElement('option');
-                                opt.value = name;
-                                opt.textContent = name;
-                                sheetSelector.appendChild(opt);
-                            });
-
-                            if (sheetNames.length > 1) {
-                                sheetContainer.classList.remove('hidden');
-                            } else {
-                                sheetContainer.classList.add('hidden');
-                            }
-
-                            loadSheetData(sheetNames[0]);
-                        } catch (err) {
-                            alert("Gagal membaca file Excel: " + err.message);
-                            document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
-                        }
-                    }, 50);
-                };
-                reader.readAsArrayBuffer(file);
-            }
+                }, 50);
+            };
+            reader.readAsArrayBuffer(file);
         });
-
-        // Parser pembacaan file .txt / .csv mentah
-        function parseTextToJSON(text) {
-            let lines = text.split(/\r\n|\n/);
-            if (lines.length === 0) return [];
-            
-            // Deteksi delimiter (tab atau koma atau titik koma)
-            let firstLine = lines[0];
-            let delimiter = ',';
-            if (firstLine.includes('\t')) delimiter = '\t';
-            else if (firstLine.includes(';')) delimiter = ';';
-
-            let headers = firstLine.split(delimiter).map(h => h.trim().replace(/^["']|["']$/g, ''));
-            let result = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
-                let currentline = line.split(delimiter);
-                let obj = {};
-                for (let j = 0; j < headers.length; j++) {
-                    let val = currentline[j] !== undefined ? currentline[j].trim().replace(/^["']|["']$/g, '') : '';
-                    obj[headers[j]] = val;
-                }
-                result.push(obj);
-            }
-            return result;
-        }
 
         document.getElementById('sheetSelector').addEventListener('change', function(e) {
             loadSheetData(e.target.value);
@@ -896,7 +846,6 @@
                 });
             });
 
-            uniqueMomoCategories.getElementById = function(){}; // dummy safety
             uniqueMomoCategories.forEach(mtCat => {
                 let d = momoGrandTotals[mtCat];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
