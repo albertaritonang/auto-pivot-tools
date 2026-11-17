@@ -21,7 +21,6 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        /* Custom smooth scrollbar */
         ::-webkit-scrollbar {
             height: 6px;
             width: 6px;
@@ -235,14 +234,12 @@
         let csChartInstance = null;
         let momoChartInstance = null;
 
-        // Rentang minggu laporan untuk mode weekly IndiHome (rolling 4 minggu).
         const WEEK_RANGES = {
             w40_43: [40, 43],
             w44_48: [44, 48],
             w49_52: [49, 52]
         };
-        const ROLLING_WINDOW = 4; // Week N = Week (N-3) s/d Week N
-
+        const ROLLING_WINDOW = 4;
         let isRollingView = false;
 
         function formatPeriod(p) {
@@ -340,7 +337,7 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar, harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (38MB+), harap tunggu...";
 
             let reader = new FileReader();
             reader.onload = function(e) {
@@ -408,6 +405,9 @@
             processAndRender();
         }
 
+        // ==========================================
+        // INDIHOME DIJAMIN AMAN & TIDAK DIOTAK-ATIK
+        // ==========================================
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
@@ -511,32 +511,37 @@
                 }
 
             } else {
+                // ==========================================
+                // PEMETAAN KHUSUS MOBILE (SESUAI HEADER BARU)
+                // ==========================================
                 isRollingView = false;
 
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod3').textContent = "Periode (Bulan)";
+                document.getElementById('thPeriod1').textContent = "Periode (Bulan / Survey Date)";
+                document.getElementById('thPeriod2').textContent = "Periode (Bulan / Survey Date)";
+                document.getElementById('thPeriod3').textContent = "Periode (Bulan / Survey Date)";
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
                 processedData = globalRawData.map(row => {
-                    let unitType = getCol(row, 'unit_type').toLowerCase();
+                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_name') || getCol(row, 'channel') || '';
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    let tNpsVal = getCol(row, 'tnps').toLowerCase();
-                    let column2Val = getCol(row, 'column2').toLowerCase();
-                    let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
-                    let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
+                    
+                    // Membaca kolom tnps type, category, q1_ans sesuai struktur header kamu
+                    let tNpsVal = getCol(row, 'tnps type') || getCol(row, 'tnps') || getCol(row, 'category') || getCol(row, 'q1_ans') || '';
+                    let column2Val = getCol(row, 'Column2') || getCol(row, 'sub_category') || '';
+                    let bulanVal = getCol(row, 'survey_date') || getCol(row, 'event_date') || getCol(row, 'bulan') || 'General Period';
+                    let bisnisModelVal = getCol(row, 'category') || getCol(row, 'sub_category') || getCol(row, 'journey') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = tNpsVal;
+                    let targetNps = tNpsVal.toLowerCase();
 
                     if (hasMsisdn && targetNps !== '') {
-                        if (targetNps.includes('promot')) {
+                        if (targetNps.includes('promot') || targetNps === 'p') {
                             isPromotor = 1;
-                        } else if (targetNps.includes('detract')) {
+                        } else if (targetNps.includes('detract') || targetNps === 'd') {
                             isDetractor = 1;
-                        } else if (targetNps.includes('passiv')) {
+                        } else if (targetNps.includes('passiv') || targetNps === 'e' || targetNps === 's') {
                             isPassive = 1;
                         } else {
                             let numScore = Number(targetNps.replace(',', '.'));
@@ -548,20 +553,22 @@
                         }
                     }
 
+                    let unitTypeLower = unitType.toLowerCase();
                     let ctpGroup = "Call Center";
                     let isGraPARI = false;
-                    if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
+                    if (unitTypeLower.includes('grapari') || unitTypeLower.includes('gerai') || unitTypeLower.includes('lite') || unitTypeLower.includes('plasa')) {
                         ctpGroup = "GraPARI";
                         isGraPARI = true;
-                    } else if (unitType.includes('webservice') || unitType.includes('web') || unitType.includes('socmed') || unitType.includes('digital')) {
+                    } else if (unitTypeLower.includes('webservice') || unitTypeLower.includes('web') || unitTypeLower.includes('socmed') || unitTypeLower.includes('digital')) {
                         ctpGroup = "Webservice";
-                    } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                    } else if (unitTypeLower.includes('call') || unitTypeLower.includes('cc') || unitTypeLower.includes('ivr')) {
                         ctpGroup = "Call Center";
                     } else {
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
+                    let column2Lower = column2Val.toLowerCase();
+                    let isCS = column2Lower.includes('petugas layanan') || column2Lower.includes('service officer') || column2Lower.includes('cs');
 
                     return {
                         IsValid: hasMsisdn,
