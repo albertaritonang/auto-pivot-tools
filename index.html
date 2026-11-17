@@ -61,7 +61,7 @@
                         <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
                     </div>
 
-                    <!-- Upload Button (Mendukung .xlsx, .xls, .csv, .txt) -->
+                    <!-- Upload Button -->
                     <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
                         <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span id="uploadBtnText">Upload File IndiHome</span>
@@ -337,7 +337,7 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file, harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (38MB+), harap tunggu...";
 
             let fileName = file.name.toLowerCase();
 
@@ -566,24 +566,28 @@
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
+                // DIUTAMAKAN SESUAI HEADER MOBILE BARU:
+                // msisdn, tnps type, unit_type, Column2, survey_date, category/sub_category, dsb.
                 processedData = globalRawData.map(row => {
-                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_type2') || '';
+                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_name') || getCol(row, 'channel') || '';
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    let tNpsVal = getCol(row, 'tnps') || getCol(row, 'nps') || '';
-                    let column2Val = getCol(row, 'column2') || '';
-                    let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
-                    let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
+                    
+                    // Membaca kolom tNPS type / category / q1_ans sesuai header Mobile kamu
+                    let tNpsVal = getCol(row, 'tnps type') || getCol(row, 'tnps') || getCol(row, 'category') || getCol(row, 'q1_ans') || '';
+                    let column2Val = getCol(row, 'Column2') || getCol(row, 'sub_category') || '';
+                    let bulanVal = getCol(row, 'survey_date') || getCol(row, 'event_date') || getCol(row, 'bulan') || 'General Period';
+                    let bisnisModelVal = getCol(row, 'category') || getCol(row, 'sub_category') || getCol(row, 'journey') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
                     let targetNps = tNpsVal.toLowerCase();
 
                     if (hasMsisdn && targetNps !== '') {
-                        if (targetNps.includes('promot')) {
+                        if (targetNps.includes('promot') || targetNps === 'p') {
                             isPromotor = 1;
-                        } else if (targetNps.includes('detract')) {
+                        } else if (targetNps.includes('detract') || targetNps === 'd') {
                             isDetractor = 1;
-                        } else if (targetNps.includes('passiv')) {
+                        } else if (targetNps.includes('passiv') || targetNps === 'e' || targetNps === 's') {
                             isPassive = 1;
                         } else {
                             let numScore = Number(targetNps.replace(',', '.'));
@@ -609,7 +613,8 @@
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    let isCS = column2Val.toLowerCase().includes('petugas layanan') || column2Val.toLowerCase().includes('service officer');
+                    let column2Lower = column2Val.toLowerCase();
+                    let isCS = column2Lower.includes('petugas layanan') || column2Lower.includes('service officer') || column2Lower.includes('cs');
 
                     return {
                         IsValid: hasMsisdn,
