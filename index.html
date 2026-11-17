@@ -128,4 +128,228 @@
                 sheetNames.forEach(name => {
                     const option = document.createElement('option');
                     option.value = name;
-                    option
+                    option.textContent = name;
+                    sheetSelector.appendChild(option);
+                });
+
+                if (sheetNames.length > 1) {
+                    sheetContainer.classList.remove('hidden');
+                } else {
+                    sheetContainer.classList.add('hidden');
+                }
+
+                processWorkbookData(sheetNames[0]);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('sheetSelector').addEventListener('change', function(e) {
+            processWorkbookData(e.target.value);
+        });
+
+        document.getElementById('timeSelector').addEventListener('change', function() {
+            if (globalProcessedData.length > 0) {
+                renderDashboard();
+            }
+        });
+
+        function getValFromRow(row, possibleKeys) {
+            let keys = Object.keys(row);
+            for (let pk of possibleKeys) {
+                let foundKey = keys.find(k => k.trim().toLowerCase() === pk.toLowerCase());
+                if (foundKey !== undefined && row[foundKey] !== undefined) {
+                    return row[foundKey];
+                }
+            }
+            return '';
+        }
+
+        function processWorkbookData(sheetName) {
+            const worksheet = currentWorkbook.Sheets[sheetName];
+            let rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+            if (rawData.length === 0) {
+                alert("Sheet kosong atau format tidak dikenali.");
+                return;
+            }
+
+            globalProcessedData = rawData.map(row => {
+                let dateVal = getValFromRow(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
+                let unitType = String(getValFromRow(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source'])).toLowerCase();
+                let reasonDesc = String(getValFromRow(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan'])).trim();
+                let npsCategory = String(getValFromRow(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS'])).toLowerCase();
+
+                // Format Week & Month
+                let weekStr = 'Week 1';
+                let monthStr = 'Bulan Ini';
+                if (dateVal) {
+                    let d = new Date(dateVal);
+                    if (!isNaN(d.getTime())) {
+                        let year = d.getFullYear();
+                        let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+                        monthStr = `${monthNames[d.getMonth()]} ${year}`;
+                        
+                        let firstDay = new Date(d.getFullYear(), 0, 1);
+                        let pastDays = (d - firstDay) / 86400000;
+                        let weekNum = Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
+                        weekStr = `Week ${weekNum} (${year})`;
+                    }
+                }
+
+                // CTP Mapping (Call Center, GraPARI, Socmed)
+                let ctpGroup = "Call Center";
+                if (unitType.includes('grapari') || unitType.includes('plasa') || unitType.includes('dyandra')) {
+                    ctpGroup = "GraPARI";
+                } else if (unitType.includes('socmed') || unitType.includes('social') || unitType.includes('medsos') || unitType.includes('saltik')) {
+                    ctpGroup = "Socmed";
+                } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                    ctpGroup = "Call Center";
+                }
+
+                // CS People Reason Filtering
+                let targetReasons = [
+                    "CUSTOMER SERVICE",
+                    "Customer service cukup responsif",
+                    "Customer service kurang responsif",
+                    "Customer service responsif",
+                    "Customer service tidak responsif",
+                    "PELAYANAN PELANGGAN"
+                ];
+                let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
+
+                let isPromoter = npsCategory.includes('promot') ? 1 : 0;
+                let isDetractor = npsCategory.includes('detract') ? 1 : 0;
+
+                return {
+                    Parsed_Week: weekStr,
+                    Parsed_Month: monthStr,
+                    Mapped_CTP: ctpGroup,
+                    Is_CS: isCS,
+                    Promoter: isPromoter,
+                    Detractor: isDetractor,
+                    Total: 1
+                };
+            });
+
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            document.getElementById('rowCount').textContent = `${globalProcessedData.length} baris data`;
+
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            let timeDimension = document.getElementById('timeSelector').value; // Parsed_Month atau Parsed_Week
+
+            // Agregasi Data Utama tNPS
+            let groupData = {};
+            let periods = new Set();
+            let ctpList = ["Call Center", "GraPARI", "Socmed"];
+
+            globalProcessedData.forEach(item => {
+                let p = item[timeDimension];
+                let ctp = item.Mapped_CTP;
+                periods.add(p);
+
+                let key = `${p}_${ctp}`;
+                if (!groupData[key]) {
+                    groupData[key] = { promoter: 0, detractor: 0, total: 0, cs_promoter: 0, cs_detractor: 0, cs_total: 0 };
+                }
+
+                groupData[key].promoter += item.Promoter;
+                groupData[key].detractor += item.Detractor;
+                groupData[key].total += item.Total;
+
+                if (item.Is_CS) {
+                    groupData[key].cs_promoter += item.Promoter;
+                    groupData[key].cs_detractor += item.Detractor;
+                    groupData[key].cs_total += item.Total;
+                }
+            });
+
+            let sortedPeriods = Array.from(periods).sort();
+
+            // Siapkan Dataset Grafik Utama
+            let chartDatasets = ctpList.map((ctp, index) => {
+                let colors = ['#dc2626', '#2563eb', '#16a34a'];
+                let dataValues = sortedPeriods.map(p => {
+                    let k = `${p}_${ctp}`;
+                    let d = groupData[k];
+                    if (!d || d.total === 0) return 0;
+                    let nps = ((d.promoter - d.detractor) / d.total) * 100;
+                    return parseFloat(nps.toFixed(2));
+                });
+                return {
+                    label: ctp,
+                    data: dataValues,
+                    borderColor: colors[index],
+                    backgroundColor: colors[index],
+                    tension: 0.2
+                };
+            });
+
+            // Siapkan Dataset Grafik CS People
+            let csDatasets = ctpList.map((ctp, index) => {
+                let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
+                let dataValues = sortedPeriods.map(p => {
+                    let k = `${p}_${ctp}`;
+                    let d = groupData[k];
+                    if (!d || d.cs_total === 0) return 0;
+                    let nps = ((d.cs_promoter - d.cs_detractor) / d.cs_total) * 100;
+                    return parseFloat(nps.toFixed(2));
+                });
+                return {
+                    label: `${ctp} (CS People)`,
+                    data: dataValues,
+                    borderColor: colors[index],
+                    backgroundColor: colors[index],
+                    tension: 0.2
+                };
+            });
+
+            // Render Grafik Utama
+            if (npsChartInstance) npsChartInstance.destroy();
+            let ctx = document.getElementById('npsChart').getContext('2d');
+            npsChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: { labels: sortedPeriods, datasets: chartDatasets },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+            });
+
+            // Render Grafik CS
+            if (csChartInstance) csChartInstance.destroy();
+            let ctxCs = document.getElementById('csChart').getContext('2d');
+            csChartInstance = new Chart(ctxCs, {
+                type: 'line',
+                data: { labels: sortedPeriods, datasets: csDatasets },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+            });
+
+            // Render Tabel Ringkasan
+            let tbody = document.querySelector('#summaryTable tbody');
+            tbody.innerHTML = '';
+            sortedPeriods.forEach(p => {
+                ctpList.forEach(ctp => {
+                    let k = `${p}_${ctp}`;
+                    let d = groupData[k] || { promoter: 0, detractor: 0, total: 0 };
+                    let npsVal = d.total > 0 ? (((d.promoter - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                    
+                    let tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.innerHTML = `
+                        <td class="p-3 font-medium text-slate-800">${p}</td>
+                        <td class="p-3">${ctp}</td>
+                        <td class="p-3 text-center">${d.promoter}</td>
+                        <td class="p-3 text-center">${d.detractor}</td>
+                        <td class="p-3 text-center">${d.total}</td>
+                        <td class="p-3 text-right font-bold text-red-600">${npsVal}%</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
