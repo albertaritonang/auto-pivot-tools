@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Dashboard</title>
+    <title>IndiHome tNPS Analytics Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Multi-source (IVR, Dyandra, Saltik) • Auto tNPS % Calculator & CTP Breakdown</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula tNPS: (Promotor - Detractor) / Grand Total • Auto-Detect Value CTP & Reason</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -85,7 +85,7 @@
 
             <!-- Tabel Ringkasan Data tNPS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi tNPS (%)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi tNPS (%) & Komponen</h2>
                 <table id="summaryTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -154,12 +154,20 @@
             }
         });
 
-        function getValFromRow(row, possibleKeys) {
+        // Fungsi pintar untuk mendeteksi nilai dari baris berdasarkan kumpulan kemungkinan nama kolom
+        function extractValue(row, possibleKeys) {
             let keys = Object.keys(row);
             for (let pk of possibleKeys) {
                 let foundKey = keys.find(k => k.trim().toLowerCase() === pk.toLowerCase());
                 if (foundKey !== undefined && row[foundKey] !== undefined) {
-                    return row[foundKey];
+                    return String(row[foundKey]).trim();
+                }
+            }
+            // Jika tidak ketemu berdasarkan nama kolom, scan isi teks baris yang mengandung keyword terkait
+            for (let k of keys) {
+                let val = String(row[k]).trim().toLowerCase();
+                for (let pk of possibleKeys) {
+                    if (val.includes(pk.toLowerCase())) return val;
                 }
             }
             return '';
@@ -175,10 +183,20 @@
             }
 
             globalProcessedData = rawData.map(row => {
-                let dateVal = getValFromRow(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
-                let unitType = String(getValFromRow(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source'])).toLowerCase();
-                let reasonDesc = String(getValFromRow(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan'])).trim();
-                let npsCategory = String(getValFromRow(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS'])).toLowerCase();
+                // Ambil teks dari seluruh kolom untuk mendeteksi value secara fleksibel
+                let allRowText = Object.values(row).join(" ").toLowerCase();
+
+                let dateVal = extractValue(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
+                let unitType = extractValue(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source', 'ts_call']);
+                let reasonDesc = extractValue(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan']);
+                let npsCategory = extractValue(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS', 'Column Labels']);
+
+                // Jika npsCategory kosong dari kolom spesifik, cek dari gabungan teks baris
+                if (!npsCategory) {
+                    if (allRowText.includes('promot')) npsCategory = 'promotor';
+                    else if (allRowText.includes('detract')) npsCategory = 'detractor';
+                    else if (allRowText.includes('passiv')) npsCategory = 'passive';
+                }
 
                 // Format Week & Month
                 let weekStr = 'Week 1';
@@ -197,13 +215,14 @@
                     }
                 }
 
-                // CTP Mapping (Call Center, GraPARI, Socmed)
+                // CTP Mapping Fleksibel (Call Center, GraPARI, Socmed)
                 let ctpGroup = "Call Center";
-                if (unitType.includes('grapari') || unitType.includes('plasa') || unitType.includes('dyandra')) {
+                let combinedUnit = (unitType + " " + allRowText).toLowerCase();
+                if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa') || combinedUnit.includes('dyandra')) {
                     ctpGroup = "GraPARI";
-                } else if (unitType.includes('socmed') || unitType.includes('social') || unitType.includes('medsos') || unitType.includes('saltik')) {
+                } else if (combinedUnit.includes('socmed') || combinedUnit.includes('social') || combinedUnit.includes('medsos') || combinedUnit.includes('saltik')) {
                     ctpGroup = "Socmed";
-                } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                } else {
                     ctpGroup = "Call Center";
                 }
 
@@ -216,9 +235,10 @@
                     "Customer service tidak responsif",
                     "PELAYANAN PELANGGAN"
                 ];
-                let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
+                let isCS = targetReasons.some(r => reasonDesc.toLowerCase().includes(r.toLowerCase())) || 
+                           targetReasons.some(r => allRowText.includes(r.toLowerCase()));
 
-                let isPromoter = npsCategory.includes('promot') ? 1 : 0;
+                let isPromotor = npsCategory.includes('promot') ? 1 : 0;
                 let isDetractor = npsCategory.includes('detract') ? 1 : 0;
 
                 return {
@@ -226,7 +246,7 @@
                     Parsed_Month: monthStr,
                     Mapped_CTP: ctpGroup,
                     Is_CS: isCS,
-                    Promoter: isPromoter,
+                    Promoter: isPromotor,
                     Detractor: isDetractor,
                     Total: 1
                 };
@@ -241,9 +261,7 @@
         }
 
         function renderDashboard() {
-            let timeDimension = document.getElementById('timeSelector').value; // Parsed_Month atau Parsed_Week
-
-            // Agregasi Data Utama tNPS
+            let timeDimension = document.getElementById('timeSelector').value;
             let groupData = {};
             let periods = new Set();
             let ctpList = ["Call Center", "GraPARI", "Socmed"];
@@ -271,7 +289,6 @@
 
             let sortedPeriods = Array.from(periods).sort();
 
-            // Siapkan Dataset Grafik Utama
             let chartDatasets = ctpList.map((ctp, index) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
                 let dataValues = sortedPeriods.map(p => {
@@ -290,7 +307,6 @@
                 };
             });
 
-            // Siapkan Dataset Grafik CS People
             let csDatasets = ctpList.map((ctp, index) => {
                 let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
                 let dataValues = sortedPeriods.map(p => {
@@ -309,7 +325,6 @@
                 };
             });
 
-            // Render Grafik Utama
             if (npsChartInstance) npsChartInstance.destroy();
             let ctx = document.getElementById('npsChart').getContext('2d');
             npsChartInstance = new Chart(ctx, {
@@ -318,7 +333,6 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
-            // Render Grafik CS
             if (csChartInstance) csChartInstance.destroy();
             let ctxCs = document.getElementById('csChart').getContext('2d');
             csChartInstance = new Chart(ctxCs, {
@@ -327,7 +341,6 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
-            // Render Tabel Ringkasan
             let tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
             sortedPeriods.forEach(p => {
