@@ -61,7 +61,7 @@
                         <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
                     </div>
 
-                    <!-- Upload Button -->
+                    <!-- Upload Button (Mendukung .xlsx, .xls, .csv, .txt) -->
                     <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
                         <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                         <span id="uploadBtnText">Upload File IndiHome</span>
@@ -337,34 +337,35 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar, harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file, harap tunggu...";
 
             let fileName = file.name.toLowerCase();
 
-            setTimeout(() => {
-                if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
-                    let reader = new FileReader();
-                    reader.onload = function(e) {
-                        try {
-                            let text = e.target.result;
-                            globalRawData = parseTextToJSON(text);
+            if (fileName.endsWith('.txt') || fileName.endsWith('.csv')) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        let text = e.target.result;
+                        // Parse teks sederhana (menggunakan pemisah koma, tab, atau titik koma)
+                        globalRawData = parseTextToJSON(text);
 
-                            document.getElementById('fileInfo').classList.remove('hidden');
-                            document.getElementById('placeholder').classList.add('hidden');
-                            document.getElementById('dashboardContent').classList.remove('hidden');
-                            document.getElementById('sheetSelectorContainer').classList.add('hidden');
+                        document.getElementById('fileInfo').classList.remove('hidden');
+                        document.getElementById('placeholder').classList.add('hidden');
+                        document.getElementById('dashboardContent').classList.remove('hidden');
+                        document.getElementById('sheetSelectorContainer').classList.add('hidden');
 
-                            buildWeekOptions();
-                            processAndRender();
-                        } catch (err) {
-                            alert("Gagal membaca file teks/CSV: " + err.message);
-                            document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
-                        }
-                    };
-                    reader.readAsText(file);
-                } else {
-                    let reader = new FileReader();
-                    reader.onload = function(e) {
+                        buildWeekOptions();
+                        processAndRender();
+                    } catch (err) {
+                        alert("Gagal membaca file teks/CSV: " + err.message);
+                        document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    setTimeout(() => {
                         try {
                             let data = new Uint8Array(e.target.result);
                             currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
@@ -392,16 +393,18 @@
                             alert("Gagal membaca file Excel: " + err.message);
                             document.getElementById('placeholderTitle').textContent = "Gagal memuat file.";
                         }
-                    };
-                    reader.readAsArrayBuffer(file);
-                }
-            }, 50);
+                    }, 50);
+                };
+                reader.readAsArrayBuffer(file);
+            }
         });
 
+        // Parser pembacaan file .txt / .csv mentah
         function parseTextToJSON(text) {
             let lines = text.split(/\r\n|\n/);
             if (lines.length === 0) return [];
             
+            // Deteksi delimiter (tab atau koma atau titik koma)
             let firstLine = lines[0];
             let delimiter = ',';
             if (firstLine.includes('\t')) delimiter = '\t';
@@ -455,9 +458,6 @@
             processAndRender();
         }
 
-        // ==========================================
-        // LOGIKA INDIHOME DIKEMBALIKAN 100% SEPERTI SEMULA
-        // ==========================================
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
@@ -569,27 +569,24 @@
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
 
-                // Mapping khusus untuk file Mobile berdasarkan header kamu:
-                // id_trx, msisdn, survey_date, category, sub_category, detail, journey, service, area, new regional, unit_name, unit_type, channel, Column1, Column2, tnps type, dll.
                 processedData = globalRawData.map(row => {
-                    let unitType = getCol(row, 'unit_type') || getCol(row, 'unit_name') || getCol(row, 'channel') || '';
+                    let unitType = getCol(row, 'unit_type').toLowerCase();
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    
-                    let tNpsVal = getCol(row, 'tnps type') || getCol(row, 'tnps') || getCol(row, 'category') || getCol(row, 'q1_ans') || '';
-                    let column2Val = getCol(row, 'Column2') || getCol(row, 'sub_category') || '';
-                    let bulanVal = getCol(row, 'survey_date') || getCol(row, 'event_date') || getCol(row, 'bulan') || 'General Period';
-                    let bisnisModelVal = getCol(row, 'category') || getCol(row, 'sub_category') || getCol(row, 'journey') || 'Unspecified';
+                    let tNpsVal = getCol(row, 'tnps').toLowerCase();
+                    let column2Val = getCol(row, 'column2').toLowerCase();
+                    let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
+                    let bisnisModelVal = getCol(row, 'bisnis model') || getCol(row, 'momo/tomo') || getCol(row, 'momo') || getCol(row, 'tomo') || 'Unspecified';
 
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                    let targetNps = tNpsVal.toLowerCase();
+                    let targetNps = tNpsVal;
 
                     if (hasMsisdn && targetNps !== '') {
-                        if (targetNps.includes('promot') || targetNps === 'p') {
+                        if (targetNps.includes('promot')) {
                             isPromotor = 1;
-                        } else if (targetNps.includes('detract') || targetNps === 'd') {
+                        } else if (targetNps.includes('detract')) {
                             isDetractor = 1;
-                        } else if (targetNps.includes('passiv') || targetNps === 'e' || targetNps === 's') {
+                        } else if (targetNps.includes('passiv')) {
                             isPassive = 1;
                         } else {
                             let numScore = Number(targetNps.replace(',', '.'));
@@ -601,22 +598,20 @@
                         }
                     }
 
-                    let unitTypeLower = unitType.toLowerCase();
                     let ctpGroup = "Call Center";
                     let isGraPARI = false;
-                    if (unitTypeLower.includes('grapari') || unitTypeLower.includes('gerai') || unitTypeLower.includes('lite') || unitTypeLower.includes('plasa')) {
+                    if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
                         ctpGroup = "GraPARI";
                         isGraPARI = true;
-                    } else if (unitTypeLower.includes('webservice') || unitTypeLower.includes('web') || unitTypeLower.includes('socmed') || unitTypeLower.includes('digital')) {
+                    } else if (unitType.includes('webservice') || unitType.includes('web') || unitType.includes('socmed') || unitType.includes('digital')) {
                         ctpGroup = "Webservice";
-                    } else if (unitTypeLower.includes('call') || unitTypeLower.includes('cc') || unitTypeLower.includes('ivr')) {
+                    } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
                         ctpGroup = "Call Center";
                     } else {
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    let column2Lower = column2Val.toLowerCase();
-                    let isCS = column2Lower.includes('petugas layanan') || column2Lower.includes('service officer') || column2Lower.includes('cs');
+                    let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
 
                     return {
                         IsValid: hasMsisdn,
@@ -901,6 +896,7 @@
                 });
             });
 
+            uniqueMomoCategories.getElementById = function(){}; // dummy safety
             uniqueMomoCategories.forEach(mtCat => {
                 let d = momoGrandTotals[mtCat];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
