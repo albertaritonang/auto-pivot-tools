@@ -288,6 +288,15 @@
                 `Master Bisnis Model: ${Object.keys(bisnisModelMaster).length} unit` + (extraText ? ` • ${extraText}` : '');
         }
 
+        // [MOBILE] unit_type yang dihitung per CTP
+        const MOBILE_CTP_MAP = {
+            callcenter: "CC",
+            gerai: "GraPARI",
+            grapari: "GraPARI",
+            grapari_lite: "GraPARI",
+            webservice: "Web service / Ecare"
+        };
+
         // [MOBILE] Pencarian kolom yang toleran (abaikan spasi/underscore/huruf besar)
         function normKey(s) { return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, ''); }
         function getColAny(row, ...names) {
@@ -408,7 +417,7 @@
                 uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/25 active:scale-95 transition-all";
                 uploadText.textContent = "Upload File Mobile";
                 mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total MSISDN • Call Center, GraPARI, Webservice & People";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Count id_trx • CC, GraPARI, Web service / Ecare & People";
                 placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
                 weekFilterContainer.style.display = "none";
             }
@@ -660,13 +669,30 @@
                 if (learned > 0) saveBisnisModelMaster();
             }
 
-            let stats = { noCategory: 0, fromMaster: 0, unmatchedUnits: new Set() };
+            let stats = { noCategory: 0, fromMaster: 0, unmatchedUnits: new Set(), duplicateTrx: 0, emptyTrx: 0, excluded: {} };
+
+            // Basis hitung Mobile: COUNT id_trx (sama seperti pivot Excel "Count of id_trx":
+            // setiap baris dengan id_trx terisi dihitung 1). Duplikat hanya dilaporkan, tidak dibuang.
+            // Jika file tidak punya kolom id_trx, fallback ke msisdn.
+            let hasIdTrxCol = hasColAny(sample, 'id_trx');
+            let seenTrx = new Set();
 
             let rows = rawData.map(row => {
                 let unitType = getColAny(row, 'unit_type').toLowerCase();
                 let unitName = getColAny(row, 'unit_name');
                 let msisdn = getColAny(row, 'msisdn').replace(/\s+/g, '');
-                let hasMsisdn = msisdn !== '';
+                let idTrx = getColAny(row, 'id_trx');
+                let isValidRow;
+                if (hasIdTrxCol) {
+                    if (idTrx === '') { isValidRow = false; stats.emptyTrx++; }
+                    else {
+                        isValidRow = true;
+                        if (seenTrx.has(idTrx)) stats.duplicateTrx++;
+                        else seenTrx.add(idTrx);
+                    }
+                } else {
+                    isValidRow = msisdn !== '';
+                }
                 let tNpsVal = getColAny(row, 'tnps', 'tnps type', 'nps', 'tnps category').toLowerCase();
                 let column2Val = getColAny(row, 'column2').toLowerCase();
                 let bulanVal = deriveMobilePeriod(row);
@@ -681,7 +707,7 @@
                 let isPromotor = 0, isDetractor = 0, isPassive = 0;
                 let targetNps = tNpsVal;
 
-                if (hasMsisdn && targetNps !== '') {
+                if (isValidRow && targetNps !== '') {
                     if (targetNps.includes('promot')) {
                         isPromotor = 1;
                     } else if (targetNps.includes('detract')) {
@@ -697,26 +723,29 @@
                         }
                     }
                 }
-                if (hasMsisdn && !isPromotor && !isDetractor && !isPassive) stats.noCategory++;
+                
 
-                let ctpGroup = "Call Center";
-                let isGraPARI = false;
-                if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
-                    ctpGroup = "GraPARI";
-                    isGraPARI = true;
-                    if (bisnisModelVal === 'Unspecified' && unitName) stats.unmatchedUnits.add(unitName);
-                } else if (unitType.includes('webservice') || unitType.includes('web') || unitType.includes('socmed') || unitType.includes('digital')) {
-                    ctpGroup = "Webservice";
-                } else if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
-                    ctpGroup = "Call Center";
-                } else {
-                    ctpGroup = unitType ? unitType : "Call Center";
+                // CTP Mobile: mapping persis per unit_type (sesuai laporan OKT)
+                //   callcenter                     → CC
+                //   gerai, grapari, grapari_lite   → GraPARI
+                //   webservice                     → Web service / Ecare
+                //   lainnya (MyGrapari, kosong, qao_kp, ...) → tidak dihitung
+                let unitKey = unitType.trim().replace(/[\s\-]+/g, '_');
+                let ctpGroup = MOBILE_CTP_MAP[unitKey] || null;
+                let isGraPARI = ctpGroup === "GraPARI";
+                if (isValidRow && !ctpGroup) {
+                    let label = unitKey || '(unit_type kosong)';
+                    stats.excluded[label] = (stats.excluded[label] || 0) + 1;
+                    isValidRow = false;
                 }
+                if (isGraPARI && isValidRow && bisnisModelVal === 'Unspecified' && unitName) stats.unmatchedUnits.add(unitName);
 
                 let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
 
+                if (isValidRow && !isPromotor && !isDetractor && !isPassive) stats.noCategory++;
+
                 return {
-                    IsValid: hasMsisdn,
+                    IsValid: isValidRow,
                     Period: bulanVal,
                     Mapped_CTP: ctpGroup,
                     Is_GraPARI: isGraPARI,
@@ -725,11 +754,18 @@
                     Promoter: isPromotor,
                     Detractor: isDetractor,
                     Passive: isPassive,
-                    Total: hasMsisdn ? 1 : 0
+                    Total: isValidRow ? 1 : 0
                 };
             }).filter(item => item.IsValid);
 
-            return { rows, stats, hasBisnisModelCol, learned };
+            return { rows, stats, hasBisnisModelCol, learned, hasIdTrxCol };
+        }
+
+        // Label kolom total (kolom ke-6) di ketiga tabel
+        function setTotalHeaders(mainLabel, csLabel) {
+            document.querySelector('#summaryTable thead th:nth-child(6)').textContent = mainLabel;
+            document.querySelector('#csTable thead th:nth-child(6)').textContent = csLabel;
+            document.querySelector('#momoTable thead th:nth-child(6)').textContent = mainLabel;
         }
 
         function processAndRender() {
@@ -746,6 +782,7 @@
                 document.getElementById('thPeriod3').textContent = periodHeader;
                 document.getElementById('thCtp1').textContent = "unit_type2 (CTP)";
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
+                setTotalHeaders("Grand Total", "Grand Total (CS)");
 
                 let baseRows = globalRawData.map(mapIndihomeRow).filter(r => r.IsValid);
 
@@ -780,20 +817,30 @@
                 document.getElementById('thPeriod3').textContent = "Periode (Bulan)";
                 document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
+                setTotalHeaders("Count id_trx", "Count id_trx (CS)");
 
                 let result = mapMobileRows(globalRawData);
                 processedData = result.rows;
 
                 if (processedData.length === 0) {
-                    alert("Mode Mobile: 0 baris valid (kolom msisdn tidak ditemukan / kosong).\n\nKolom terdeteksi:\n" +
+                    alert("Mode Mobile: 0 baris valid (kolom id_trx / msisdn tidak ditemukan atau kosong).\n\nKolom terdeteksi:\n" +
                           Object.keys(globalRawData[0] || {}).join(', ') +
-                          "\n\nKolom wajib: msisdn, tNPS / tnps type, unit_type");
+                          "\n\nKolom wajib: id_trx (atau msisdn), tNPS / tnps type, unit_type");
                 } else if (result.stats.noCategory === processedData.length) {
                     alert("Mode Mobile: kolom tNPS tidak ditemukan atau isinya tidak dikenali.\n" +
                           "Pastikan ada kolom 'tNPS' atau 'tnps type' berisi Promotor / Passiver / Detractor.");
                 }
 
-                rowInfoText = `${processedData.length} baris data aktif`;
+                rowInfoText = result.hasIdTrxCol
+                    ? `Count id_trx: ${processedData.length}`
+                      + (result.stats.duplicateTrx ? ` • ⚠ ${result.stats.duplicateTrx} id_trx dobel` : '')
+                      + (result.stats.emptyTrx ? ` • ${result.stats.emptyTrx} id_trx kosong` : '')
+                    : `${processedData.length} baris data aktif (basis msisdn)`;
+                let excludedEntries = Object.entries(result.stats.excluded);
+                if (excludedEntries.length) {
+                    let totalEx = excludedEntries.reduce((a, [, n]) => a + n, 0);
+                    rowInfoText += ` • ${totalEx} tidak dihitung (` + excludedEntries.map(([k, n]) => `${k}: ${n}`).join(', ') + `)`;
+                }
 
                 let masterNote = '';
                 if (result.hasBisnisModelCol) {
@@ -819,7 +866,7 @@
             let momoGroup = {};
             let periods = new Set();
             let momoPeriods = new Set();
-            let ctpList = currentMode === 'indihome' ? ["Call Center", "GraPARI", "Socmed"] : ["Call Center", "GraPARI", "Webservice"];
+            let ctpList = currentMode === 'indihome' ? ["Call Center", "GraPARI", "Socmed"] : ["CC", "GraPARI", "Web service / Ecare"];
 
             data.forEach(item => {
                 let p = item.Period;
@@ -992,6 +1039,26 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            if (currentMode === 'mobile') {
+                let t = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                ctpList.forEach(ctp => {
+                    ['promotor', 'detractor', 'passive', 'total'].forEach(f => t[f] += ctpGrandTotals[ctp][f]);
+                });
+                let npsTotal = t.total > 0 ? (((t.promotor - t.detractor) / t.total) * 100).toFixed(2) : "0.00";
+                let tr = document.createElement('tr');
+                tr.className = "bg-blue-50 font-extrabold text-slate-900 border-t-2 border-blue-200";
+                tr.innerHTML = `
+                    <td class="p-3.5">Total Mobile</td>
+                    <td class="p-3.5">Semua CTP</td>
+                    <td class="p-3.5 text-center">${t.detractor}</td>
+                    <td class="p-3.5 text-center">${t.passive}</td>
+                    <td class="p-3.5 text-center">${t.promotor}</td>
+                    <td class="p-3.5 text-center">${t.total}</td>
+                    <td class="p-3.5 text-right text-blue-700">${npsTotal}%</td>
+                `;
+                tbody.appendChild(tr);
+            }
 
             // 2. Render Tabel People CS + Grand Total
             let csTbody = document.querySelector('#csTable tbody');
