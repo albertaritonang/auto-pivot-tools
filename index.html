@@ -178,6 +178,59 @@
                 </div>
             </div>
 
+            <!-- [INDIHOME] Rincian tNPS per Source (IVR, Saltik, Dyandra, dst.) -->
+            <div id="sourceSection" class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-sky-50 text-sky-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h6"/></svg></span>
+                        Rincian tNPS per Source
+                    </h2>
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label for="sourceColSelect" class="text-xs font-bold text-slate-600">Source dari kolom:</label>
+                        <select id="sourceColSelect" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer"></select>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Semua baris di file dihitung (sesuai filter minggu), termasuk unit_type2 di luar Call Center / GraPARI / Socmed seperti DigiPos dan Others.</p>
+                <div class="relative w-full mb-5" id="sourceChartWrap" style="height: 320px;"><canvas id="sourceChart"></canvas></div>
+
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan per Source</h3>
+                <div class="w-full overflow-x-auto rounded-xl border border-slate-100 mb-6">
+                    <table id="sourceSummaryTable" class="min-w-[700px] w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+                                <th id="thPeriodSrcSum" class="p-3.5">Periode (Week)</th>
+                                <th id="thSourceNameSum" class="p-3.5">Source</th>
+                                <th class="p-3.5 text-center">Detractor</th>
+                                <th class="p-3.5 text-center">Passive</th>
+                                <th class="p-3.5 text-center">Promotor</th>
+                                <th class="p-3.5 text-center">Grand Total</th>
+                                <th class="p-3.5 text-right">tNPS (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-sm font-bold text-slate-800 mb-2">Rincian Source per CTP (unit_type2)</h3>
+                <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
+                    <table id="sourceTable" class="min-w-[860px] w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+                                <th id="thPeriodSrc" class="p-3.5">Periode (Week)</th>
+                                <th class="p-3.5">CTP</th>
+                                <th id="thSourceName" class="p-3.5">Source</th>
+                                <th class="p-3.5 text-center">Detractor</th>
+                                <th class="p-3.5 text-center">Passive</th>
+                                <th class="p-3.5 text-center">Promotor</th>
+                                <th class="p-3.5 text-center">Grand Total</th>
+                                <th class="p-3.5 text-right">tNPS (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Tabel People CS + Grand Total -->
             <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
                 <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
@@ -495,6 +548,7 @@
             document.getElementById('dashboardContent').classList.remove('hidden');
 
             buildWeekOptions();
+            buildSourceColOptions();
             processAndRender();
         }
 
@@ -784,7 +838,11 @@
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
                 setTotalHeaders("Grand Total", "Grand Total (CS)");
 
-                let baseRows = globalRawData.map(mapIndihomeRow).filter(r => r.IsValid);
+                // Source detail ditempel di luar mapIndihomeRow (logika hitung IndiHome tidak berubah)
+                let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
+                let baseRows = globalRawData
+                    .map(row => ({ ...mapIndihomeRow(row), Source: getCol(row, sourceCol) || '(kosong)' }))
+                    .filter(r => r.IsValid);
 
                 if (!isRollingView) {
                     processedData = baseRows.map(r => ({ ...r, Period: `W${r.WeekNum}` }));
@@ -858,6 +916,207 @@
             if (currentMode === 'indihome') updateMasterInfo();
             document.getElementById('rowCount').textContent = rowInfoText;
             renderDashboard(processedData);
+
+            let sourceSection = document.getElementById('sourceSection');
+            if (currentMode === 'indihome') {
+                sourceSection.classList.remove('hidden');
+                renderSourceDetail(processedData);
+            } else {
+                sourceSection.classList.add('hidden');
+            }
+        }
+
+        // =====================================================================
+        // [INDIHOME] Rincian per Source
+        // =====================================================================
+        let sourceChartInstance = null;
+
+        function buildSourceColOptions() {
+            let select = document.getElementById('sourceColSelect');
+            let previous = select.value;
+            let cols = Object.keys(globalRawData[0] || {}).map(c => c.trim()).filter(c => c !== '');
+            select.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
+            let preferred = [previous, 'source', 'sumber', 'unit_type2', 'unit_type', 'unit_name']
+                .find(c => c && cols.some(x => x.toLowerCase() === c.toLowerCase()));
+            if (preferred) select.value = cols.find(x => x.toLowerCase() === preferred.toLowerCase());
+        }
+
+        document.getElementById('sourceColSelect').addEventListener('change', function() {
+            if (globalRawData.length > 0) processAndRender();
+        });
+
+        function npsOf(d) {
+            return d.total > 0 ? ((d.promotor - d.detractor) / d.total) * 100 : 0;
+        }
+
+        function renderSourceDetail(data) {
+            const SEP = '|||';
+            let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
+            document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
+            document.getElementById('thPeriodSrc').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
+
+            let byPeriod = {};   // period|||ctp|||source
+            let overall = {};    // ctp|||source (akumulasi semua periode yang tampil)
+            let periods = new Set();
+            const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
+
+            data.forEach(item => {
+                let k = [item.Period, item.Mapped_CTP, item.Source].join(SEP);
+                let ok = [item.Mapped_CTP, item.Source].join(SEP);
+                periods.add(item.Period);
+                byPeriod[k] = byPeriod[k] || empty();
+                overall[ok] = overall[ok] || empty();
+                [byPeriod[k], overall[ok]].forEach(d => {
+                    d.promotor += item.Promoter;
+                    d.detractor += item.Detractor;
+                    d.passive += item.Passive;
+                    d.total += item.Total;
+                });
+            });
+
+            // Urutan CTP: Call Center, GraPARI, Socmed, lalu lainnya; source urut volume terbesar
+            let ctpOrder = ["Call Center", "GraPARI", "Socmed"];
+            let overallKeys = Object.keys(overall).sort((a, b) => {
+                let [ca, sa] = a.split(SEP), [cb, sb] = b.split(SEP);
+                let ia = ctpOrder.indexOf(ca), ib = ctpOrder.indexOf(cb);
+                ia = ia < 0 ? 99 : ia; ib = ib < 0 ? 99 : ib;
+                if (ia !== ib) return ia - ib;
+                if (ca !== cb) return ca.localeCompare(cb);
+                return overall[b].total - overall[a].total || sa.localeCompare(sb);
+            });
+
+            let sortedPeriods = Array.from(periods).sort((a, b) => {
+                let numA = parseInt(String(a).replace(/\D/g, '')) || 0;
+                let numB = parseInt(String(b).replace(/\D/g, '')) || 0;
+                return numA !== 0 && numB !== 0 ? numA - numB : String(a).localeCompare(String(b));
+            });
+
+            // ---- Ringkasan per source (semua CTP) ----
+            let srcPeriod = {};   // period|||source
+            let srcTotal = {};    // source
+            data.forEach(item => {
+                let pk = item.Period + SEP + item.Source;
+                srcPeriod[pk] = srcPeriod[pk] || empty();
+                srcTotal[item.Source] = srcTotal[item.Source] || empty();
+                [srcPeriod[pk], srcTotal[item.Source]].forEach(d => {
+                    d.promotor += item.Promoter;
+                    d.detractor += item.Detractor;
+                    d.passive += item.Passive;
+                    d.total += item.Total;
+                });
+            });
+            let sourceNames = Object.keys(srcTotal).sort((a, b) => srcTotal[b].total - srcTotal[a].total || a.localeCompare(b));
+            let allSrc = empty();
+            sourceNames.forEach(sn => ['promotor', 'detractor', 'passive', 'total'].forEach(f => allSrc[f] += srcTotal[sn][f]));
+
+            document.getElementById('thSourceNameSum').textContent = `Source (${sourceCol})`;
+            document.getElementById('thPeriodSrcSum').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
+            let sumBody = document.querySelector('#sourceSummaryTable tbody');
+            sumBody.innerHTML = '';
+            const sumRow = (c1, c2, d, cls, npsCls) => {
+                let tr = document.createElement('tr');
+                tr.className = cls;
+                tr.innerHTML = `
+                    <td class="p-3.5">${c1}</td>
+                    <td class="p-3.5">${c2}</td>
+                    <td class="p-3.5 text-center">${d.detractor}</td>
+                    <td class="p-3.5 text-center">${d.passive}</td>
+                    <td class="p-3.5 text-center">${d.promotor}</td>
+                    <td class="p-3.5 text-center font-semibold">${d.total}</td>
+                    <td class="p-3.5 text-right ${npsCls}">${npsOf(d).toFixed(2)}%</td>`;
+                sumBody.appendChild(tr);
+            };
+            sortedPeriods.forEach(p => {
+                sourceNames.forEach(sn => {
+                    let d = srcPeriod[p + SEP + sn];
+                    if (d) sumRow(formatPeriod(p), sn, d, "hover:bg-slate-50/80 transition-colors font-semibold text-slate-700", 'font-bold text-slate-900');
+                });
+            });
+            let gtLabel = isRollingView ? "Grand Total (Akumulasi Rolling)" : "Grand Total (Periode Ini)";
+            sourceNames.forEach((sn, i) => sumRow(gtLabel, sn, srcTotal[sn],
+                "bg-slate-100/80 font-bold text-slate-900" + (i === 0 ? " border-t border-slate-200" : ""), 'text-sky-700 font-extrabold'));
+            sumRow("Total", "Semua source", allSrc, "bg-sky-50 font-extrabold text-slate-900 border-t-2 border-sky-200", 'text-sky-800');
+
+            // ---- Grafik: tNPS per source per periode + Grand Total ----
+            let palette = ['#0284c7', '#e11d48', '#16a34a', '#f59e0b', '#8b5cf6', '#64748b', '#0d9488', '#db2777'];
+            let chartLabels = sortedPeriods.map(formatPeriod).concat(['Grand Total']);
+            let datasets = sourceNames.slice(0, 12).map((sn, i) => ({
+                label: sn,
+                data: sortedPeriods.map(p => {
+                    let d = srcPeriod[p + SEP + sn];
+                    return d ? parseFloat(npsOf(d).toFixed(2)) : null;
+                }).concat([parseFloat(npsOf(srcTotal[sn]).toFixed(2))]),
+                backgroundColor: palette[i % palette.length],
+                borderRadius: 4,
+                maxBarThickness: 28
+            }));
+
+            document.getElementById('sourceChartWrap').style.height = '340px';
+            if (sourceChartInstance) sourceChartInstance.destroy();
+            sourceChartInstance = new Chart(document.getElementById('sourceChart').getContext('2d'), {
+                type: 'bar',
+                data: { labels: chartLabels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } },
+                        tooltip: { callbacks: { label: ctx => {
+                            let sn = ctx.dataset.label;
+                            let d = ctx.dataIndex < sortedPeriods.length ? srcPeriod[sortedPeriods[ctx.dataIndex] + SEP + sn] : srcTotal[sn];
+                            return d ? ` ${sn}: ${ctx.parsed.y}% • ${d.total} survey (P ${d.promotor} / Pa ${d.passive} / D ${d.detractor})` : ` ${sn}: -`;
+                        } } }
+                    },
+                    scales: {
+                        y: { ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // ---- Tabel ----
+            let tbody = document.querySelector('#sourceTable tbody');
+            tbody.innerHTML = '';
+            const rowHtml = (cells, cls) => {
+                let tr = document.createElement('tr');
+                tr.className = cls;
+                tr.innerHTML = cells;
+                tbody.appendChild(tr);
+            };
+            const numCells = (d, npsCls) => `
+                <td class="p-3.5 text-center">${d.detractor}</td>
+                <td class="p-3.5 text-center">${d.passive}</td>
+                <td class="p-3.5 text-center">${d.promotor}</td>
+                <td class="p-3.5 text-center font-semibold">${d.total}</td>
+                <td class="p-3.5 text-right ${npsCls}">${npsOf(d).toFixed(2)}%</td>`;
+
+            sortedPeriods.forEach(p => {
+                let lastCtp = null;
+                overallKeys.forEach(ok => {
+                    let [ctp, src] = ok.split(SEP);
+                    let d = byPeriod[[p, ctp, src].join(SEP)];
+                    if (!d) return;
+                    rowHtml(`
+                        <td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td>
+                        <td class="p-3.5 text-slate-500">${ctp === lastCtp ? '' : ctp}</td>
+                        <td class="p-3.5 font-medium text-slate-800">${src}</td>
+                        ${numCells(d, 'font-bold text-slate-900')}`, "hover:bg-slate-50/80 transition-colors");
+                    lastCtp = ctp;
+                });
+            });
+
+            let grandTotalLabel = isRollingView ? "Grand Total (Akumulasi Rolling)" : "Grand Total (Periode Ini)";
+            let lastCtp = null;
+            overallKeys.forEach(ok => {
+                let [ctp, src] = ok.split(SEP);
+                rowHtml(`
+                    <td class="p-3.5">${grandTotalLabel}</td>
+                    <td class="p-3.5">${ctp === lastCtp ? '' : ctp}</td>
+                    <td class="p-3.5">${src}</td>
+                    ${numCells(overall[ok], 'text-sky-700 font-extrabold')}`,
+                    "bg-slate-100/80 font-bold text-slate-900" + (ctp === lastCtp ? "" : " border-t border-slate-200"));
+                lastCtp = ctp;
+            });
         }
 
         function renderDashboard(data) {
