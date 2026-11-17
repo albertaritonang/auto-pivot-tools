@@ -3,30 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Auto-Pivot Tool</title>
+    <title>IndiHome tNPS Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
-    <!-- jQuery & jQuery UI -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
-    
     <!-- SheetJS (Excel & CSV Reader) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     
-    <!-- PivotTable.js CSS & JS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pivottable/2.23.0/pivot.min.js"></script>
-
-    <style>
-        .pvtUi { width: 100%; font-family: inherit; }
-        .pvtAxisContainer, .pvtVals { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; }
-        .pvtAttr { background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 8px; font-size: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        table.pvtTable { font-size: 13px; border-collapse: collapse; width: 100%; margin-top: 10px; }
-        table.pvtTable thead tr th, table.pvtTable tbody tr th { background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 10px; }
-        table.pvtTable tbody tr td { border: 1px solid #e2e8f0; padding: 6px 10px; }
-    </style>
+    <!-- Chart.js untuk Grafik Visual -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
 
@@ -35,8 +21,8 @@
         <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Auto-Pivot Tool</h1>
-                    <p class="text-sm text-slate-500 mt-1">Upload file multi-source (IVR, Dyandra, Saltik) untuk kalkulasi otomatis tNPS & CTP.</p>
+                    <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
+                    <p class="text-sm text-slate-500 mt-1">Multi-source (IVR, Dyandra, Saltik) • Auto tNPS % Calculator & CTP Breakdown</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -48,7 +34,7 @@
                 </div>
             </div>
 
-            <!-- Status & Info Sheet -->
+            <!-- Status & Filter Kontrol -->
             <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-sm">
                 <div class="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md font-medium">
                     <span>✅ Data Dimuat:</span>
@@ -56,25 +42,72 @@
                     <span id="rowCount" class="text-xs bg-emerald-200/70 px-2 py-0.5 rounded"></span>
                 </div>
 
-                <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
-                    <label for="sheetSelector" class="font-medium text-slate-600">Pilih Sheet/Source:</label>
-                    <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500"></select>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <label class="font-medium text-slate-600">Periode:</label>
+                        <select id="timeSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="Parsed_Month">Bulan (Month)</option>
+                            <option value="Parsed_Week">Minggu (Week)</option>
+                        </select>
+                    </div>
+
+                    <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
+                        <label class="font-medium text-slate-600">Source/Sheet:</label>
+                        <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500"></select>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pivot Container -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-            <div id="placeholder" class="text-center py-16 text-slate-400">
-                <p class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
-                <p class="text-sm mt-1">Silakan upload file Excel kamu untuk mulai melakukan analisis pivot tNPS.</p>
+        <!-- Placeholder sebelum upload -->
+        <div id="placeholder" class="bg-white rounded-xl shadow-sm border border-slate-200 p-16 text-center text-slate-400">
+            <p class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
+            <p class="text-sm mt-1">Silakan klik tombol <b>Upload File IndiHome</b> di kanan atas untuk mulai melihat grafik tNPS.</p>
+        </div>
+
+        <!-- Konten Dashboard Grafik & Tabel -->
+        <div id="dashboardContent" class="hidden space-y-6">
+            <!-- Grafik Utama tNPS per CTP -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS Berdasarkan CTP (Call Center, GraPARI, Socmed)</h2>
+                <div class="relative h-80 w-full">
+                    <canvas id="npsChart"></canvas>
+                </div>
             </div>
-            <div id="pivotOutput"></div>
+
+            <!-- Grafik Khusus People CS tNPS -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service per CTP</h2>
+                <div class="relative h-80 w-full">
+                    <canvas id="csChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Tabel Ringkasan Data tNPS % -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi tNPS (%)</h2>
+                <table id="summaryTable" class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                            <th class="p-3">Periode</th>
+                            <th class="p-3">CTP Group</th>
+                            <th class="p-3 text-center">Promotor</th>
+                            <th class="p-3 text-center">Detractor</th>
+                            <th class="p-3 text-center">Grand Total</th>
+                            <th class="p-3 text-right font-bold">tNPS (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
         let currentWorkbook = null;
+        let globalProcessedData = [];
+        let npsChartInstance = null;
+        let csChartInstance = null;
 
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -95,122 +128,4 @@
                 sheetNames.forEach(name => {
                     const option = document.createElement('option');
                     option.value = name;
-                    option.textContent = name;
-                    sheetSelector.appendChild(option);
-                });
-
-                if (sheetNames.length > 1) {
-                    sheetContainer.classList.remove('hidden');
-                } else {
-                    sheetContainer.classList.add('hidden');
-                }
-
-                processAndRenderPivot(sheetNames[0]);
-            };
-
-            reader.readAsArrayBuffer(file);
-        });
-
-        document.getElementById('sheetSelector').addEventListener('change', function(e) {
-            processAndRenderPivot(e.target.value);
-        });
-
-        // Fungsi bantu untuk mencari nilai kolom secara fleksibel (aman dari beda huruf besar/kecil atau spasi)
-        function getValFromRow(row, possibleKeys) {
-            let keys = Object.keys(row);
-            for (let pk of possibleKeys) {
-                let foundKey = keys.find(k => k.trim().toLowerCase() === pk.toLowerCase());
-                if (foundKey !== undefined && row[foundKey] !== undefined) {
-                    return row[foundKey];
-                }
-            }
-            return '';
-        }
-
-        function processAndRenderPivot(sheetName) {
-            const worksheet = currentWorkbook.Sheets[sheetName];
-            let rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-            if (rawData.length === 0) {
-                alert("Sheet ini kosong atau format datanya tidak terbaca.");
-                return;
-            }
-
-            // Transformasi Data Otomatis & Fleksibel
-            let processedData = rawData.map(row => {
-                let dateVal = getValFromRow(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
-                let unitType = String(getValFromRow(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source'])).toLowerCase();
-                let reasonDesc = String(getValFromRow(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan'])).trim();
-                let npsCategory = String(getValFromRow(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS'])).toLowerCase();
-
-                // 1. Ekstraksi Week & Bulan
-                let weekStr = 'Unknown Week';
-                let monthStr = 'Unknown Month';
-                if (dateVal) {
-                    let d = new Date(dateVal);
-                    if (!isNaN(d.getTime())) {
-                        let year = d.getFullYear();
-                        let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-                        monthStr = `${monthNames[d.getMonth()]} ${year}`;
-                        
-                        let firstDay = new Date(d.getFullYear(), 0, 1);
-                        let pastDays = (d - firstDay) / 86400000;
-                        let weekNum = Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
-                        weekStr = `Week ${weekNum} (${year})`;
-                    }
-                }
-
-                // 2. Pemetaan Unit Type ke CTP ("Call Center", "GraPARI", "Socmed")
-                let ctpGroup = "Other / Unmapped";
-                if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
-                    ctpGroup = "Call Center";
-                } else if (unitType.includes('grapari') || unitType.includes('plasa') || unitType.includes('dyandra')) {
-                    ctpGroup = "GraPARI";
-                } else if (unitType.includes('socmed') || unitType.includes('social') || unitType.includes('medsos') || unitType.includes('saltik')) {
-                    ctpGroup = "Socmed";
-                }
-
-                // 3. Filter Alasan CS (People Indicator)
-                let targetReasons = [
-                    "CUSTOMER SERVICE",
-                    "Customer service cukup responsif",
-                    "Customer service kurang responsif",
-                    "Customer service responsif",
-                    "Customer service tidak responsif",
-                    "PELAYANAN PELANGGAN"
-                ];
-                
-                let isTargetCSReason = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
-                let csPeopleMetric = isTargetCSReason ? (npsCategory.includes('promot') ? 'Promoter CS' : (npsCategory.includes('detract') ? 'Detractor CS' : 'Neutral CS')) : 'Non-CS';
-
-                return {
-                    ...row,
-                    'Parsed_Week': weekStr,
-                    'Parsed_Month': monthStr,
-                    'Mapped_CTP': ctpGroup,
-                    'CS_People_Category': csPeopleMetric,
-                    'Score_Promotor': npsCategory.includes('promot') ? 1 : 0,
-                    'Score_Detractor': npsCategory.includes('detract') ? 1 : 0,
-                    'Score_Total': 1
-                };
-            });
-
-            document.getElementById('fileInfo').classList.remove('hidden');
-            document.getElementById('placeholder').classList.add('hidden');
-            document.getElementById('rowCount').textContent = `${processedData.length} baris data`;
-
-            // Kosongkan area output sebelumnya agar tidak menumpuk
-            document.getElementById('pivotOutput').innerHTML = "";
-
-            // Render PivotTable.js
-            $("#pivotOutput").pivotUI(processedData, {
-                rows: ["Parsed_Month", "Mapped_CTP"],
-                cols: ["Parsed_Week"],
-                aggregatorName: "Sum",
-                vals: ["Score_Total"],
-                unusedAttrsVertical: false
-            }, true);
-        }
-    </script>
-</body>
-</html>
+                    option
