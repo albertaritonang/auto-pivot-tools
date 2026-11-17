@@ -50,4 +50,167 @@
 
             <!-- Status & Info Sheet -->
             <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 text-sm">
-                <div class="flex items-center gap-2 text-emerald-700 bg-emerald-
+                <div class="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md font-medium">
+                    <span>✅ Data Dimuat:</span>
+                    <span id="fileName"></span>
+                    <span id="rowCount" class="text-xs bg-emerald-200/70 px-2 py-0.5 rounded"></span>
+                </div>
+
+                <div id="sheetSelectorContainer" class="hidden flex items-center gap-2">
+                    <label for="sheetSelector" class="font-medium text-slate-600">Pilih Sheet/Source:</label>
+                    <select id="sheetSelector" class="border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-500"></select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pivot Container -->
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
+            <div id="placeholder" class="text-center py-16 text-slate-400">
+                <p class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
+                <p class="text-sm mt-1">Silakan upload file Excel kamu untuk mulai melakukan analisis pivot tNPS.</p>
+            </div>
+            <div id="pivotOutput"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentWorkbook = null;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = file.name;
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const data = new Uint8Array(event.target.result);
+                currentWorkbook = XLSX.read(data, { type: 'array' });
+
+                const sheetNames = currentWorkbook.SheetNames;
+                const sheetSelector = document.getElementById('sheetSelector');
+                const sheetContainer = document.getElementById('sheetSelectorContainer');
+
+                sheetSelector.innerHTML = '';
+                sheetNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    sheetSelector.appendChild(option);
+                });
+
+                if (sheetNames.length > 1) {
+                    sheetContainer.classList.remove('hidden');
+                } else {
+                    sheetContainer.classList.add('hidden');
+                }
+
+                processAndRenderPivot(sheetNames[0]);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        document.getElementById('sheetSelector').addEventListener('change', function(e) {
+            processAndRenderPivot(e.target.value);
+        });
+
+        // Fungsi bantu untuk mencari nilai kolom secara fleksibel (aman dari beda huruf besar/kecil atau spasi)
+        function getValFromRow(row, possibleKeys) {
+            let keys = Object.keys(row);
+            for (let pk of possibleKeys) {
+                let foundKey = keys.find(k => k.trim().toLowerCase() === pk.toLowerCase());
+                if (foundKey !== undefined && row[foundKey] !== undefined) {
+                    return row[foundKey];
+                }
+            }
+            return '';
+        }
+
+        function processAndRenderPivot(sheetName) {
+            const worksheet = currentWorkbook.Sheets[sheetName];
+            let rawData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+            if (rawData.length === 0) {
+                alert("Sheet ini kosong atau format datanya tidak terbaca.");
+                return;
+            }
+
+            // Transformasi Data Otomatis & Fleksibel
+            let processedData = rawData.map(row => {
+                let dateVal = getValFromRow(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
+                let unitType = String(getValFromRow(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source'])).toLowerCase();
+                let reasonDesc = String(getValFromRow(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan'])).trim();
+                let npsCategory = String(getValFromRow(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS'])).toLowerCase();
+
+                // 1. Ekstraksi Week & Bulan
+                let weekStr = 'Unknown Week';
+                let monthStr = 'Unknown Month';
+                if (dateVal) {
+                    let d = new Date(dateVal);
+                    if (!isNaN(d.getTime())) {
+                        let year = d.getFullYear();
+                        let monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+                        monthStr = `${monthNames[d.getMonth()]} ${year}`;
+                        
+                        let firstDay = new Date(d.getFullYear(), 0, 1);
+                        let pastDays = (d - firstDay) / 86400000;
+                        let weekNum = Math.ceil((pastDays + firstDay.getDay() + 1) / 7);
+                        weekStr = `Week ${weekNum} (${year})`;
+                    }
+                }
+
+                // 2. Pemetaan Unit Type ke CTP ("Call Center", "GraPARI", "Socmed")
+                let ctpGroup = "Other / Unmapped";
+                if (unitType.includes('call') || unitType.includes('cc') || unitType.includes('ivr')) {
+                    ctpGroup = "Call Center";
+                } else if (unitType.includes('grapari') || unitType.includes('plasa') || unitType.includes('dyandra')) {
+                    ctpGroup = "GraPARI";
+                } else if (unitType.includes('socmed') || unitType.includes('social') || unitType.includes('medsos') || unitType.includes('saltik')) {
+                    ctpGroup = "Socmed";
+                }
+
+                // 3. Filter Alasan CS (People Indicator)
+                let targetReasons = [
+                    "CUSTOMER SERVICE",
+                    "Customer service cukup responsif",
+                    "Customer service kurang responsif",
+                    "Customer service responsif",
+                    "Customer service tidak responsif",
+                    "PELAYANAN PELANGGAN"
+                ];
+                
+                let isTargetCSReason = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
+                let csPeopleMetric = isTargetCSReason ? (npsCategory.includes('promot') ? 'Promoter CS' : (npsCategory.includes('detract') ? 'Detractor CS' : 'Neutral CS')) : 'Non-CS';
+
+                return {
+                    ...row,
+                    'Parsed_Week': weekStr,
+                    'Parsed_Month': monthStr,
+                    'Mapped_CTP': ctpGroup,
+                    'CS_People_Category': csPeopleMetric,
+                    'Score_Promotor': npsCategory.includes('promot') ? 1 : 0,
+                    'Score_Detractor': npsCategory.includes('detract') ? 1 : 0,
+                    'Score_Total': 1
+                };
+            });
+
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('rowCount').textContent = `${processedData.length} baris data`;
+
+            // Kosongkan area output sebelumnya agar tidak menumpuk
+            document.getElementById('pivotOutput').innerHTML = "";
+
+            // Render PivotTable.js
+            $("#pivotOutput").pivotUI(processedData, {
+                rows: ["Parsed_Month", "Mapped_CTP"],
+                cols: ["Parsed_Week"],
+                aggregatorName: "Sum",
+                vals: ["Score_Total"],
+                unusedAttrsVertical: false
+            }, true);
+        }
+    </script>
+</body>
+</html>
