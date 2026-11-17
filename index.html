@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Analytics Dashboard (Week 40-43 & Momo/Tomo)</title>
+    <title>IndiHome tNPS Analytics Dashboard (Week 40-43 & Grand Total)</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard (Week 40 - 43)</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP & Momo/Tomo GraPARI Analysis</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • Termasuk Baris Grand Total Gabungan</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -75,9 +75,9 @@
                 <div class="relative h-80 w-full"><canvas id="momoChart"></canvas></div>
             </div>
 
-            <!-- Tabel Detail Rekapitulasi -->
+            <!-- Tabel Detail Rekapitulasi + Grand Total -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci tNPS (%) (Week 40 - 43)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci tNPS (%) & Grand Total (Week 40 - 43)</h2>
                 <table id="summaryTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -94,9 +94,9 @@
                 </table>
             </div>
 
-            <!-- Tabel Momo/Tomo GraPARI -->
+            <!-- Tabel Momo/Tomo GraPARI + Grand Total -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Momo/Tomo GraPARI</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Momo/Tomo GraPARI & Grand Total</h2>
                 <table id="momoTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -187,14 +187,10 @@
                 let rawWeek = getCol(row, 'week');
                 let momoVal = getCol(row, 'momo/  tomo') || getCol(row, 'momo/tomo') || getCol(row, 'momo _ tomo') || '';
 
-                // Ekstraksi angka minggu secara fleksibel (misal: "Week 40", "40.0", dll)
                 let weekMatch = rawWeek.match(/\d+/);
                 let weekVal = weekMatch ? parseInt(weekMatch[0]) : 0;
-
-                // Filter Week 40 sampai 43
                 let isValidWeek = (weekVal >= 40 && weekVal <= 43);
 
-                // Status NPS
                 let isPromotor = 0, isDetractor = 0, isPassive = 0;
                 let targetNps = npsVal || categoryVal;
 
@@ -211,7 +207,6 @@
                     }
                 }
 
-                // CTP Mapping
                 let ctpGroup = "Call Center";
                 if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
                     ctpGroup = "GraPARI";
@@ -223,7 +218,6 @@
                     ctpGroup = unitType2 ? unitType2 : "Call Center";
                 }
 
-                // Filter Reason CS People
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -354,13 +348,24 @@
                 options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
             });
 
+            // Render Tabel Utama + Baris Grand Total Gabungan W40-43
             let tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
+            
+            let ctpGrandTotals = {};
+            ctpList.forEach(ctp => { ctpGrandTotals[ctp] = { promotor: 0, detractor: 0, passive: 0, total: 0 }; });
+
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
                     let d = group[`${p}_${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                     
+                    // Akumulasi ke Grand Total CTP
+                    ctpGrandTotals[ctp].promotor += d.promotor;
+                    ctpGrandTotals[ctp].detractor += d.detractor;
+                    ctpGrandTotals[ctp].passive += d.passive;
+                    ctpGrandTotals[ctp].total += d.total;
+
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
                     tr.innerHTML = `
@@ -370,18 +375,46 @@
                         <td class="p-3 text-center">${d.passive}</td>
                         <td class="p-3 text-center">${d.promotor}</td>
                         <td class="p-3 text-center">${d.total}</td>
-                        <td class="p-3 text-right font-bold text-red-600">${npsVal}%</td>
+                        <td class="p-3 text-right font-bold text-slate-700">${npsVal}%</td>
                     `;
                     tbody.appendChild(tr);
                 });
             });
 
+            // Tambahkan Baris Grand Total Gabungan W40-43 untuk CTP
+            ctpList.forEach(ctp => {
+                let d = ctpGrandTotals[ctp];
+                let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                let tr = document.createElement('tr');
+                tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
+                tr.innerHTML = `
+                    <td class="p-3">Grand Total (W40-43)</td>
+                    <td class="p-3">${ctp}</td>
+                    <td class="p-3 text-center">${d.detractor}</td>
+                    <td class="p-3 text-center">${d.passive}</td>
+                    <td class="p-3 text-center">${d.promotor}</td>
+                    <td class="p-3 text-center">${d.total}</td>
+                    <td class="p-3 text-right text-red-600">${npsVal}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Render Tabel Momo/Tomo GraPARI + Baris Grand Total Gabungan
             let momoTbody = document.querySelector('#momoTable tbody');
             momoTbody.innerHTML = '';
+            
+            let momoGrandTotals = {};
+            uniqueMomoCategories.forEach(mtCat => { momoGrandTotals[mtCat] = { promotor: 0, detractor: 0, passive: 0, total: 0 }; });
+
             sortedMomoPeriods.forEach(p => {
                 uniqueMomoCategories.forEach(mtCat => {
                     let d = momoGroup[`${p}_${mtCat}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+
+                    momoGrandTotals[mtCat].promotor += d.promotor;
+                    momoGrandTotals[mtCat].detractor += d.detractor;
+                    momoGrandTotals[mtCat].passive += d.passive;
+                    momoGrandTotals[mtCat].total += d.total;
 
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
@@ -392,10 +425,28 @@
                         <td class="p-3 text-center">${d.passive}</td>
                         <td class="p-3 text-center">${d.promotor}</td>
                         <td class="p-3 text-center">${d.total}</td>
-                        <td class="p-3 text-right font-bold text-indigo-600">${npsVal}%</td>
+                        <td class="p-3 text-right font-bold text-slate-700">${npsVal}%</td>
                     `;
                     momoTbody.appendChild(tr);
                 });
+            });
+
+            // Tambahkan Baris Grand Total Gabungan W40-43 untuk Momo/Tomo
+            uniqueMomoCategories.forEach(mtCat => {
+                let d = momoGrandTotals[mtCat];
+                let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                let tr = document.createElement('tr');
+                tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
+                tr.innerHTML = `
+                    <td class="p-3">Grand Total (W40-43)</td>
+                    <td class="p-3">${mtCat}</td>
+                    <td class="p-3 text-center">${d.detractor}</td>
+                    <td class="p-3 text-center">${d.passive}</td>
+                    <td class="p-3 text-center">${d.promotor}</td>
+                    <td class="p-3 text-center">${d.total}</td>
+                    <td class="p-3 text-right text-indigo-600">${npsVal}%</td>
+                `;
+                momoTbody.appendChild(tr);
             });
         }
     </script>
