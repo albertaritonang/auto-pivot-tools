@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Dashboard</title>
+    <title>IndiHome tNPS Analytics Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP & People CS Breakdown</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • Detractor, Passive, Promotor Breakdown</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -62,37 +62,38 @@
         <!-- Placeholder sebelum upload -->
         <div id="placeholder" class="bg-white rounded-xl shadow-sm border border-slate-200 p-16 text-center text-slate-400">
             <p class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
-            <p class="text-sm mt-1">Silakan klik tombol <b>Upload File IndiHome</b> di kanan atas untuk mulai melihat grafik tNPS.</p>
+            <p class="text-sm mt-1">Silakan klik tombol <b>Upload File IndiHome</b> di kanan atas untuk mulai melihat dashboard & grafik tNPS %.</p>
         </div>
 
         <!-- Konten Dashboard Grafik & Tabel -->
         <div id="dashboardContent" class="hidden space-y-6">
-            <!-- Grafik Utama tNPS per CTP -->
+            <!-- Grafik Tren tNPS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS Berdasarkan CTP (Call Center, GraPARI, Socmed)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Berdasarkan CTP (Call Center, GraPARI, Socmed)</h2>
                 <div class="relative h-80 w-full">
                     <canvas id="npsChart"></canvas>
                 </div>
             </div>
 
-            <!-- Grafik Khusus People CS tNPS -->
+            <!-- Grafik tNPS People CS % -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service per CTP</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) per CTP</h2>
                 <div class="relative h-80 w-full">
                     <canvas id="csChart"></canvas>
                 </div>
             </div>
 
-            <!-- Tabel Ringkasan Data tNPS % -->
+            <!-- Tabel Detail Rekapitulasi -->
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi tNPS (%) & Komponen</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci Komponen & tNPS (%)</h2>
                 <table id="summaryTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
                             <th class="p-3">Periode</th>
                             <th class="p-3">CTP Group</th>
-                            <th class="p-3 text-center">Promotor</th>
                             <th class="p-3 text-center">Detractor</th>
+                            <th class="p-3 text-center">Passive</th>
+                            <th class="p-3 text-center">Promotor</th>
                             <th class="p-3 text-center">Grand Total (ts_call)</th>
                             <th class="p-3 text-right font-bold">tNPS (%)</th>
                         </tr>
@@ -186,7 +187,7 @@
                 let dateVal = extractValue(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
                 let unitType = extractValue(row, ['Unit Type', 'unit_type', 'UNIT TYPE', 'Unit', 'Channel', 'Source', 'ts_call']);
                 let reasonDesc = extractValue(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan']);
-                let npsCategory = extractValue(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS', 'Column Labels']);
+                let npsCategory = extractValue(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS', 'Column Labels']).toLowerCase();
 
                 if (!npsCategory) {
                     if (allRowText.includes('promot')) npsCategory = 'promotor';
@@ -210,6 +211,7 @@
                     }
                 }
 
+                // CTP Mapping (Call Center, GraPARI, Socmed)
                 let ctpGroup = "Call Center";
                 let combinedUnit = (unitType + " " + allRowText).toLowerCase();
                 if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa') || combinedUnit.includes('dyandra')) {
@@ -220,6 +222,7 @@
                     ctpGroup = "Call Center";
                 }
 
+                // Reason Desc Filter untuk People CS
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -233,6 +236,7 @@
 
                 let isPromotor = npsCategory.includes('promot') ? 1 : 0;
                 let isDetractor = npsCategory.includes('detract') ? 1 : 0;
+                let isPassive = npsCategory.includes('passiv') ? 1 : 0;
 
                 return {
                     Parsed_Week: weekStr,
@@ -241,7 +245,8 @@
                     Is_CS: isCS,
                     Promoter: isPromotor,
                     Detractor: isDetractor,
-                    Total: 1 // Berperan sebagai ts_call (Grand Total responden per baris)
+                    Passive: isPassive,
+                    Total: 1 // Mewakili hitungan ts_call (Grand Total responden per baris)
                 };
             });
 
@@ -266,16 +271,18 @@
 
                 let key = `${p}_${ctp}`;
                 if (!groupData[key]) {
-                    groupData[key] = { promoter: 0, detractor: 0, total: 0, cs_promoter: 0, cs_detractor: 0, cs_total: 0 };
+                    groupData[key] = { promoter: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
                 }
 
                 groupData[key].promoter += item.Promoter;
                 groupData[key].detractor += item.Detractor;
-                groupData[key].total += item.Total; // Grand Total (ts_call)
+                groupData[key].passive += item.Passive;
+                groupData[key].total += item.Total; // Grand Total ts_call
 
                 if (item.Is_CS) {
-                    groupData[key].cs_promoter += item.Promoter;
+                    groupData[key].cs_promotor += item.Promoter;
                     groupData[key].cs_detractor += item.Detractor;
+                    groupData[key].cs_passive += item.Passive;
                     groupData[key].cs_total += item.Total;
                 }
             });
@@ -288,7 +295,7 @@
                     let k = `${p}_${ctp}`;
                     let d = groupData[k];
                     if (!d || d.total === 0) return 0;
-                    let nps = ((d.promoter - d.detractor) / d.total) * 100;
+                    let nps = ((d.promotor - d.detractor) / d.total) * 100;
                     return parseFloat(nps.toFixed(2));
                 });
                 return {
@@ -306,7 +313,7 @@
                     let k = `${p}_${ctp}`;
                     let d = groupData[k];
                     if (!d || d.cs_total === 0) return 0;
-                    let nps = ((d.cs_promoter - d.cs_detractor) / d.cs_total) * 100;
+                    let nps = ((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100;
                     return parseFloat(nps.toFixed(2));
                 });
                 return {
@@ -323,7 +330,11 @@
             npsChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: { labels: sortedPeriods, datasets: chartDatasets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { ticks: { callback: v => v + '%' } } } 
+                }
             });
 
             if (csChartInstance) csChartInstance.destroy();
@@ -331,7 +342,11 @@
             csChartInstance = new Chart(ctxCs, {
                 type: 'line',
                 data: { labels: sortedPeriods, datasets: csDatasets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    scales: { y: { ticks: { callback: v => v + '%' } } } 
+                }
             });
 
             let tbody = document.querySelector('#summaryTable tbody');
@@ -339,16 +354,17 @@
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
                     let k = `${p}_${ctp}`;
-                    let d = groupData[k] || { promoter: 0, detractor: 0, total: 0 };
-                    let npsVal = d.total > 0 ? (((d.promoter - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                    let d = groupData[k] || { promoter: 0, detractor: 0, passive: 0, total: 0 };
+                    let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                     
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50 border-b border-slate-100";
                     tr.innerHTML = `
                         <td class="p-3 font-medium text-slate-800">${p}</td>
                         <td class="p-3">${ctp}</td>
-                        <td class="p-3 text-center">${d.promoter}</td>
                         <td class="p-3 text-center">${d.detractor}</td>
+                        <td class="p-3 text-center">${d.passive}</td>
+                        <td class="p-3 text-center">${d.promotor}</td>
                         <td class="p-3 text-center">${d.total}</td>
                         <td class="p-3 text-right font-bold text-red-600">${npsVal}%</td>
                     `;
