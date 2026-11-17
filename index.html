@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Telkomsel tNPS Analytics Dashboard (IndiHome & Mobile)</title>
     
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS v4 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
     <!-- SheetJS (Excel & CSV Reader) -->
@@ -13,44 +13,77 @@
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-slate-50 text-slate-800 min-h-screen p-2 sm:p-4 md:p-8">
 
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 mb-4 sm:mb-6">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h1 id="mainTitle" class="text-xl sm:text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p id="subTitle" class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Custom smooth scrollbar */
+        ::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-red-50/30 text-slate-800 min-h-screen p-3 sm:p-6 md:p-10">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        
+        <!-- Header Section -->
+        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-8 transition-all">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div class="space-y-1.5">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold tracking-wide uppercase border border-red-100">
+                        <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                        Telkomsel CX Intelligence
+                    </div>
+                    <h1 id="mainTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">📊 IndiHome tNPS Analytics Dashboard</h1>
+                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
                 </div>
                 
                 <!-- Pilihan Mode & Upload -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 w-full md:w-auto">
-                    <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto">
-                        <button id="modeIndihome" onclick="switchMode('indihome')" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm">IndiHome</button>
-                        <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition">Mobile</button>
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
+                    <!-- Mode Switcher -->
+                    <div class="flex items-center bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto shadow-inner">
+                        <button id="modeIndihome" onclick="switchMode('indihome')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-600 text-white transition-all shadow-md shadow-red-600/20">IndiHome</button>
+                        <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
                     </div>
 
-                    <label id="uploadBtnLabel" class="cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
-                        <span id="uploadBtnText">📂 Upload File IndiHome</span>
+                    <!-- Upload Button -->
+                    <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
+                        <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                        <span id="uploadBtnText">Upload File IndiHome</span>
                         <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
                     </label>
                 </div>
             </div>
 
             <!-- Status & Filter Kontrol -->
-            <div id="fileInfo" class="hidden mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center justify-between gap-3 sm:gap-4 text-sm">
-                <div class="flex items-center gap-2 text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-md font-medium">
-                    <span>✅ Data Dimuat:</span>
-                    <span id="fileName"></span>
-                    <span id="rowCount" class="text-xs bg-emerald-200/70 px-2 py-0.5 rounded"></span>
+            <div id="fileInfo" class="hidden mt-6 pt-5 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
+                <div class="flex items-center gap-2.5 text-emerald-700 bg-emerald-50/80 border border-emerald-200/60 px-4 py-2 rounded-xl font-medium shadow-sm">
+                    <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">File Aktif:</span>
+                    <span id="fileName" class="font-semibold truncate max-w-[200px] sm:max-w-xs"></span>
+                    <span id="rowCount" class="text-xs bg-emerald-200/70 text-emerald-900 px-2.5 py-0.5 rounded-full font-bold ml-1"></span>
                 </div>
 
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 flex-wrap w-full sm:w-auto">
-                    <div id="weekFilterContainer" class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        <label class="font-medium text-slate-600">Filter Minggu:</label>
-                        <select id="weekFilter" class="w-full sm:w-auto border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
+                    <div id="weekFilterContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Filter Minggu:</label>
+                        <select id="weekFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
                             <option value="all">Semua Minggu di File (Full Month)</option>
                             <option value="w40_43">Week 40 - Week 43 (Rolling 4W)</option>
                             <option value="w44_48">Week 44 - Week 48 (Rolling 4W)</option>
@@ -58,95 +91,138 @@
                         </select>
                     </div>
 
-                    <div id="sheetSelectorContainer" class="hidden flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                        <label class="font-medium text-slate-600">Sheet:</label>
-                        <select id="sheetSelector" class="w-full sm:w-auto border border-slate-300 rounded-md px-3 py-1.5 bg-white text-slate-700 focus:outline-none"></select>
+                    <div id="sheetSelectorContainer" class="hidden flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Sheet:</label>
+                        <select id="sheetSelector" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer"></select>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Placeholder -->
-        <div id="placeholder" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sm:p-10 md:p-16 text-center text-slate-400">
-            <p id="placeholderTitle" class="text-lg font-medium">Belum ada file data IndiHome yang diunggah</p>
-            <p class="text-sm mt-1">Silakan klik tombol upload di kanan atas untuk mulai melihat dashboard.</p>
+        <!-- Placeholder State -->
+        <div id="placeholder" class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-12 sm:p-20 text-center">
+            <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center text-red-500 shadow-inner">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            </div>
+            <p id="placeholderTitle" class="text-lg font-bold text-slate-700">Belum ada file data IndiHome yang diunggah</p>
+            <p class="text-sm text-slate-400 mt-1 max-w-md mx-auto">Silakan klik tombol upload di kanan atas untuk mulai menganalisis data tNPS secara interaktif.</p>
         </div>
 
-        <!-- Dashboard Content -->
+        <!-- Dashboard Content Container -->
         <div id="dashboardContent" class="hidden space-y-6">
-            <!-- Grafik Utama tNPS % -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📈 Tren tNPS (%) Per CTP</h2>
-                <div class="relative h-64 sm:h-80 w-full"><canvas id="npsChart"></canvas></div>
-            </div>
+            
+            <!-- Grid Grafik Utama -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Grafik Utama tNPS % -->
+                <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <span class="p-2 rounded-xl bg-red-50 text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></span>
+                            Tren tNPS (%) Per CTP
+                        </h2>
+                    </div>
+                    <div class="relative h-72 sm:h-80 w-full"><canvas id="npsChart"></canvas></div>
+                </div>
 
-            <!-- Grafik People CS % -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 tNPS People Customer Service (%) Per CTP</h2>
-                <div class="relative h-64 sm:h-80 w-full"><canvas id="csChart"></canvas></div>
+                <!-- Grafik People CS % -->
+                <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <span class="p-2 rounded-xl bg-orange-50 text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
+                            tNPS People Customer Service (%)
+                        </h2>
+                    </div>
+                    <div class="relative h-72 sm:h-80 w-full"><canvas id="csChart"></canvas></div>
+                </div>
             </div>
 
             <!-- Grafik Analisis Momo/Tomo GraPARI -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">🏷️ Analisis tNPS Bisnis Model / Momo / Tomo</h2>
-                <div class="relative h-64 sm:h-80 w-full"><canvas id="momoChart"></canvas></div>
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-indigo-50 text-indigo-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg></span>
+                        Analisis tNPS Bisnis Model / Momo / Tomo
+                    </h2>
+                </div>
+                <div class="relative h-72 sm:h-80 w-full"><canvas id="momoChart"></canvas></div>
             </div>
 
             <!-- Tabel Detail CTP + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci tNPS (%) & Grand Total CTP</h2>
-                <div class="w-full overflow-x-auto"><table id="summaryTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
-                            <th id="thPeriod1" class="p-3">Periode (Week)</th>
-                            <th id="thCtp1" class="p-3">unit_type2 (CTP)</th>
-                            <th class="p-3 text-center">Detractor</th>
-                            <th class="p-3 text-center">Passive</th>
-                            <th class="p-3 text-center">Promotor</th>
-                            <th class="p-3 text-center">Grand Total</th>
-                            <th class="p-3 text-right font-bold">tNPS (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table></div>
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>
+                        Tabel Rinci tNPS (%) & Grand Total CTP
+                    </h2>
+                </div>
+                <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
+                    <table id="summaryTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+                                <th id="thPeriod1" class="p-3.5">Periode (Week)</th>
+                                <th id="thCtp1" class="p-3.5">unit_type2 (CTP)</th>
+                                <th class="p-3.5 text-center">Detractor</th>
+                                <th class="p-3.5 text-center">Passive</th>
+                                <th class="p-3.5 text-center">Promotor</th>
+                                <th class="p-3.5 text-center">Grand Total</th>
+                                <th class="p-3.5 text-right">tNPS (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Tabel People CS + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">👥 Tabel Rinci tNPS People Customer Service (%) & Grand Total</h2>
-                <div class="w-full overflow-x-auto"><table id="csTable" class="min-w-[800px] w-full text-left border-collapse text-xs sm:text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
-                            <th id="thPeriod2" class="p-3">Periode (Week)</th>
-                            <th id="thCtp2" class="p-3">unit_type2 (CTP) - People CS</th>
-                            <th class="p-3 text-center">Detractor (CS)</th>
-                            <th class="p-3 text-center">Passive (CS)</th>
-                            <th class="p-3 text-center">Promotor (CS)</th>
-                            <th class="p-3 text-center">Grand Total (CS)</th>
-                            <th class="p-3 text-right font-bold">tNPS People (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table></div>
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-orange-50 text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span>
+                        Tabel Rinci tNPS People Customer Service (%) & Grand Total
+                    </h2>
+                </div>
+                <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
+                    <table id="csTable" class="min-w-[800px] w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+                                <th id="thPeriod2" class="p-3.5">Periode (Week)</th>
+                                <th id="thCtp2" class="p-3.5">unit_type2 (CTP) - People CS</th>
+                                <th class="p-3.5 text-center">Detractor (CS)</th>
+                                <th class="p-3.5 text-center">Passive (CS)</th>
+                                <th class="p-3.5 text-center">Promotor (CS)</th>
+                                <th class="p-3.5 text-center">Grand Total (CS)</th>
+                                <th class="p-3.5 text-right">tNPS People (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- Tabel Momo/Tomo GraPARI + Grand Total -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-5 md:p-6 overflow-hidden">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rekapitulasi Bisnis Model / Momo / Tomo & Grand Total</h2>
-                <div class="w-full overflow-x-auto"><table id="momoTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
-                    <thead>
-                        <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
-                            <th id="thPeriod3" class="p-3">Periode (Week)</th>
-                            <th class="p-3">Kategori Bisnis Model / Momo</th>
-                            <th class="p-3 text-center">Detractor</th>
-                            <th class="p-3 text-center">Passive</th>
-                            <th class="p-3 text-center">Promotor</th>
-                            <th class="p-3 text-center">Grand Total</th>
-                            <th class="p-3 text-right font-bold">tNPS (%)</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 text-slate-600"></tbody>
-                </table></div>
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-purple-50 text-purple-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
+                        Tabel Rekapitulasi Bisnis Model / Momo / Tomo & Grand Total
+                    </h2>
+                </div>
+                <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
+                    <table id="momoTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
+                                <th id="thPeriod3" class="p-3.5">Periode (Week)</th>
+                                <th class="p-3.5">Kategori Bisnis Model / Momo</th>
+                                <th class="p-3.5 text-center">Detractor</th>
+                                <th class="p-3.5 text-center">Passive</th>
+                                <th class="p-3.5 text-center">Promotor</th>
+                                <th class="p-3.5 text-center">Grand Total</th>
+                                <th class="p-3.5 text-right">tNPS (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -167,11 +243,8 @@
         };
         const ROLLING_WINDOW = 4; // Week N = Week (N-3) s/d Week N
 
-        // true jika tampilan saat ini adalah IndiHome weekly (rolling).
         let isRollingView = false;
 
-        // Label periode untuk ditampilkan. Nilai Period asli (mis. "W41") tetap dipakai
-        // sebagai key & untuk sorting; label hanya untuk tampilan.
         function formatPeriod(p) {
             if (!isRollingView) return p;
             let n = parseInt(String(p).replace(/\D/g, ''));
@@ -180,8 +253,6 @@
             return `${p} (W${start}–W${n})`;
         }
 
-        // Rentang minggu laporan dari nilai dropdown.
-        // "wk_41" = satu minggu saja (W41, dihitung dari W38–W41).
         function getWeekRange(filterMode) {
             if (filterMode.startsWith('wk_')) {
                 let n = parseInt(filterMode.replace('wk_', ''));
@@ -190,7 +261,6 @@
             return WEEK_RANGES[filterMode];
         }
 
-        // Isi dropdown minggu berdasarkan minggu yang ada di file IndiHome.
         function buildWeekOptions() {
             let select = document.getElementById('weekFilter');
             let previous = select.value;
@@ -224,7 +294,6 @@
 
             select.innerHTML = html;
 
-            // Pertahankan pilihan sebelumnya kalau masih tersedia.
             let stillExists = Array.from(select.options).some(o => o.value === previous);
             select.value = stillExists ? previous : 'all';
         }
@@ -241,19 +310,19 @@
             let weekFilterContainer = document.getElementById('weekFilterContainer');
 
             if (mode === 'indihome') {
-                btnIndi.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-red-600 text-white transition shadow-sm";
-                btnMobile.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
-                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
-                uploadText.textContent = "📂 Upload File IndiHome";
+                btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-600 text-white transition-all shadow-md shadow-red-600/20";
+                btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
+                uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all";
+                uploadText.textContent = "Upload File IndiHome";
                 mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
                 subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
             } else {
-                btnMobile.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md bg-blue-600 text-white transition shadow-sm";
-                btnIndi.className = "flex-1 sm:flex-none px-3 sm:px-4 py-2 text-xs font-bold rounded-md text-slate-600 hover:text-slate-900 transition";
-                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition";
-                uploadText.textContent = "📂 Upload File Mobile";
+                btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition-all shadow-md shadow-blue-600/20";
+                btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
+                uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/25 active:scale-95 transition-all";
+                uploadText.textContent = "Upload File Mobile";
                 mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
                 subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total MSISDN • Call Center, GraPARI, Webservice & People";
                 placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
@@ -271,14 +340,13 @@
 
             document.getElementById('fileName').textContent = file.name;
             document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar (14 MB), harap tunggu...";
+            document.getElementById('placeholderTitle').textContent = "Sedang membaca file besar, harap tunggu...";
 
             let reader = new FileReader();
             reader.onload = function(e) {
                 setTimeout(() => {
                     try {
                         let data = new Uint8Array(e.target.result);
-                        // Menggunakan optimasi agar tidak freeze pada file besar
                         currentWorkbook = XLSX.read(data, { type: 'array', cellDates: false, cellStyles: false });
 
                         let sheetNames = currentWorkbook.SheetNames;
@@ -340,7 +408,6 @@
             processAndRender();
         }
 
-        // Klasifikasi 1 baris IndiHome menjadi objek dasar (tanpa Period).
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
@@ -421,21 +488,13 @@
                 let baseRows = globalRawData.map(mapIndihomeRow).filter(r => r.IsValid);
 
                 if (!isRollingView) {
-                    // FULL MONTH: perhitungan lama, setiap baris hanya dihitung di minggu sumbernya.
                     processedData = baseRows.map(r => ({ ...r, Period: `W${r.WeekNum}` }));
                     rowInfoText = `${processedData.length} baris data aktif`;
                 } else {
-                    // WEEKLY: rolling 4 minggu.
-                    // Week N = gabungan data Week (N-3), (N-2), (N-1), dan N.
-                    // Contoh: Week 41 = Week 38 + Week 39 + Week 40 + Week 41.
-                    // Caranya: setiap baris minggu S ikut dihitung ke laporan minggu S, S+1, S+2, S+3.
                     let [minWeek, maxWeek] = getWeekRange(filterMode);
-
-                    // Hanya tampilkan minggu laporan yang datanya benar-benar ada di file,
-                    // supaya tidak muncul minggu "bayangan" yang isinya cuma limpahan minggu sebelumnya.
                     let availableWeeks = new Set(baseRows.map(r => r.WeekNum));
-
                     let usedSourceRows = 0;
+
                     baseRows.forEach(r => {
                         let used = false;
                         for (let offset = 0; offset < ROLLING_WINDOW; offset++) {
@@ -454,7 +513,6 @@
             } else {
                 isRollingView = false;
 
-                // Mode Mobile (Menyesuaikan header msisdn, bulan, unit_type, column2, & bisnis Model)
                 document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
                 document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
                 document.getElementById('thPeriod3').textContent = "Periode (Bulan)";
@@ -463,10 +521,8 @@
 
                 processedData = globalRawData.map(row => {
                     let unitType = getCol(row, 'unit_type').toLowerCase();
-                    // Grand Total Mobile dihitung dari baris dengan MSISDN terisi.
                     let msisdn = getCol(row, 'msisdn').replace(/\s+/g, '');
                     let hasMsisdn = msisdn !== '';
-                    // Kolom sumber klasifikasi skor Mobile adalah 'tNPS' (bukan 'nps' atau 'category').
                     let tNpsVal = getCol(row, 'tnps').toLowerCase();
                     let column2Val = getCol(row, 'column2').toLowerCase();
                     let bulanVal = getCol(row, 'bulan') || getCol(row, 'survey_date') || 'General Period';
@@ -475,8 +531,6 @@
                     let isPromotor = 0, isDetractor = 0, isPassive = 0;
                     let targetNps = tNpsVal;
 
-                    // Setiap kategori dihitung sebagai 1 MSISDN valid berdasarkan nilai pada kolom tNPS.
-                    // Mendukung nilai label (Promotor/Passive/Detractor) maupun skor numerik 0-10.
                     if (hasMsisdn && targetNps !== '') {
                         if (targetNps.includes('promot')) {
                             isPromotor = 1;
@@ -494,7 +548,6 @@
                         }
                     }
 
-                    // CTP Mobile Mapping
                     let ctpGroup = "Call Center";
                     let isGraPARI = false;
                     if (unitType.includes('grapari') || unitType.includes('gerai') || unitType.includes('lite') || unitType.includes('plasa')) {
@@ -508,8 +561,6 @@
                         ctpGroup = unitType ? unitType : "Call Center";
                     }
 
-                    // People CS Mobile hanya mengambil dua kategori dari Column2:
-                    // Petugas Layanan dan Service Officer.
                     let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
 
                     return {
@@ -562,7 +613,6 @@
                     group[k].cs_total += item.Total;
                 }
 
-                // Untuk analisis Momo/Tomo / Bisnis Model
                 let mt = item.MomoTomo;
                 momoPeriods.add(p);
                 let mk = `${p}_${mt}`;
@@ -588,14 +638,22 @@
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return { label: ctp, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
+                return { label: ctp, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 };
             });
 
             if (npsChartInstance) npsChartInstance.destroy();
             npsChartInstance = new Chart(document.getElementById('npsChart').getContext('2d'), {
                 type: 'line',
                 data: { labels: sortedPeriods.map(formatPeriod), datasets: chartSets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
+                    scales: { 
+                        y: { ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    } 
+                }
             });
 
             let csSets = ctpList.map((ctp, i) => {
@@ -605,14 +663,22 @@
                     if (!d || d.cs_total === 0) return 0;
                     return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
                 });
-                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
+                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 };
             });
 
             if (csChartInstance) csChartInstance.destroy();
             csChartInstance = new Chart(document.getElementById('csChart').getContext('2d'), {
                 type: 'line',
                 data: { labels: sortedPeriods.map(formatPeriod), datasets: csSets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
+                    scales: { 
+                        y: { ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    } 
+                }
             });
 
             let uniqueMomoCategories = Array.from(new Set(Object.keys(momoGroup).map(k => k.split('_')[1])));
@@ -629,18 +695,24 @@
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return { label: mtCat, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
+                return { label: mtCat, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 };
             });
 
             if (momoChartInstance) momoChartInstance.destroy();
             momoChartInstance = new Chart(document.getElementById('momoChart').getContext('2d'), {
                 type: 'line',
                 data: { labels: sortedMomoPeriods.map(formatPeriod), datasets: momoChartSets },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { ticks: { callback: v => v + '%' } } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
+                    scales: { 
+                        y: { ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    } 
+                }
             });
 
-            // Catatan: pada mode rolling, satu responden bisa muncul di beberapa minggu laporan,
-            // sehingga baris "Grand Total" adalah penjumlahan dari minggu-minggu rolling tersebut.
             let grandTotalLabel = isRollingView ? "Grand Total (Akumulasi Rolling)" : "Grand Total (Periode Ini)";
 
             // 1. Render Tabel Utama CTP + Grand Total
@@ -660,15 +732,15 @@
                     ctpGrandTotals[ctp].total += d.total;
 
                     let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.className = "hover:bg-slate-50/80 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
-                        <td class="p-3">${ctp}</td>
-                        <td class="p-3 text-center">${d.detractor}</td>
-                        <td class="p-3 text-center">${d.passive}</td>
-                        <td class="p-3 text-center">${d.promotor}</td>
-                        <td class="p-3 text-center">${d.total}</td>
-                        <td class="p-3 text-right font-bold text-slate-700">${npsVal}%</td>
+                        <td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td>
+                        <td class="p-3.5 font-medium text-slate-800">${ctp}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.detractor}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.passive}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.promotor}</td>
+                        <td class="p-3.5 text-center font-semibold text-slate-700">${d.total}</td>
+                        <td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>
                     `;
                     tbody.appendChild(tr);
                 });
@@ -678,15 +750,15 @@
                 let d = ctpGrandTotals[ctp];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                 let tr = document.createElement('tr');
-                tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
+                tr.className = "bg-slate-100/80 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `
-                    <td class="p-3">${grandTotalLabel}</td>
-                    <td class="p-3">${ctp}</td>
-                    <td class="p-3 text-center">${d.detractor}</td>
-                    <td class="p-3 text-center">${d.passive}</td>
-                    <td class="p-3 text-center">${d.promotor}</td>
-                    <td class="p-3 text-center">${d.total}</td>
-                    <td class="p-3 text-right text-red-600">${npsVal}%</td>
+                    <td class="p-3.5">${grandTotalLabel}</td>
+                    <td class="p-3.5">${ctp}</td>
+                    <td class="p-3.5 text-center">${d.detractor}</td>
+                    <td class="p-3.5 text-center">${d.passive}</td>
+                    <td class="p-3.5 text-center">${d.promotor}</td>
+                    <td class="p-3.5 text-center">${d.total}</td>
+                    <td class="p-3.5 text-right text-red-600 font-extrabold">${npsVal}%</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -712,15 +784,15 @@
                     csGrandTotals[ctp].total += tot;
 
                     let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.className = "hover:bg-slate-50/80 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
-                        <td class="p-3">${ctp} (CS People)</td>
-                        <td class="p-3 text-center">${detr}</td>
-                        <td class="p-3 text-center">${pass}</td>
-                        <td class="p-3 text-center">${prom}</td>
-                        <td class="p-3 text-center">${tot}</td>
-                        <td class="p-3 text-right font-bold text-slate-700">${npsVal}%</td>
+                        <td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td>
+                        <td class="p-3.5 font-medium text-slate-800">${ctp} (CS People)</td>
+                        <td class="p-3.5 text-center text-slate-600">${detr}</td>
+                        <td class="p-3.5 text-center text-slate-600">${pass}</td>
+                        <td class="p-3.5 text-center text-slate-600">${prom}</td>
+                        <td class="p-3.5 text-center font-semibold text-slate-700">${tot}</td>
+                        <td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>
                     `;
                     csTbody.appendChild(tr);
                 });
@@ -730,15 +802,15 @@
                 let d = csGrandTotals[ctp];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                 let tr = document.createElement('tr');
-                tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
+                tr.className = "bg-slate-100/80 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `
-                    <td class="p-3">${grandTotalLabel}</td>
-                    <td class="p-3">${ctp} (CS People)</td>
-                    <td class="p-3 text-center">${d.detractor}</td>
-                    <td class="p-3 text-center">${d.passive}</td>
-                    <td class="p-3 text-center">${d.promotor}</td>
-                    <td class="p-3 text-center">${d.total}</td>
-                    <td class="p-3 text-right text-orange-600">${npsVal}%</td>
+                    <td class="p-3.5">${grandTotalLabel}</td>
+                    <td class="p-3.5">${ctp} (CS People)</td>
+                    <td class="p-3.5 text-center">${d.detractor}</td>
+                    <td class="p-3.5 text-center">${d.passive}</td>
+                    <td class="p-3.5 text-center">${d.promotor}</td>
+                    <td class="p-3.5 text-center">${d.total}</td>
+                    <td class="p-3.5 text-right text-orange-600 font-extrabold">${npsVal}%</td>
                 `;
                 csTbody.appendChild(tr);
             });
@@ -760,15 +832,15 @@
                     momoGrandTotals[mtCat].total += d.total;
 
                     let tr = document.createElement('tr');
-                    tr.className = "hover:bg-slate-50 border-b border-slate-100";
+                    tr.className = "hover:bg-slate-50/80 transition-colors";
                     tr.innerHTML = `
-                        <td class="p-3 font-medium text-slate-800">${formatPeriod(p)}</td>
-                        <td class="p-3">${mtCat}</td>
-                        <td class="p-3 text-center">${d.detractor}</td>
-                        <td class="p-3 text-center">${d.passive}</td>
-                        <td class="p-3 text-center">${d.promotor}</td>
-                        <td class="p-3 text-center">${d.total}</td>
-                        <td class="p-3 text-right font-bold text-slate-700">${npsVal}%</td>
+                        <td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td>
+                        <td class="p-3.5 font-medium text-slate-800">${mtCat}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.detractor}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.passive}</td>
+                        <td class="p-3.5 text-center text-slate-600">${d.promotor}</td>
+                        <td class="p-3.5 text-center font-semibold text-slate-700">${d.total}</td>
+                        <td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>
                     `;
                     momoTbody.appendChild(tr);
                 });
@@ -778,15 +850,15 @@
                 let d = momoGrandTotals[mtCat];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                 let tr = document.createElement('tr');
-                tr.className = "bg-slate-100 font-bold border-b border-slate-200 text-slate-900";
+                tr.className = "bg-slate-100/80 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `
-                    <td class="p-3">${grandTotalLabel}</td>
-                    <td class="p-3">${mtCat}</td>
-                    <td class="p-3 text-center">${d.detractor}</td>
-                    <td class="p-3 text-center">${d.passive}</td>
-                    <td class="p-3 text-center">${d.promotor}</td>
-                    <td class="p-3 text-center">${d.total}</td>
-                    <td class="p-3 text-right text-indigo-600">${npsVal}%</td>
+                    <td class="p-3.5">${grandTotalLabel}</td>
+                    <td class="p-3.5">${mtCat}</td>
+                    <td class="p-3.5 text-center">${d.detractor}</td>
+                    <td class="p-3.5 text-center">${d.passive}</td>
+                    <td class="p-3.5 text-center">${d.promotor}</td>
+                    <td class="p-3.5 text-center">${d.total}</td>
+                    <td class="p-3.5 text-right text-indigo-600 font-extrabold">${npsVal}%</td>
                 `;
                 momoTbody.appendChild(tr);
             });
