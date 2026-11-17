@@ -180,6 +180,55 @@
             return `${p} (W${start}–W${n})`;
         }
 
+        // Rentang minggu laporan dari nilai dropdown.
+        // "wk_41" = satu minggu saja (W41, dihitung dari W38–W41).
+        function getWeekRange(filterMode) {
+            if (filterMode.startsWith('wk_')) {
+                let n = parseInt(filterMode.replace('wk_', ''));
+                return [n, n];
+            }
+            return WEEK_RANGES[filterMode];
+        }
+
+        // Isi dropdown minggu berdasarkan minggu yang ada di file IndiHome.
+        function buildWeekOptions() {
+            let select = document.getElementById('weekFilter');
+            let previous = select.value;
+
+            let weeks = new Set();
+            globalRawData.forEach(row => {
+                let m = getCol(row, 'week').match(/\d+/);
+                if (m) {
+                    let n = parseInt(m[0]);
+                    if (n > 0) weeks.add(n);
+                }
+            });
+            let sortedWeeks = Array.from(weeks).sort((a, b) => a - b);
+
+            let html = `<option value="all">Semua Minggu di File (Full Month)</option>`;
+
+            if (sortedWeeks.length > 0) {
+                html += `<optgroup label="Per Minggu (Rolling 4W)">`;
+                sortedWeeks.forEach(n => {
+                    let start = Math.max(1, n - (ROLLING_WINDOW - 1));
+                    html += `<option value="wk_${n}">Week ${n} (W${start}–W${n})</option>`;
+                });
+                html += `</optgroup>`;
+            }
+
+            html += `<optgroup label="Rentang Minggu (Rolling 4W)">
+                <option value="w40_43">Week 40 - Week 43</option>
+                <option value="w44_48">Week 44 - Week 48</option>
+                <option value="w49_52">Week 49 - Week 52</option>
+            </optgroup>`;
+
+            select.innerHTML = html;
+
+            // Pertahankan pilihan sebelumnya kalau masih tersedia.
+            let stillExists = Array.from(select.options).some(o => o.value === previous);
+            select.value = stillExists ? previous : 'all';
+        }
+
         function switchMode(mode) {
             currentMode = mode;
             let btnIndi = document.getElementById('modeIndihome');
@@ -287,6 +336,7 @@
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
 
+            buildWeekOptions();
             processAndRender();
         }
 
@@ -379,7 +429,7 @@
                     // Week N = gabungan data Week (N-3), (N-2), (N-1), dan N.
                     // Contoh: Week 41 = Week 38 + Week 39 + Week 40 + Week 41.
                     // Caranya: setiap baris minggu S ikut dihitung ke laporan minggu S, S+1, S+2, S+3.
-                    let [minWeek, maxWeek] = WEEK_RANGES[filterMode];
+                    let [minWeek, maxWeek] = getWeekRange(filterMode);
 
                     // Hanya tampilkan minggu laporan yang datanya benar-benar ada di file,
                     // supaya tidak muncul minggu "bayangan" yang isinya cuma limpahan minggu sebelumnya.
