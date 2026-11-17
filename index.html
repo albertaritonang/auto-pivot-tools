@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IndiHome tNPS Analytics Dashboard</title>
+    <title>IndiHome tNPS Dashboard</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula tNPS: (Promotor - Detractor) / Grand Total • Auto-Detect Value CTP & Reason</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP & People CS Breakdown</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -93,7 +93,7 @@
                             <th class="p-3">CTP Group</th>
                             <th class="p-3 text-center">Promotor</th>
                             <th class="p-3 text-center">Detractor</th>
-                            <th class="p-3 text-center">Grand Total</th>
+                            <th class="p-3 text-center">Grand Total (ts_call)</th>
                             <th class="p-3 text-right font-bold">tNPS (%)</th>
                         </tr>
                     </thead>
@@ -154,7 +154,6 @@
             }
         });
 
-        // Fungsi pintar untuk mendeteksi nilai dari baris berdasarkan kumpulan kemungkinan nama kolom
         function extractValue(row, possibleKeys) {
             let keys = Object.keys(row);
             for (let pk of possibleKeys) {
@@ -163,7 +162,6 @@
                     return String(row[foundKey]).trim();
                 }
             }
-            // Jika tidak ketemu berdasarkan nama kolom, scan isi teks baris yang mengandung keyword terkait
             for (let k of keys) {
                 let val = String(row[k]).trim().toLowerCase();
                 for (let pk of possibleKeys) {
@@ -183,7 +181,6 @@
             }
 
             globalProcessedData = rawData.map(row => {
-                // Ambil teks dari seluruh kolom untuk mendeteksi value secara fleksibel
                 let allRowText = Object.values(row).join(" ").toLowerCase();
 
                 let dateVal = extractValue(row, ['Date', 'tanggal', 'TANGGAL', 'Timestamp', 'Waktu']);
@@ -191,14 +188,12 @@
                 let reasonDesc = extractValue(row, ['Reason Desc', 'reason_desc', 'REASON DESC', 'Reason', 'Alasan', 'Keterangan']);
                 let npsCategory = extractValue(row, ['NPS Category', 'nps_category', 'Category', 'Kategori NPS', 'NPS', 'Column Labels']);
 
-                // Jika npsCategory kosong dari kolom spesifik, cek dari gabungan teks baris
                 if (!npsCategory) {
                     if (allRowText.includes('promot')) npsCategory = 'promotor';
                     else if (allRowText.includes('detract')) npsCategory = 'detractor';
                     else if (allRowText.includes('passiv')) npsCategory = 'passive';
                 }
 
-                // Format Week & Month
                 let weekStr = 'Week 1';
                 let monthStr = 'Bulan Ini';
                 if (dateVal) {
@@ -215,7 +210,6 @@
                     }
                 }
 
-                // CTP Mapping Fleksibel (Call Center, GraPARI, Socmed)
                 let ctpGroup = "Call Center";
                 let combinedUnit = (unitType + " " + allRowText).toLowerCase();
                 if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa') || combinedUnit.includes('dyandra')) {
@@ -226,7 +220,6 @@
                     ctpGroup = "Call Center";
                 }
 
-                // CS People Reason Filtering
                 let targetReasons = [
                     "CUSTOMER SERVICE",
                     "Customer service cukup responsif",
@@ -248,7 +241,7 @@
                     Is_CS: isCS,
                     Promoter: isPromotor,
                     Detractor: isDetractor,
-                    Total: 1
+                    Total: 1 // Berperan sebagai ts_call (Grand Total responden per baris)
                 };
             });
 
@@ -278,7 +271,7 @@
 
                 groupData[key].promoter += item.Promoter;
                 groupData[key].detractor += item.Detractor;
-                groupData[key].total += item.Total;
+                groupData[key].total += item.Total; // Grand Total (ts_call)
 
                 if (item.Is_CS) {
                     groupData[key].cs_promoter += item.Promoter;
