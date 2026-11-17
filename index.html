@@ -22,7 +22,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-slate-900">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • Berdasarkan unit_type2 & reason_desc</p>
+                    <p class="text-sm text-slate-500 mt-1">Formula: (Promotor - Detractor) / Grand Total (ts_call) • GraPARI Momo/Tomo & Week 40-43</p>
                 </div>
                 
                 <!-- Upload Input -->
@@ -78,7 +78,7 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 overflow-x-auto">
-                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci Komponen & tNPS (%)</h2>
+                <h2 class="text-lg font-bold text-slate-900 mb-4">📋 Tabel Rinci Komponen & tNPS (%) [Grand Total Week 40-43]</h2>
                 <table id="summaryTable" class="w-full text-left border-collapse text-sm">
                     <thead>
                         <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
@@ -149,10 +149,15 @@
             if (globalProcessedData.length > 0) renderDashboard();
         });
 
-        function getCol(row, name) {
+        function getCol(row, possibleNames) {
             let keys = Object.keys(row);
-            let found = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());
-            return found !== undefined && row[found] !== undefined ? String(row[found]).trim() : '';
+            for (let name of possibleNames) {
+                let found = keys.find(k => k.trim().toLowerCase() === name.toLowerCase());
+                if (found !== undefined && row[found] !== undefined) {
+                    return String(row[found]).trim();
+                }
+            }
+            return '';
         }
 
         function processSheet(sheetName) {
@@ -165,36 +170,26 @@
             }
 
             globalProcessedData = rawData.map(row => {
-                let unitType2 = getCol(row, 'unit_type2').toLowerCase();
-                let npsVal = getCol(row, 'nps').toLowerCase();
-                let categoryVal = getCol(row, 'category').toLowerCase();
-                let reasonDesc = getCol(row, 'reason_desc');
-                let weekVal = getCol(row, 'week');
-                let tsCallVal = getCol(row, 'ts_call');
+                let unitType2 = getCol(row, ['unit_type2']).toLowerCase();
+                let npsVal = getCol(row, ['nps']).toLowerCase();
+                let categoryVal = getCol(row, ['category']).toLowerCase();
+                let reasonDesc = getCol(row, ['reason_desc']);
+                let weekVal = getCol(row, ['week']);
+                let tsCallVal = getCol(row, ['ts_call']);
+                let momoTomoVal = getCol(row, ['Momo/  Tomo', 'momo/tomo', 'momo_tomo']);
 
-                // Deteksi status NPS dari kolom 'nps' terlebih dahulu, lalu fallback ke 'category'
-                let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                let targetNps = npsVal || categoryVal;
-
-                if (targetNps !== '') {
-                    let numScore = Number(targetNps);
-                    if (!isNaN(numScore) && targetNps.trim() !== '') {
-                        // Jika kolom nps berisi angka skor 0-10
-                        if (numScore >= 9) isPromotor = 1;
-                        else if (numScore >= 7) isPassive = 1;
-                        else if (numScore >= 0) isDetractor = 1;
-                    } else {
-                        // Jika kolom nps berisi teks label
-                        if (targetNps.includes('promot')) isPromotor = 1;
-                        else if (targetNps.includes('detract')) isDetractor = 1;
-                        else if (targetNps.includes('passiv')) isPassive = 1;
-                    }
-                }
+                // Filter Week hanya antara 40 sampai 43
+                let weekNum = parseInt(weekVal);
+                let isValidWeek = (!isNaN(weekNum) && weekNum >= 40 && weekNum <= 43);
 
                 // Pemetaan unit_type2 ke CTP Group (call center, grapari, socmed)
                 let ctpGroup = "Call Center";
                 if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
                     ctpGroup = "GraPARI";
+                    // Khusus GraPARI, cek informasi Momo / Tomo jika diperlukan
+                    if (momoTomoVal) {
+                        ctpGroup = `GraPARI (${momoTomoVal})`;
+                    }
                 } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
                     ctpGroup = "Socmed";
                 } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
@@ -203,14 +198,31 @@
                     ctpGroup = unitType2 ? unitType2 : "Call Center";
                 }
 
-                // Ekstraksi Periode Minggu & Bulan
-                let weekStr = weekVal ? `Week ${weekVal}` : 'Week 1';
-                let monthStr = 'Bulan Ini';
+                // Deteksi status NPS
+                let isPromotor = 0, isDetractor = 0, isPassive = 0;
+                let targetNps = npsVal || categoryVal;
+
+                if (targetNps !== '') {
+                    let numScore = Number(targetNps);
+                    if (!isNaN(numScore) && targetNps.trim() !== '') {
+                        if (numScore >= 9) isPromotor = 1;
+                        else if (numScore >= 7) isPassive = 1;
+                        else if (numScore >= 0) isDetractor = 1;
+                    } else {
+                        if (targetNps.includes('promot')) isPromotor = 1;
+                        else if (targetNps.includes('detract')) isDetractor = 1;
+                        else if (targetNps.includes('passiv')) isPassive = 1;
+                    }
+                }
+
+                // Periode Minggu & Bulan
+                let weekStr = !isNaN(weekNum) ? `Week ${weekNum}` : 'Week 40-43';
+                let monthStr = 'Grand Total (W40-43)';
                 if (tsCallVal) {
                     let d = new Date(tsCallVal);
                     if (!isNaN(d.getTime()) && d.getFullYear() > 2015) {
                         let mNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
-                        monthStr = `${mNames[d.getMonth()]} ${d.getFullYear()}`;
+                        monthStr = `${mNames[d.getMonth()]} ${d.getFullYear()} (W40-43)`;
                     }
                 }
 
@@ -226,6 +238,7 @@
                 let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
                 return {
+                    IsValidWeek: isValidWeek,
                     Parsed_Week: weekStr,
                     Parsed_Month: monthStr,
                     Mapped_CTP: ctpGroup,
@@ -235,12 +248,12 @@
                     Passive: isPassive,
                     Total: 1
                 };
-            });
+            }).filter(item => item.IsValidWeek); // Hanya ambil data yang masuk rentang Week 40 - 43
 
             document.getElementById('fileInfo').classList.remove('hidden');
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
-            document.getElementById('rowCount').textContent = `${globalProcessedData.length} baris data`;
+            document.getElementById('rowCount').textContent = `${globalProcessedData.length} baris data (Week 40-43)`;
 
             renderDashboard();
         }
@@ -249,7 +262,13 @@
             let timeDim = document.getElementById('timeSelector').value;
             let group = {};
             let periods = new Set();
-            let ctpList = ["Call Center", "GraPARI", "Socmed"];
+            let ctpListSet = new Set(["Call Center", "Socmed"]);
+
+            // Masukkan CTP utama & variasi GraPARI Momo/Tomo
+            globalProcessedData.forEach(item => {
+                ctpListSet.add(item.Mapped_CTP);
+            });
+            let ctpList = Array.from(ctpListSet).sort();
 
             globalProcessedData.forEach(item => {
                 let p = item[timeDim];
@@ -276,23 +295,23 @@
             let sortedPeriods = Array.from(periods).sort();
 
             let chartSets = ctpList.map((ctp, i) => {
-                let colors = ['#dc2626', '#2563eb', '#16a34a'];
+                let colors = ['#dc2626', '#2563eb', '#16a34a', '#d97706', '#9333ea', '#06b6d4'];
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}_${ctp}`];
                     if (!d || d.total === 0) return 0;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return { label: ctp, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
+                return { label: ctp, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
             });
 
             let csSets = ctpList.map((ctp, i) => {
-                let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
+                let colors = ['#f97316', '#8b5cf6', '#06b6d4', '#e11d48', '#10b981', '#6366f1'];
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}_${ctp}`];
                     if (!d || d.cs_total === 0) return 0;
                     return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
                 });
-                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.2 };
+                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.2 };
             });
 
             if (npsChartInstance) npsChartInstance.destroy();
@@ -313,7 +332,8 @@
             tbody.innerHTML = '';
             sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}_${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    let d = group[`${p}_${ctp}`];
+                    if (!d || d.total === 0) return; // Hanya tampilkan baris yang ada datanya
                     let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                     
                     let tr = document.createElement('tr');
