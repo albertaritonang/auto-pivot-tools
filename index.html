@@ -166,10 +166,30 @@
 
             globalProcessedData = rawData.map(row => {
                 let unitType2 = getCol(row, 'unit_type2').toLowerCase();
-                let category = getCol(row, 'category').toLowerCase();
+                let npsVal = getCol(row, 'nps').toLowerCase();
+                let categoryVal = getCol(row, 'category').toLowerCase();
                 let reasonDesc = getCol(row, 'reason_desc');
                 let weekVal = getCol(row, 'week');
                 let tsCallVal = getCol(row, 'ts_call');
+
+                // Deteksi status NPS dari kolom 'nps' terlebih dahulu, lalu fallback ke 'category'
+                let isPromotor = 0, isDetractor = 0, isPassive = 0;
+                let targetNps = npsVal || categoryVal;
+
+                if (targetNps !== '') {
+                    let numScore = Number(targetNps);
+                    if (!isNaN(numScore) && targetNps.trim() !== '') {
+                        // Jika kolom nps berisi angka skor 0-10
+                        if (numScore >= 9) isPromotor = 1;
+                        else if (numScore >= 7) isPassive = 1;
+                        else if (numScore >= 0) isDetractor = 1;
+                    } else {
+                        // Jika kolom nps berisi teks label
+                        if (targetNps.includes('promot')) isPromotor = 1;
+                        else if (targetNps.includes('detract')) isDetractor = 1;
+                        else if (targetNps.includes('passiv')) isPassive = 1;
+                    }
+                }
 
                 // Pemetaan unit_type2 ke CTP Group (call center, grapari, socmed)
                 let ctpGroup = "Call Center";
@@ -205,10 +225,6 @@
                 ];
                 let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
-                let isPromotor = category.includes('promot') ? 1 : 0;
-                let isDetractor = category.includes('detract') ? 1 : 0;
-                let isPassive = category.includes('passiv') ? 1 : 0;
-
                 return {
                     Parsed_Week: weekStr,
                     Parsed_Month: monthStr,
@@ -217,7 +233,7 @@
                     Promoter: isPromotor,
                     Detractor: isDetractor,
                     Passive: isPassive,
-                    Total: 1 // Berperan sebagai hitungan responden ts_call per baris
+                    Total: 1
                 };
             });
 
