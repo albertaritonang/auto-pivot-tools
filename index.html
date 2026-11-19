@@ -194,22 +194,8 @@
                 <div class="relative w-full mb-5" id="sourceChartWrap" style="height: 320px;"><canvas id="sourceChart"></canvas></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan per Source</h3>
-                <div class="w-full overflow-x-auto rounded-xl border border-slate-100 mb-6">
-                    <table id="sourceSummaryTable" class="min-w-[700px] w-full text-left border-collapse text-xs sm:text-sm">
-                        <thead>
-                            <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
-                                <th id="thPeriodSrcSum" class="p-3.5">Periode (Week)</th>
-                                <th id="thSourceNameSum" class="p-3.5">Source</th>
-                                <th class="p-3.5 text-center">Detractor</th>
-                                <th class="p-3.5 text-center">Passive</th>
-                                <th class="p-3.5 text-center">Promotor</th>
-                                <th class="p-3.5 text-center">Grand Total</th>
-                                <th class="p-3.5 text-right">tNPS (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
-                    </table>
-                </div>
+                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kolom terpisah agar perbandingan Week dan tNPS lebih mudah dibaca.</p>
+                <div id="sourceSummaryCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Rincian Source per CTP (unit_type2)</h3>
                 <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
@@ -1009,33 +995,58 @@
             let allSrc = empty();
             sourceNames.forEach(sn => ['promotor', 'detractor', 'passive', 'total'].forEach(f => allSrc[f] += srcTotal[sn][f]));
 
-            document.getElementById('thSourceNameSum').textContent = `Source (${sourceCol})`;
-            document.getElementById('thPeriodSrcSum').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
-            let sumBody = document.querySelector('#sourceSummaryTable tbody');
-            sumBody.innerHTML = '';
-            const sumRow = (c1, c2, d, cls, npsCls) => {
-                let tr = document.createElement('tr');
-                tr.className = cls;
-                tr.innerHTML = `
-                    <td class="p-3.5">${c1}</td>
-                    <td class="p-3.5">${c2}</td>
-                    <td class="p-3.5 text-center">${d.detractor}</td>
-                    <td class="p-3.5 text-center">${d.passive}</td>
-                    <td class="p-3.5 text-center">${d.promotor}</td>
-                    <td class="p-3.5 text-center font-semibold">${d.total}</td>
-                    <td class="p-3.5 text-right ${npsCls}">${npsOf(d).toFixed(2)}%</td>`;
-                sumBody.appendChild(tr);
-            };
-            sortedPeriods.forEach(p => {
-                sourceNames.forEach(sn => {
+            // ---- Ringkasan per source: satu kolom/kartu untuk setiap source ----
+            let cardsWrap = document.getElementById('sourceSummaryCards');
+            cardsWrap.innerHTML = '';
+            const sourceCardCell = (value, cls = '') => `<td class="px-2.5 py-2.5 ${cls}">${value}</td>`;
+            sourceNames.forEach((sn, sourceIndex) => {
+                let card = document.createElement('div');
+                card.className = "rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm";
+                let rows = sortedPeriods.map(p => {
                     let d = srcPeriod[p + SEP + sn];
-                    if (d) sumRow(formatPeriod(p), sn, d, "hover:bg-slate-50/80 transition-colors font-semibold text-slate-700", 'font-bold text-slate-900');
-                });
+                    if (!d) return '';
+                    return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+                        ${sourceCardCell(formatPeriod(p), 'font-semibold text-slate-700 whitespace-nowrap')}
+                        ${sourceCardCell(d.detractor, 'text-center')}
+                        ${sourceCardCell(d.passive, 'text-center')}
+                        ${sourceCardCell(d.promotor, 'text-center')}
+                        ${sourceCardCell(d.total, 'text-center font-semibold')}
+                        ${sourceCardCell(npsOf(d).toFixed(2) + '%', 'text-right font-bold text-slate-900 whitespace-nowrap')}
+                    </tr>`;
+                }).join('');
+                let total = srcTotal[sn];
+                card.innerHTML = `
+                    <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
+                        <h4 class="font-extrabold text-slate-800 text-sm">${sn}</h4>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Source ${sourceIndex + 1}</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[11px] sm:text-xs text-slate-600">
+                            <thead class="bg-white text-slate-500 uppercase tracking-wide">
+                                <tr>
+                                    <th class="px-2.5 py-2.5 text-left">Week</th>
+                                    <th class="px-2.5 py-2.5 text-center">D</th>
+                                    <th class="px-2.5 py-2.5 text-center">P</th>
+                                    <th class="px-2.5 py-2.5 text-center">Prom</th>
+                                    <th class="px-2.5 py-2.5 text-center">Total</th>
+                                    <th class="px-2.5 py-2.5 text-right">tNPS</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                            <tfoot>
+                                <tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
+                                    <td class="px-2.5 py-3" colspan="1">Grand Total</td>
+                                    <td class="px-2.5 py-3 text-center">${total.detractor}</td>
+                                    <td class="px-2.5 py-3 text-center">${total.passive}</td>
+                                    <td class="px-2.5 py-3 text-center">${total.promotor}</td>
+                                    <td class="px-2.5 py-3 text-center">${total.total}</td>
+                                    <td class="px-2.5 py-3 text-right text-sky-700">${npsOf(total).toFixed(2)}%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>`;
+                cardsWrap.appendChild(card);
             });
-            let gtLabel = isRollingView ? "Grand Total (Akumulasi Rolling)" : "Grand Total (Periode Ini)";
-            sourceNames.forEach((sn, i) => sumRow(gtLabel, sn, srcTotal[sn],
-                "bg-slate-100/80 font-bold text-slate-900" + (i === 0 ? " border-t border-slate-200" : ""), 'text-sky-700 font-extrabold'));
-            sumRow("Total", "Semua source", allSrc, "bg-sky-50 font-extrabold text-slate-900 border-t-2 border-sky-200", 'text-sky-800');
 
             // ---- Grafik: tNPS per source per periode + Grand Total ----
             let palette = ['#0284c7', '#e11d48', '#16a34a', '#f59e0b', '#8b5cf6', '#64748b', '#0d9488', '#db2777'];
