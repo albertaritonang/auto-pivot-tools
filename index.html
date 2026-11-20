@@ -90,16 +90,6 @@
                         </select>
                     </div>
 
-                    <!-- [INDIHOME] Dropdown Filter Call Center (Bandung / Semarang) -->
-                    <div id="ccFilterContainer" class="flex items-center gap-2 bg-red-50/80 border border-red-200 px-3 py-1.5 rounded-xl shadow-sm">
-                        <label for="ccFilter" class="text-xs font-bold text-red-700 uppercase tracking-wide">Call Center:</label>
-                        <select id="ccFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="all">Semua Call Center</option>
-                            <option value="bandung">CC Bandung</option>
-                            <option value="semarang">CC Semarang</option>
-                        </select>
-                    </div>
-
                     <!-- [MOBILE] Info master Bisnis Model (unit_name → MOMO/TOMO) -->
                     <div id="masterInfoContainer" class="hidden items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <span id="masterInfo" class="text-xs font-semibold text-blue-800"></span>
@@ -130,38 +120,22 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Grafik Utama tNPS % -->
                 <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                             <span class="p-2 rounded-xl bg-red-50 text-red-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg></span>
                             Tren tNPS (%) Per CTP
                         </h2>
-                        <div id="ccFilterBadge1" class="hidden items-center gap-1.5 bg-red-50 border border-red-200 px-2.5 py-1 rounded-lg">
-                            <span class="text-[11px] font-bold text-red-700">CC:</span>
-                            <select class="ccFilterSync border-0 bg-transparent text-xs font-bold text-red-800 focus:outline-none cursor-pointer">
-                                <option value="all">Semua CC</option>
-                                <option value="bandung">CC Bandung</option>
-                                <option value="semarang">CC Semarang</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="relative h-72 sm:h-80 w-full"><canvas id="npsChart"></canvas></div>
                 </div>
 
                 <!-- Grafik People CS % -->
                 <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
-                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                         <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                             <span class="p-2 rounded-xl bg-orange-50 text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></span>
                             tNPS People Customer Service (%)
                         </h2>
-                        <div id="ccFilterBadge2" class="hidden items-center gap-1.5 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-lg">
-                            <span class="text-[11px] font-bold text-orange-700">CC:</span>
-                            <select class="ccFilterSync border-0 bg-transparent text-xs font-bold text-orange-800 focus:outline-none cursor-pointer">
-                                <option value="all">Semua CC</option>
-                                <option value="bandung">CC Bandung</option>
-                                <option value="semarang">CC Semarang</option>
-                            </select>
-                        </div>
                     </div>
                     <div class="relative h-72 sm:h-80 w-full"><canvas id="csChart"></canvas></div>
                 </div>
@@ -169,15 +143,14 @@
 
             <!-- Grafik Analisis Momo/Tomo GraPARI -->
             <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 transition-all hover:shadow-2xl">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                     <h2 id="momoChartTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-indigo-50 text-indigo-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg></span>
                         Analisis tNPS Bisnis Model / Momo / Tomo (Khusus GraPARI)
                     </h2>
-                    <!-- Dropdown Filter Tampilan Momo/Tomo (IndiHome) -->
-                    <div id="momoViewFilterContainer" class="flex items-center gap-2 bg-indigo-50/80 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
-                        <label for="momoViewFilter" class="text-xs font-bold text-indigo-700 uppercase tracking-wide">Tampilan:</label>
-                        <select id="momoViewFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer">
+                    <div id="momoChartFilterWrap" class="flex items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label for="momoFilterChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Filter:</label>
+                        <select id="momoFilterChart" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="overall">Momo / Tomo (GraPARI)</option>
                             <option value="area">Per Area (Momo / Tomo)</option>
                             <option value="regional">Per Regional (Momo / Tomo)</option>
@@ -189,11 +162,19 @@
 
             <!-- Tabel Detail CTP + Grand Total -->
             <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                     <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></span>
                         Tabel Rinci tNPS (%) & Grand Total CTP
                     </h2>
+                    <div class="ccFilterWrap flex items-center gap-2 bg-red-50/90 border border-red-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-[11px] font-bold text-red-700 uppercase tracking-wide">Call Center:</label>
+                        <select class="ccFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer" onchange="setCcFilter(this.value)">
+                            <option value="all">Semua Call Center</option>
+                            <option value="bandung">CC Bandung</option>
+                            <option value="semarang">CC Semarang</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
                     <table id="summaryTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
@@ -254,11 +235,19 @@
 
             <!-- Tabel People CS + Grand Total -->
             <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                     <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-orange-50 text-orange-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg></span>
                         Tabel Rinci tNPS People Customer Service (%) & Grand Total
                     </h2>
+                    <div class="ccFilterWrap flex items-center gap-2 bg-orange-50/90 border border-orange-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-[11px] font-bold text-orange-700 uppercase tracking-wide">Call Center:</label>
+                        <select class="ccFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer" onchange="setCcFilter(this.value)">
+                            <option value="all">Semua Call Center</option>
+                            <option value="bandung">CC Bandung</option>
+                            <option value="semarang">CC Semarang</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="w-full overflow-x-auto rounded-xl border border-slate-100">
                     <table id="csTable" class="min-w-[800px] w-full text-left border-collapse text-xs sm:text-sm">
@@ -280,15 +269,14 @@
 
             <!-- Tabel Momo/Tomo GraPARI + Grand Total -->
             <div class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                     <h2 id="momoTableTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-purple-50 text-purple-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
                         Tabel Rekapitulasi Bisnis Model / Momo / Tomo (Khusus GraPARI) & Grand Total
                     </h2>
-                    <!-- Sinkronisasi Dropdown Filter Tampilan Momo/Tomo -->
-                    <div id="momoTableFilterContainer" class="flex items-center gap-2 bg-purple-50/80 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
-                        <label for="momoViewFilterTable" class="text-xs font-bold text-purple-700 uppercase tracking-wide">Filter:</label>
-                        <select id="momoViewFilterTable" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer">
+                    <div id="momoTableFilterWrap" class="flex items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label for="momoFilterTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Filter:</label>
+                        <select id="momoFilterTable" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="overall">Momo / Tomo (GraPARI)</option>
                             <option value="area">Per Area (Momo / Tomo)</option>
                             <option value="regional">Per Regional (Momo / Tomo)</option>
@@ -300,7 +288,7 @@
                         <thead>
                             <tr class="bg-slate-50/80 text-slate-600 uppercase font-bold text-[11px] tracking-wider border-b border-slate-200">
                                 <th id="thPeriod3" class="p-3.5">Periode (Week)</th>
-                                <th id="thMomoGroup" class="p-3.5 hidden">Area / Regional</th>
+                                <th id="thMomoDim" class="p-3.5 hidden">Area / Regional</th>
                                 <th class="p-3.5">Kategori Bisnis Model / Momo</th>
                                 <th class="p-3.5 text-center">Detractor</th>
                                 <th class="p-3.5 text-center">Passive</th>
@@ -334,6 +322,9 @@
 
         // =====================================================================
         // [MOBILE] Master Bisnis Model: unit_name → MOMO / TOMO
+        // Seed diambil dari raw data Mobile Oktober 2026 (464 unit).
+        // Setiap upload file Mobile yang punya kolom "bisnis Model" akan
+        // otomatis memperbarui master ini (disimpan di browser).
         // =====================================================================
         const SEED_BISNIS_MODEL = {"GraPARI Abepura":"TOMO","GraPARI Airmadidi":"TOMO","GraPARI Ambon":"TOMO","GraPARI Amlapura":"TOMO","GraPARI Ampana":"TOMO","GraPARI Amuntai":"MOMO","GraPARI Amurang":"MOMO","GraPARI Atambua":"TOMO","GraPARI BSD":"TOMO","GraPARI Baa Rote":"MOMO","GraPARI Bagan Batu":"MOMO","GraPARI Bagan Siapiapi":"MOMO","GraPARI Bajawa":"TOMO","GraPARI Balaikarangan":"TOMO","GraPARI Balaraja":"MOMO","GraPARI Balige":"MOMO","GraPARI Balikpapan A Yani":"TOMO","GraPARI Banda Aceh":"TOMO","GraPARI Bandar Jaya":"MOMO","GraPARI Bandar Sribawono":"MOMO","GraPARI Bandung Elektronik Center":"MOMO","GraPARI Banggai":"MOMO","GraPARI Bangka":"MOMO","GraPARI Bangkalan":"MOMO","GraPARI Bangkinang":"MOMO","GraPARI Banjar":"TOMO","GraPARI Banjarbaru HM Noor":"TOMO","GraPARI Banjarmasin":"TOMO","GraPARI Banjarnegara":"MOMO","GraPARI Bantaeng":"TOMO","GraPARI Bantarkalong":"MOMO","GraPARI Bantul":"TOMO","GraPARI Banyumanik":"MOMO","GraPARI Banyuwangi":"TOMO","GraPARI Barabai":"MOMO","GraPARI Barito Selatan":"MOMO","GraPARI Barong Tongkok":"MOMO","GraPARI Barru":"TOMO","GraPARI Bassura City Mall Jakarta":"MOMO","GraPARI Batam Center":"TOMO","GraPARI Batang":"MOMO","GraPARI Batu":"TOMO","GraPARI Batu Sangkar":"MOMO","GraPARI Batulicin":"MOMO","GraPARI Baturaja":"MOMO","GraPARI Bau Bau":"MOMO","GraPARI Bekasi Cyber Park":"TOMO","GraPARI Belitang":"MOMO","GraPARI Belitung":"TOMO","GraPARI Bengkalis":"MOMO","GraPARI Bengkayang":"MOMO","GraPARI Bengkulu":"TOMO","GraPARI Betung":"MOMO","GraPARI Biak":"MOMO","GraPARI Bima":"MOMO","GraPARI Binjai Supermall":"TOMO","GraPARI Bintan":"MOMO","GraPARI Bintaro Jaya Xchange":"MOMO","GraPARI Bireun":"MOMO","GraPARI Bitung":"TOMO","GraPARI Blitar":"MOMO","GraPARI Blora":"TOMO","GraPARI Bogor":"TOMO","GraPARI Bojonegoro":"MOMO","GraPARI Bojongsoang":"MOMO","GraPARI Bondowoso":"MOMO","GraPARI Bone":"TOMO","GraPARI Bontang":"TOMO","GraPARI Boyolali":"TOMO","GraPARI Brebes":"MOMO","GraPARI Bukit Tinggi":"TOMO","GraPARI Bula":"MOMO","GraPARI Bulukumba":"TOMO","GraPARI Bumiayu":"TOMO","GraPARI Cengkareng":"MOMO","GraPARI Central Park Jakarta":"TOMO","GraPARI Ciamis":"MOMO","GraPARI Cianjur":"TOMO","GraPARI Cibinong":"TOMO","GraPARI Cicurug":"TOMO","GraPARI Cikampek":"MOMO","GraPARI Cikarang":"TOMO","GraPARI Cikupa":"MOMO","GraPARI Cilacap":"MOMO","GraPARI Ciledug Cirebon":"MOMO","GraPARI Cilegon":"TOMO","GraPARI Cimahi":"TOMO","GraPARI Ciputat":"TOMO","GraPARI Cirebon":"TOMO","GraPARI Cirebon Super Blok":"MOMO","GraPARI Curup":"MOMO","GraPARI Dabo Singkep":"MOMO","GraPARI Dago":"TOMO","GraPARI Demak":"MOMO","GraPARI Dobo":"MOMO","GraPARI Dompu":"MOMO","GraPARI Dramaga":"MOMO","GraPARI Dumai":"TOMO","GraPARI Duri":"MOMO","GraPARI Emporium Pluit Jakarta":"MOMO","GraPARI Ende":"TOMO","GraPARI Enrekang":"MOMO","GraPARI Flamboyan":"MOMO","GraPARI Garut":"MOMO","GraPARI Gatsu Tengah Denpasar":"MOMO","GraPARI Genteng":"MOMO","GraPARI Gorontalo":"TOMO","GraPARI Gowa":"MOMO","GraPARI Graha Merah Putih":"TOMO","GraPARI Grand Batam Mall":"TOMO","GraPARI Gresik":"TOMO","GraPARI Gunung Kidul":"MOMO","GraPARI Gunung Sitoli":"MOMO","GraPARI ITC Depok":"MOMO","GraPARI Indralaya":"MOMO","GraPARI Indramayu":"MOMO","GraPARI Jambi":"TOMO","GraPARI Jatibarang":"MOMO","GraPARI Jayapura":"TOMO","GraPARI Jember":"TOMO","GraPARI Jeneponto":"TOMO","GraPARI Jepara":"TOMO","GraPARI Jimbaran":"TOMO","GraPARI Jombang":"TOMO","GraPARI Kabanjahe":"MOMO","GraPARI Kaimana":"TOMO","GraPARI Kalabahi":"TOMO","GraPARI Kalianda":"MOMO","GraPARI Kalibata":"TOMO","GraPARI Kandangan":"MOMO","GraPARI Kapten Muslim":"MOMO","GraPARI Karanganyar":"TOMO","GraPARI Kasongan":"MOMO","GraPARI Kayu Agung":"MOMO","GraPARI Kebumen":"MOMO","GraPARI Kediri":"TOMO","GraPARI Kefamenanu":"TOMO","GraPARI Kembangan":"MOMO","GraPARI Kendal":"TOMO","GraPARI Kendari":"TOMO","GraPARI Kepanjen":"MOMO","GraPARI Ketapang":"TOMO","GraPARI Kisaran":"TOMO","GraPARI Klaten":"TOMO","GraPARI Kolaka":"MOMO","GraPARI Kosambi":"MOMO","GraPARI Kota Bangun":"MOMO","GraPARI Kota Pinang":"MOMO","GraPARI Kotabaru":"MOMO","GraPARI Kotabumi":"MOMO","GraPARI Kotamobagu":"TOMO","GraPARI Kraksaan":"MOMO","GraPARI Kroya":"MOMO","GraPARI Kuala Kapuas":"TOMO","GraPARI Kubu Raya":"MOMO","GraPARI Kudus":"TOMO","GraPARI Kulonprogo":"MOMO","GraPARI Kuningan":"MOMO","GraPARI Kupang":"TOMO","GraPARI Kuranji":"MOMO","GraPARI Kuta":"TOMO","GraPARI Kutacane":"MOMO","GraPARI Kwandang":"TOMO","GraPARI Labuan Bajo":"MOMO","GraPARI Labuan Pandeglang":"MOMO","GraPARI Labuan pandeglang":"MOMO","GraPARI Labuha":"MOMO","GraPARI Lahat":"MOMO","GraPARI Lambaro":"MOMO","GraPARI Lamongan":"MOMO","GraPARI Lampung Majapahit":"TOMO","GraPARI Langowan":"TOMO","GraPARI Langsa":"MOMO","GraPARI Larantuka":"TOMO","GraPARI Lembang":"MOMO","GraPARI Lembong":"TOMO","GraPARI Lhokseumawe":"TOMO","GraPARI Living World Pekanbaru":"TOMO","GraPARI Loajanan":"MOMO","GraPARI Lombok Timur":"MOMO","GraPARI Lombok Utara":"MOMO","GraPARI Lubuk Alung":"MOMO","GraPARI Lubuk Basung":"MOMO","GraPARI Lubuk Linggau":"TOMO","GraPARI Lubuk Pakam":"MOMO","GraPARI Lubuk Sikaping":"MOMO","GraPARI Lumajang":"MOMO","GraPARI MDP Palembang":"MOMO","GraPARI Madiun Pahlawan":"TOMO","GraPARI Magelang":"TOMO","GraPARI Magetan":"TOMO","GraPARI Majalaya":"MOMO","GraPARI Majalengka":"MOMO","GraPARI Majenang":"MOMO","GraPARI Majene":"TOMO","GraPARI Makale":"MOMO","GraPARI Makassar":"TOMO","GraPARI Makassar Balaikota":"TOMO","GraPARI Malaka":"MOMO","GraPARI Malang":"TOMO","GraPARI Malang Blimbing":"MOMO","GraPARI Malili":"MOMO","GraPARI Malinau":"MOMO","GraPARI Mall Ambassador Jakarta":"MOMO","GraPARI Mall Balikpapan Baru":"TOMO","GraPARI Mall Cijantung Jakarta":"MOMO","GraPARI Mall Cinere":"MOMO","GraPARI Mall Grand Cibubur":"TOMO","GraPARI Mall Kelapa Gading Jakarta":"TOMO","GraPARI Mall Kota Kasablanka Jakarta":"TOMO","GraPARI Mall Nagoya Hill Batam":"MOMO","GraPARI Mall Panakukang Makassar":"MOMO","GraPARI Mall Panbill Batam":"MOMO","GraPARI Mall Sarinah":"TOMO","GraPARI Mall Technomart Karawang":"TOMO","GraPARI Maluk":"MOMO","GraPARI Mamasa":"MOMO","GraPARI Mamuju":"MOMO","GraPARI Manado":"TOMO","GraPARI Manna":"MOMO","GraPARI Manokwari":"TOMO","GraPARI Margorejo":"TOMO","GraPARI Marisa":"TOMO","GraPARI Maros":"TOMO","GraPARI Masamba":"TOMO","GraPARI Masohi":"MOMO","GraPARI Mataram":"TOMO","GraPARI Maumere":"TOMO","GraPARI Medan":"TOMO","GraPARI Medan Karyajasa":"MOMO","GraPARI Medan Marelan":"MOMO","GraPARI Merangin":"MOMO","GraPARI Merauke":"MOMO","GraPARI Meteorologi":"MOMO","GraPARI Metro Lampung":"MOMO","GraPARI Metro Trade Center Bandung":"MOMO","GraPARI Meulaboh":"TOMO","GraPARI Miko Mall Bandung":"MOMO","GraPARI Mojokerto":"TOMO","GraPARI Morowali":"MOMO","GraPARI Muara Bungo":"MOMO","GraPARI Muara Enim":"MOMO","GraPARI Muara Jawa":"MOMO","GraPARI Muara Teweh":"TOMO","GraPARI Muko Muko":"MOMO","GraPARI Mungkid":"TOMO","GraPARI Nabire":"MOMO","GraPARI Namlea":"TOMO","GraPARI Nanga Pinoh":"TOMO","GraPARI Natar":"MOMO","GraPARI Natuna":"MOMO","GraPARI Negara":"MOMO","GraPARI Ngabang":"TOMO","GraPARI Nganjuk":"MOMO","GraPARI Ngawi":"TOMO","GraPARI Nunukan":"MOMO","GraPARI Obi":"MOMO","GraPARI PGC Jakarta":"MOMO","GraPARI Pacitan":"MOMO","GraPARI Padalarang":"MOMO","GraPARI Padang":"TOMO","GraPARI Padang Panjang":"TOMO","GraPARI Padang Sidempuan":"TOMO","GraPARI Pahlawan Semarang":"TOMO","GraPARI Painan":"TOMO","GraPARI Pakning":"MOMO","GraPARI Palangka Raya":"TOMO","GraPARI Palembang":"TOMO","GraPARI Palmerah":"TOMO","GraPARI Palopo":"MOMO","GraPARI Palu":"TOMO","GraPARI Pamanukan":"MOMO","GraPARI Pamekasan":"TOMO","GraPARI Pandaan":"MOMO","GraPARI Pandeglang":"MOMO","GraPARI Pangandaran":"MOMO","GraPARI Pangkajene":"TOMO","GraPARI Pangkal Pinang":"TOMO","GraPARI Pangkalan":"MOMO","GraPARI Pangkalan Bun":"MOMO","GraPARI Pangkalan Kerinci":"MOMO","GraPARI Pantai Indah Kapuk":"MOMO","GraPARI Panyabungan":"MOMO","GraPARI ParePare":"TOMO","GraPARI Parigi Moutong":"MOMO","GraPARI Parung":"TOMO","GraPARI Pasaman":"MOMO","GraPARI Passo":"TOMO","GraPARI Pasuruan":"TOMO","GraPARI Pati":"TOMO","GraPARI Payakumbuh":"TOMO","GraPARI Pekalongan":"TOMO","GraPARI Pekanbaru":"TOMO","GraPARI Pekanbaru Panam":"MOMO","GraPARI Pelabuhan Ratu":"TOMO","GraPARI Pelaihari":"MOMO","GraPARI Pemalang":"MOMO","GraPARI Pematang Siantar":"TOMO","GraPARI Penajam Propinsi":"TOMO","GraPARI Perawang Siak":"MOMO","GraPARI Perdagangan":"MOMO","GraPARI Pinrang":"MOMO","GraPARI Piru":"MOMO","GraPARI Plaza Medan Fair":"TOMO","GraPARI Polewali":"MOMO","GraPARI Pondok Indah":"TOMO","GraPARI Pondok Jati Sidoarjo":"TOMO","GraPARI Ponorogo":"MOMO","GraPARI Pontianak":"TOMO","GraPARI Poso":"MOMO","GraPARI Prabumulih":"MOMO","GraPARI Pringsewu":"MOMO","GraPARI Probolinggo":"TOMO","GraPARI Purbalingga":"TOMO","GraPARI Purwakarta":"TOMO","GraPARI Purwodadi":"TOMO","GraPARI Purwokerto":"TOMO","GraPARI Purworejo":"TOMO","GraPARI Putusibau":"MOMO","GraPARI Raha":"TOMO","GraPARI Raja Ampat":"TOMO","GraPARI Rancaekek":"TOMO","GraPARI Rangkasbitung":"MOMO","GraPARI Rantau Prapat":"TOMO","GraPARI Rantau Tapin":"MOMO","GraPARI Rawamangun":"TOMO","GraPARI Rembang":"MOMO","GraPARI Rengat":"MOMO","GraPARI Renon Denpasar":"TOMO","GraPARI Rimbo Bujang":"MOMO","GraPARI Ruteng":"MOMO","GraPARI Sabang":"TOMO","GraPARI Salatiga":"MOMO","GraPARI Samarinda":"TOMO","GraPARI Samarinda Awang Long":"TOMO","GraPARI Sambas":"MOMO","GraPARI Sampang":"MOMO","GraPARI Sampit":"MOMO","GraPARI Sangatta":"MOMO","GraPARI Sanggau":"TOMO","GraPARI Sarmi":"TOMO","GraPARI Sarolangun":"MOMO","GraPARI Saumlaki":"MOMO","GraPARI Sebrang Ulu":"MOMO","GraPARI Sei Danau":"MOMO","GraPARI Sei Rampah":"MOMO","GraPARI Sekayu":"MOMO","GraPARI Selat Panjang":"MOMO","GraPARI Selayar":"TOMO","GraPARI Sentani":"MOMO","GraPARI Serang":"TOMO","GraPARI Serui":"TOMO","GraPARI Sibolga":"TOMO","GraPARI Sidrap Pangkajene":"TOMO","GraPARI Sigli":"MOMO","GraPARI Singaparna":"MOMO","GraPARI Singaraja":"MOMO","GraPARI Singkawang":"MOMO","GraPARI Sinjai":"TOMO","GraPARI Sintang":"MOMO","GraPARI Situbondo":"MOMO","GraPARI Siwa":"TOMO","GraPARI Slawi":"TOMO","GraPARI Sleman":"TOMO","GraPARI Soe":"TOMO","GraPARI Solo":"TOMO","GraPARI Solok":"MOMO","GraPARI Solok Selatan":"MOMO","GraPARI Soppeng":"TOMO","GraPARI Soreang":"MOMO","GraPARI Soroako":"MOMO","GraPARI Sorong":"TOMO","GraPARI Sragen":"TOMO","GraPARI Stabat":"MOMO","GraPARI Subang":"TOMO","GraPARI Subulussalam":"MOMO","GraPARI Sudiang Makassar":"MOMO","GraPARI Sukabumi":"TOMO","GraPARI Sukanagara":"MOMO","GraPARI Sumarrecon Mall Serpong":"MOMO","GraPARI Sumbawa":"MOMO","GraPARI Sumber":"MOMO","GraPARI Sumedang":"MOMO","GraPARI Sumenep":"MOMO","GraPARI Sungai Penuh":"TOMO","GraPARI Sungai Rumbai":"MOMO","GraPARI Supermall Karawaci":"MOMO","GraPARI Supratman":"TOMO","GraPARI Surabaya Barat":"TOMO","GraPARI Surabaya Garuda":"TOMO","GraPARI Surabaya Manyar":"TOMO","GraPARI Surabaya Sudirman":"TOMO","GraPARI Tabanan":"MOMO","GraPARI Tahuna":"TOMO","GraPARI Takalar":"TOMO","GraPARI Takengon":"MOMO","GraPARI Taliwang":"MOMO","GraPARI Tambun":"MOMO","GraPARI Tanah Grogot":"MOMO","GraPARI Tangerang City":"MOMO","GraPARI Tanjung Balai Asahan":"MOMO","GraPARI Tanjung Balai Karimun":"MOMO","GraPARI Tanjung Batu Karimun":"MOMO","GraPARI Tanjung Morawa":"MOMO","GraPARI Tanjung Pinang":"TOMO","GraPARI Tanjung Redep":"MOMO","GraPARI Tanjung Selor":"MOMO","GraPARI Tanjung Tabalong":"MOMO","GraPARI Tarakan":"TOMO","GraPARI Tarutung":"MOMO","GraPARI Tasikmalaya":"TOMO","GraPARI Tawaeli":"TOMO","GraPARI Tebing Tinggi":"MOMO","GraPARI Tegal":"TOMO","GraPARI Teluk Kuantan":"MOMO","GraPARI Temanggung":"TOMO","GraPARI Tembagapura":"MOMO","GraPARI Tembilahan":"MOMO","GraPARI Tenggarong":"MOMO","GraPARI Terminal 3 Bandara Soetta":"TOMO","GraPARI Ternate":"MOMO","GraPARI Timika":"TOMO","GraPARI Tobelo":"TOMO","GraPARI Toboali":"MOMO","GraPARI Toli-Toli":"MOMO","GraPARI Tomohon":"MOMO","GraPARI Topoyo":"MOMO","GraPARI Toraja":"TOMO","GraPARI Trans Studio Mall Bandung":"MOMO","GraPARI Trenggalek":"MOMO","GraPARI Tropodo Sidoarjo":"MOMO","GraPARI Tual":"TOMO","GraPARI Tuban":"MOMO","GraPARI Tulang Bawang":"MOMO","GraPARI Tulungagung":"TOMO","GraPARI Tungkal Ilir":"MOMO","GraPARI Turen":"MOMO","GraPARI Ubud":"TOMO","GraPARI Ujung Batu":"MOMO","GraPARI Ujung Berung":"TOMO","GraPARI Unahaa":"TOMO","GraPARI Ungaran":"MOMO","GraPARI Waikabubak":"MOMO","GraPARI Waingapu":"MOMO","GraPARI Wajo":"TOMO","GraPARI Wamena":"MOMO","GraPARI Wanci":"MOMO","GraPARI Weda":"MOMO","GraPARI Wisma Alia Jakarta":"TOMO","GraPARI Wolter Monginsidi":"MOMO","GraPARI Wonogiri":"TOMO","GraPARI Wonosobo":"TOMO","GraPARI Yogyakarta":"TOMO","GraPARI Yos Sudarso":"TOMO","GraPARi Samarinda":"TOMO","GraPari Lembang":"MOMO","Grapari Malang":"TOMO","Grapari Nabire":"MOMO","Grapari Pasangkayu":"MOMO","Grapari Probolinggo":"TOMO","Grapari Raja Ampat":"TOMO","Grapari Sukoharjo":"MOMO","Grapari Tual":"TOMO","Grapari Unahaa":"TOMO"};
         const MASTER_STORAGE_KEY = 'tnps_mobile_bisnis_model_master';
@@ -344,7 +335,7 @@
             try {
                 let saved = localStorage.getItem(MASTER_STORAGE_KEY);
                 if (saved) Object.assign(master, JSON.parse(saved));
-            } catch (e) {}
+            } catch (e) { /* storage tidak tersedia, pakai seed saja */ }
             return master;
         }
 
@@ -369,6 +360,7 @@
                 `Master Bisnis Model: ${Object.keys(bisnisModelMaster).length} unit` + (extraText ? ` • ${extraText}` : '');
         }
 
+        // [MOBILE] unit_type yang dihitung per CTP
         const MOBILE_CTP_MAP = {
             callcenter: "CC",
             gerai: "GraPARI",
@@ -377,6 +369,7 @@
             webservice: "Web service / Ecare"
         };
 
+        // [MOBILE] Pencarian kolom yang toleran (abaikan spasi/underscore/huruf besar)
         function normKey(s) { return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, ''); }
         function getColAny(row, ...names) {
             let keys = Object.keys(row);
@@ -390,6 +383,7 @@
             return Object.keys(row).some(key => normKey(key) === normKey(name));
         }
 
+        // [MOBILE] Periode bulanan dari kolom Bulan, atau diturunkan dari survey_date
         const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         function monthLabel(y, m) {
             let mm = String(m).padStart(2, '0');
@@ -402,13 +396,13 @@
             let raw = getColAny(row, 'survey_date', 'event_date');
             if (!raw) return 'General Period';
 
-            let m = raw.match(/^(\d{4})[-\/]?(\d{2})/);
+            let m = raw.match(/^(\d{4})[-\/]?(\d{2})/);                       // 20261018 / 2026-10-18
             if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[1], +m[2]);
 
-            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // 18/10/2026
             if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[3], +m[2]);
 
-            let n = Number(raw.replace(',', '.'));
+            let n = Number(raw.replace(',', '.'));                              // serial tanggal Excel
             if (!isNaN(n) && n > 20000 && n < 80000) {
                 let d = new Date(Math.round((n - 25569) * 86400000));
                 return monthLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
@@ -479,9 +473,6 @@
             let subTitle = document.getElementById('subTitle');
             let placeholderTitle = document.getElementById('placeholderTitle');
             let weekFilterContainer = document.getElementById('weekFilterContainer');
-            let ccFilterContainer = document.getElementById('ccFilterContainer');
-            let momoViewFilterContainer = document.getElementById('momoViewFilterContainer');
-            let momoTableFilterContainer = document.getElementById('momoTableFilterContainer');
 
             if (mode === 'indihome') {
                 btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-600 text-white transition-all shadow-md shadow-red-600/20";
@@ -492,9 +483,9 @@
                 subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
-                ccFilterContainer.style.display = "flex";
-                momoViewFilterContainer.style.display = "flex";
-                momoTableFilterContainer.style.display = "flex";
+                document.getElementById('momoChartFilterWrap').style.display = "flex";
+                document.getElementById('momoTableFilterWrap').style.display = "flex";
+                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "flex");
             } else {
                 btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition-all shadow-md shadow-blue-600/20";
                 btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
@@ -504,9 +495,9 @@
                 subTitle.textContent = "Formula: (Promotor - Detractor) / Count id_trx • CC, GraPARI, Web service / Ecare & People";
                 placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
                 weekFilterContainer.style.display = "none";
-                ccFilterContainer.style.display = "none";
-                momoViewFilterContainer.style.display = "none";
-                momoTableFilterContainer.style.display = "none";
+                document.getElementById('momoChartFilterWrap').style.display = "none";
+                document.getElementById('momoTableFilterWrap').style.display = "none";
+                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "none");
             }
 
             updateMasterInfo();
@@ -517,7 +508,10 @@
         }
 
         // =====================================================================
-        // PEMBACAAN FILE (Web Worker + Fallback Main Thread)
+        // PEMBACAAN FILE (Web Worker, tanpa file worker.js terpisah)
+        // Semua format (.xlsx, .xls, .csv, .txt) dibaca SheetJS di background,
+        // sehingga halaman tidak membeku dan CSV dengan tanda kutip terbaca benar.
+        // Jika Worker tidak tersedia, otomatis fallback ke main thread.
         // =====================================================================
         const WORKER_CODE = `
             importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
@@ -617,6 +611,7 @@
                 let blobUrl = URL.createObjectURL(new Blob([WORKER_CODE], { type: 'text/javascript' }));
                 dataWorker = new Worker(blobUrl);
             } catch (err) {
+                console.warn('Web Worker tidak tersedia, pakai main thread:', err);
                 parseOnMainThread(file);
                 return;
             }
@@ -634,13 +629,14 @@
             };
 
             dataWorker.onerror = function(err) {
+                console.warn('Worker error, fallback ke main thread:', err.message);
                 err.preventDefault && err.preventDefault();
                 if (dataWorker) { dataWorker.terminate(); dataWorker = null; }
                 parseOnMainThread(currentFile);
             };
 
             dataWorker.postMessage({ file });
-            e.target.value = '';
+            e.target.value = ''; // supaya file yang sama bisa diupload ulang
         });
 
         document.getElementById('sheetSelector').addEventListener('change', function(e) {
@@ -649,34 +645,6 @@
 
         document.getElementById('weekFilter').addEventListener('change', function() {
             if (globalRawData.length > 0) processAndRender();
-        });
-
-        // Sinkronisasi dropdown Call Center (header & grafik)
-        function syncCCFilters(val) {
-            document.getElementById('ccFilter').value = val;
-            document.querySelectorAll('.ccFilterSync').forEach(el => el.value = val);
-            if (globalRawData.length > 0) processAndRender();
-        }
-        document.getElementById('ccFilter').addEventListener('change', function(e) {
-            syncCCFilters(e.target.value);
-        });
-        document.querySelectorAll('.ccFilterSync').forEach(el => {
-            el.addEventListener('change', function(e) {
-                syncCCFilters(e.target.value);
-            });
-        });
-
-        // Sinkronisasi dropdown tampilan Momo/Tomo (grafik & tabel)
-        function syncMomoViewFilters(val) {
-            document.getElementById('momoViewFilter').value = val;
-            document.getElementById('momoViewFilterTable').value = val;
-            if (globalRawData.length > 0) processAndRender();
-        }
-        document.getElementById('momoViewFilter').addEventListener('change', function(e) {
-            syncMomoViewFilters(e.target.value);
-        });
-        document.getElementById('momoViewFilterTable').addEventListener('change', function(e) {
-            syncMomoViewFilters(e.target.value);
         });
 
         function getCol(row, name) {
@@ -699,15 +667,17 @@
 
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
-            let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
-            let unitNameLower = unitName.toLowerCase();
-            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area') || 'Unspecified Area';
-            let regionalVal = getColAny(row, 'regional', 'region', 'nama_regional', 'treg') || 'Unspecified Regional';
             let npsVal = getCol(row, 'nps').toLowerCase();
             let categoryVal = getCol(row, 'category').toLowerCase();
             let reasonDesc = getCol(row, 'reason_desc');
             let rawWeek = getCol(row, 'week');
-            let momoVal = getColAny(row, 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'bisnis model', 'momo', 'tomo');
+            let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
+            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || 'Unspecified Area';
+            let regionalVal = getColAny(row, 'regional', 'region', 'nama_regional', 'treg') || 'Unspecified Regional';
+            let momoVal = getColAny(row, 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'bisnis model', 'bisnis_model', 'momo', 'tomo');
+            if (!momoVal && unitName && typeof bisnisModelMaster !== 'undefined' && bisnisModelMaster[unitName]) {
+                momoVal = bisnisModelMaster[unitName];
+            }
 
             let weekMatch = rawWeek.match(/\d+/);
             let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
@@ -739,14 +709,6 @@
                 ctpGroup = unitType2 ? unitType2 : "Call Center";
             }
 
-            // Deteksi lokasi Call Center dari kolom unit_name (Bandung / Semarang)
-            let ccSite = 'other';
-            if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) {
-                ccSite = 'bandung';
-            } else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) {
-                ccSite = 'semarang';
-            }
-
             let targetReasons = [
                 "CUSTOMER SERVICE",
                 "Customer service cukup responsif",
@@ -757,6 +719,11 @@
             ];
             let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
+            let unitNameLower = unitName.toLowerCase();
+            let ccSite = 'other';
+            if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) ccSite = 'bandung';
+            else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
+
             return {
                 IsValid: weekNum > 0,
                 WeekNum: weekNum,
@@ -766,7 +733,7 @@
                 UnitName: unitName,
                 Area: areaVal,
                 Regional: regionalVal,
-                MomoTomo: momoVal !== '' ? momoVal : 'Unspecified',
+                MomoTomo: momoVal !== '' ? momoVal.toUpperCase() : 'Unspecified',
                 Is_CS: isCS,
                 Promoter: isPromotor,
                 Detractor: isDetractor,
@@ -782,6 +749,7 @@
             let sample = rawData[0] || {};
             let hasBisnisModelCol = hasColAny(sample, 'bisnis model') || hasColAny(sample, 'momo/tomo');
 
+            // Pelajari master unit_name → bisnis model dari file yang punya kolomnya
             let learned = 0;
             if (hasBisnisModelCol) {
                 rawData.forEach(row => {
@@ -796,6 +764,10 @@
             }
 
             let stats = { noCategory: 0, fromMaster: 0, unmatchedUnits: new Set(), duplicateTrx: 0, emptyTrx: 0, excluded: {} };
+
+            // Basis hitung Mobile: COUNT id_trx (sama seperti pivot Excel "Count of id_trx":
+            // setiap baris dengan id_trx terisi dihitung 1). Duplikat hanya dilaporkan, tidak dibuang.
+            // Jika file tidak punya kolom id_trx, fallback ke msisdn.
             let hasIdTrxCol = hasColAny(sample, 'id_trx');
             let seenTrx = new Set();
 
@@ -845,7 +817,13 @@
                         }
                     }
                 }
+                
 
+                // CTP Mobile: mapping persis per unit_type (sesuai laporan OKT)
+                //   callcenter                     → CC
+                //   gerai, grapari, grapari_lite   → GraPARI
+                //   webservice                     → Web service / Ecare
+                //   lainnya (MyGrapari, kosong, qao_kp, ...) → tidak dihitung
                 let unitKey = unitType.trim().replace(/[\s\-]+/g, '_');
                 let ctpGroup = MOBILE_CTP_MAP[unitKey] || null;
                 let isGraPARI = ctpGroup === "GraPARI";
@@ -857,6 +835,7 @@
                 if (isGraPARI && isValidRow && bisnisModelVal === 'Unspecified' && unitName) stats.unmatchedUnits.add(unitName);
 
                 let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
+
                 if (isValidRow && !isPromotor && !isDetractor && !isPassive) stats.noCategory++;
 
                 return {
@@ -876,6 +855,25 @@
             return { rows, stats, hasBisnisModelCol, learned, hasIdTrxCol };
         }
 
+        // Label kolom total (kolom ke-6) di ketiga tabel
+        let currentMomoFilter = 'overall'; // 'overall' | 'area' | 'regional'
+        let currentCcFilter = 'all';     // 'all' | 'bandung' | 'semarang'
+
+        function setMomoFilter(val) {
+            currentMomoFilter = val;
+            let fChart = document.getElementById('momoFilterChart');
+            let fTable = document.getElementById('momoFilterTable');
+            if (fChart) fChart.value = val;
+            if (fTable) fTable.value = val;
+            if (globalRawData.length > 0) processAndRender();
+        }
+
+        function setCcFilter(val) {
+            currentCcFilter = val;
+            document.querySelectorAll('.ccFilterSelect').forEach(el => { el.value = val; });
+            if (globalRawData.length > 0) processAndRender();
+        }
+
         function setTotalHeaders(mainLabel, csLabel) {
             document.querySelector('#summaryTable thead th:nth-child(6)').textContent = mainLabel;
             document.querySelector('#csTable thead th:nth-child(6)').textContent = csLabel;
@@ -886,12 +884,6 @@
             let filterMode = document.getElementById('weekFilter').value;
             let processedData = [];
             let rowInfoText = '';
-
-            // Tampilkan badge dropdown CC khusus di mode IndiHome
-            document.querySelectorAll('#ccFilterBadge1, #ccFilterBadge2').forEach(el => {
-                el.classList.toggle('hidden', currentMode !== 'indihome');
-                el.classList.toggle('flex', currentMode === 'indihome');
-            });
 
             if (currentMode === 'indihome') {
                 isRollingView = filterMode !== 'all';
@@ -904,6 +896,7 @@
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
                 setTotalHeaders("Grand Total", "Grand Total (CS)");
 
+                // Source detail ditempel di luar mapIndihomeRow (logika hitung IndiHome tidak berubah)
                 let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
                 let baseRows = globalRawData
                     .map(row => ({ ...mapIndihomeRow(row), Source: getCol(row, sourceCol) || '(kosong)' }))
@@ -972,6 +965,7 @@
                     masterNote = `${result.stats.fromMaster} baris diisi dari master`;
                     if (result.stats.unmatchedUnits.size > 0) {
                         masterNote += `, ${result.stats.unmatchedUnits.size} unit GraPARI belum ada di master`;
+                        console.warn('Unit GraPARI tanpa Bisnis Model:', Array.from(result.stats.unmatchedUnits));
                     }
                 }
                 updateMasterInfo(masterNote);
@@ -1019,8 +1013,8 @@
             document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
             document.getElementById('thPeriodSrc').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
 
-            let byPeriod = {};
-            let overall = {};
+            let byPeriod = {};   // period|||ctp|||source
+            let overall = {};    // ctp|||source (akumulasi semua periode yang tampil)
             let periods = new Set();
             const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
 
@@ -1038,6 +1032,7 @@
                 });
             });
 
+            // Urutan CTP: Call Center, GraPARI, Socmed, lalu lainnya; source urut volume terbesar
             let ctpOrder = ["Call Center", "GraPARI", "Socmed"];
             let overallKeys = Object.keys(overall).sort((a, b) => {
                 let [ca, sa] = a.split(SEP), [cb, sb] = b.split(SEP);
@@ -1054,8 +1049,9 @@
                 return numA !== 0 && numB !== 0 ? numA - numB : String(a).localeCompare(String(b));
             });
 
-            let srcPeriod = {};
-            let srcTotal = {};
+            // ---- Ringkasan per source (semua CTP) ----
+            let srcPeriod = {};   // period|||source
+            let srcTotal = {};    // source
             data.forEach(item => {
                 let pk = item.Period + SEP + item.Source;
                 srcPeriod[pk] = srcPeriod[pk] || empty();
@@ -1068,7 +1064,10 @@
                 });
             });
             let sourceNames = Object.keys(srcTotal).sort((a, b) => srcTotal[b].total - srcTotal[a].total || a.localeCompare(b));
+            let allSrc = empty();
+            sourceNames.forEach(sn => ['promotor', 'detractor', 'passive', 'total'].forEach(f => allSrc[f] += srcTotal[sn][f]));
 
+            // ---- Ringkasan per source: satu kolom/kartu untuk setiap source ----
             let cardsWrap = document.getElementById('sourceSummaryCards');
             cardsWrap.innerHTML = '';
             const sourceCardCell = (value, cls = '') => `<td class="px-2.5 py-2.5 ${cls}">${value}</td>`;
@@ -1121,6 +1120,7 @@
                 cardsWrap.appendChild(card);
             });
 
+            // ---- Grafik: tNPS per source per periode + Grand Total ----
             let palette = ['#0284c7', '#e11d48', '#16a34a', '#f59e0b', '#8b5cf6', '#64748b', '#0d9488', '#db2777'];
             let chartLabels = sortedPeriods.map(formatPeriod).concat(['Grand Total']);
             let datasets = sourceNames.slice(0, 12).map((sn, i) => ({
@@ -1157,6 +1157,7 @@
                 }
             });
 
+            // ---- Tabel ----
             let tbody = document.querySelector('#sourceTable tbody');
             tbody.innerHTML = '';
             const rowHtml = (cells, cls) => {
@@ -1202,64 +1203,58 @@
         }
 
         function renderDashboard(data) {
-            const SEP = '|||';
+            const SEP = '|||'; // pemisah key periode/kategori (aman walau nilai mengandung "_")
             let group = {};
             let momoGroup = {};
             let periods = new Set();
             let momoPeriods = new Set();
 
-            // Filter Call Center khusus IndiHome (all | bandung | semarang)
-            let ccFilterVal = currentMode === 'indihome' ? document.getElementById('ccFilter').value : 'all';
-            let ccDisplayLabel = ccFilterVal === 'bandung' ? 'CC Bandung'
-                               : ccFilterVal === 'semarang' ? 'CC Semarang'
-                               : 'Call Center';
+            let ccLabel = currentCcFilter === 'bandung' ? 'CC Bandung'
+                        : currentCcFilter === 'semarang' ? 'CC Semarang'
+                        : 'Call Center';
 
-            // Filter tampilan Momo/Tomo khusus IndiHome (overall | area | regional)
-            let momoViewMode = currentMode === 'indihome' ? document.getElementById('momoViewFilter').value : 'overall';
+            let ctpList = currentMode === 'indihome'
+                ? [ccLabel, "GraPARI", "Socmed"]
+                : ["CC", "GraPARI", "Web service / Ecare"];
 
-            // Update judul & header kolom dinamis Momo/Tomo
+            let thMomoDim = document.getElementById('thMomoDim');
             let momoChartTitle = document.getElementById('momoChartTitle');
             let momoTableTitle = document.getElementById('momoTableTitle');
-            let thMomoGroup = document.getElementById('thMomoGroup');
+            let showDimCol = currentMode === 'indihome' && (currentMomoFilter === 'area' || currentMomoFilter === 'regional');
 
             if (currentMode === 'indihome') {
-                let suffix = momoViewMode === 'area' ? 'Per Area'
-                           : momoViewMode === 'regional' ? 'Per Regional'
-                           : 'Keseluruhan';
-                momoChartTitle.lastChild.textContent = ` Analisis tNPS Bisnis Model / Momo / Tomo (Khusus GraPARI • ${suffix})`;
-                momoTableTitle.lastChild.textContent = ` Tabel Rekapitulasi Bisnis Model / Momo / Tomo (Khusus GraPARI • ${suffix}) & Grand Total`;
-
-                if (momoViewMode === 'area' || momoViewMode === 'regional') {
-                    thMomoGroup.classList.remove('hidden');
-                    thMomoGroup.textContent = momoViewMode === 'area' ? 'Area' : 'Regional';
+                let modeSuffix = currentMomoFilter === 'area' ? 'Per Area'
+                               : currentMomoFilter === 'regional' ? 'Per Regional'
+                               : 'GraPARI';
+                momoChartTitle.lastChild.textContent = ` Analisis tNPS Bisnis Model / Momo / Tomo (Khusus GraPARI • ${modeSuffix})`;
+                momoTableTitle.lastChild.textContent = ` Tabel Rekapitulasi Bisnis Model / Momo / Tomo (Khusus GraPARI • ${modeSuffix}) & Grand Total`;
+                if (showDimCol) {
+                    thMomoDim.classList.remove('hidden');
+                    thMomoDim.textContent = currentMomoFilter === 'area' ? 'Area' : 'Regional';
                 } else {
-                    thMomoGroup.classList.add('hidden');
+                    thMomoDim.classList.add('hidden');
                 }
             } else {
                 momoChartTitle.lastChild.textContent = ` Analisis tNPS Bisnis Model / Momo / Tomo`;
                 momoTableTitle.lastChild.textContent = ` Tabel Rekapitulasi Bisnis Model / Momo / Tomo & Grand Total`;
-                thMomoGroup.classList.add('hidden');
+                thMomoDim.classList.add('hidden');
             }
-
-            let ctpList = currentMode === 'indihome'
-                ? [ccDisplayLabel, "GraPARI", "Socmed"]
-                : ["CC", "GraPARI", "Web service / Ecare"];
 
             data.forEach(item => {
                 let p = item.Period;
                 let ctp = item.Mapped_CTP;
                 periods.add(p);
 
-                // Terapkan filter Call Center Bandung / Semarang untuk IndiHome
-                let includeInCtp = true;
+                // Filter Call Center berdasarkan unit_name (Bandung / Semarang) pada mode IndiHome
+                let includeInGroup = true;
                 if (currentMode === 'indihome' && ctp === 'Call Center') {
-                    if (ccFilterVal !== 'all' && item.CC_Site !== ccFilterVal) {
-                        includeInCtp = false;
+                    if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) {
+                        includeInGroup = false;
                     }
-                    ctp = ccDisplayLabel;
+                    ctp = ccLabel;
                 }
 
-                if (includeInCtp) {
+                if (includeInGroup) {
                     let k = `${p}${SEP}${ctp}`;
                     if (!group[k]) {
                         group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
@@ -1278,18 +1273,17 @@
                     }
                 }
 
-                // Untuk IndiHome: Momo/Tomo HANYA menghitung data GraPARI
+                // Momo / Tomo di mode IndiHome: KHUSUS GraPARI saja
                 let includeInMomo = currentMode === 'indihome' ? item.Is_GraPARI : true;
                 if (includeInMomo) {
                     let mt = item.MomoTomo;
-                    let groupDim = '';
+                    let dimVal = '';
                     if (currentMode === 'indihome') {
-                        if (momoViewMode === 'area') groupDim = item.Area;
-                        else if (momoViewMode === 'regional') groupDim = item.Regional;
+                        if (currentMomoFilter === 'area') dimVal = item.Area || 'Unspecified Area';
+                        else if (currentMomoFilter === 'regional') dimVal = item.Regional || 'Unspecified Regional';
                     }
-
                     momoPeriods.add(p);
-                    let mk = `${p}${SEP}${groupDim}${SEP}${mt}`;
+                    let mk = `${p}${SEP}${dimVal}${SEP}${mt}`;
                     if (!momoGroup[mk]) {
                         momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
                     }
@@ -1306,7 +1300,6 @@
                 return numA !== 0 && numB !== 0 ? numA - numB : a.localeCompare(b);
             });
 
-            // 1. Grafik Utama tNPS %
             let chartSets = ctpList.map((ctp, i) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
                 let vals = sortedPeriods.map(p => {
@@ -1332,7 +1325,6 @@
                 }
             });
 
-            // 2. Grafik People CS %
             let csSets = ctpList.map((ctp, i) => {
                 let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
                 let vals = sortedPeriods.map(p => {
@@ -1358,16 +1350,15 @@
                 }
             });
 
-            // 3. Grafik Momo/Tomo (GraPARI / Per Area / Per Regional)
-            let uniqueMomoKeys = Array.from(new Set(
+            let uniqueMomoCombos = Array.from(new Set(
                 Object.keys(momoGroup).map(k => {
                     let parts = k.split(SEP);
-                    return `${parts[1]}${SEP}${parts[2]}`; // groupDim|||mtCat
+                    return `${parts[1]}${SEP}${parts[2]}`; // dimVal|||mtCat
                 })
             )).sort((a, b) => {
-                let [ga, ma] = a.split(SEP);
-                let [gb, mb] = b.split(SEP);
-                return ga.localeCompare(gb) || ma.localeCompare(mb);
+                let [da, ma] = a.split(SEP);
+                let [db, mb] = b.split(SEP);
+                return da.localeCompare(db) || ma.localeCompare(mb);
             });
 
             let sortedMomoPeriods = Array.from(momoPeriods).sort((a,b) => {
@@ -1376,26 +1367,16 @@
                 return numA !== 0 && numB !== 0 ? numA - numB : a.localeCompare(b);
             });
 
-            let momoPalette = ['#e11d48', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#0d9488', '#db2777', '#6366f1', '#84cc16', '#f97316'];
-            let momoChartSets = uniqueMomoKeys.map((comboKey, i) => {
-                let [groupDim, mtCat] = comboKey.split(SEP);
-                let seriesLabel = groupDim ? `${groupDim} - ${mtCat}` : mtCat;
+            let momoChartSets = uniqueMomoCombos.map((combo, i) => {
+                let [dimVal, mtCat] = combo.split(SEP);
+                let labelStr = dimVal ? `${dimVal} - ${mtCat}` : mtCat;
+                let colors = ['#e11d48', '#0284c7', '#10b981', '#f59e0b', '#8b5cf6', '#0d9488', '#db2777', '#6366f1'];
                 let vals = sortedMomoPeriods.map(p => {
-                    let d = momoGroup[`${p}${SEP}${groupDim}${SEP}${mtCat}`];
+                    let d = momoGroup[`${p}${SEP}${dimVal}${SEP}${mtCat}`];
                     if (!d || d.total === 0) return null;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return {
-                    label: seriesLabel,
-                    data: vals,
-                    borderColor: momoPalette[i % momoPalette.length],
-                    backgroundColor: momoPalette[i % momoPalette.length],
-                    tension: 0.3,
-                    borderWidth: 3,
-                    pointRadius: 4,
-                    pointHoverRadius: 6,
-                    spanGaps: true
-                };
+                return { label: labelStr, data: vals, borderColor: colors[i % colors.length], backgroundColor: colors[i % colors.length], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true };
             });
 
             if (momoChartInstance) momoChartInstance.destroy();
@@ -1535,30 +1516,29 @@
                 csTbody.appendChild(tr);
             });
 
-            // 3. Render Tabel Bisnis Model / Momo / Tomo (GraPARI / Per Area / Per Regional) + Grand Total
+            // 3. Render Tabel Bisnis Model / Momo / Tomo + Grand Total
             let momoTbody = document.querySelector('#momoTable tbody');
             momoTbody.innerHTML = '';
             let momoGrandTotals = {};
-            uniqueMomoKeys.forEach(comboKey => { momoGrandTotals[comboKey] = { promotor: 0, detractor: 0, passive: 0, total: 0 }; });
-            let showGroupCol = currentMode === 'indihome' && (momoViewMode === 'area' || momoViewMode === 'regional');
+            uniqueMomoCombos.forEach(combo => { momoGrandTotals[combo] = { promotor: 0, detractor: 0, passive: 0, total: 0 }; });
 
             sortedMomoPeriods.forEach(p => {
-                uniqueMomoKeys.forEach(comboKey => {
-                    let [groupDim, mtCat] = comboKey.split(SEP);
-                    let d = momoGroup[`${p}${SEP}${groupDim}${SEP}${mtCat}`];
+                uniqueMomoCombos.forEach(combo => {
+                    let [dimVal, mtCat] = combo.split(SEP);
+                    let d = momoGroup[`${p}${SEP}${dimVal}${SEP}${mtCat}`];
                     if (!d || d.total === 0) return;
                     let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
 
-                    momoGrandTotals[comboKey].promotor += d.promotor;
-                    momoGrandTotals[comboKey].detractor += d.detractor;
-                    momoGrandTotals[comboKey].passive += d.passive;
-                    momoGrandTotals[comboKey].total += d.total;
+                    momoGrandTotals[combo].promotor += d.promotor;
+                    momoGrandTotals[combo].detractor += d.detractor;
+                    momoGrandTotals[combo].passive += d.passive;
+                    momoGrandTotals[combo].total += d.total;
 
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors";
                     tr.innerHTML = `
                         <td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td>
-                        ${showGroupCol ? `<td class="p-3.5 font-semibold text-indigo-700">${groupDim}</td>` : ''}
+                        ${showDimCol ? `<td class="p-3.5 font-semibold text-indigo-700">${dimVal}</td>` : ''}
                         <td class="p-3.5 font-medium text-slate-800">${mtCat}</td>
                         <td class="p-3.5 text-center text-slate-600">${d.detractor}</td>
                         <td class="p-3.5 text-center text-slate-600">${d.passive}</td>
@@ -1570,15 +1550,15 @@
                 });
             });
 
-            uniqueMomoKeys.forEach(comboKey => {
-                let [groupDim, mtCat] = comboKey.split(SEP);
-                let d = momoGrandTotals[comboKey];
+            uniqueMomoCombos.forEach(combo => {
+                let [dimVal, mtCat] = combo.split(SEP);
+                let d = momoGrandTotals[combo];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/80 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `
                     <td class="p-3.5">${grandTotalLabel}</td>
-                    ${showGroupCol ? `<td class="p-3.5 text-indigo-700">${groupDim}</td>` : ''}
+                    ${showDimCol ? `<td class="p-3.5 font-semibold text-indigo-700">${dimVal}</td>` : ''}
                     <td class="p-3.5">${mtCat}</td>
                     <td class="p-3.5 text-center">${d.detractor}</td>
                     <td class="p-3.5 text-center">${d.passive}</td>
