@@ -151,7 +151,7 @@
                     <div id="momoChartFilterWrap" class="flex items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterChart" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="overall">Momo / Tomo (GraPARI)</option>
+                            <option value="national">Nasional (Momo / Tomo)</option>
                             <option value="area">Per Area (Momo / Tomo)</option>
                             <option value="regional">Per Regional (Momo / Tomo)</option>
                         </select>
@@ -192,6 +192,26 @@
                         <tbody class="divide-y divide-slate-100 text-slate-600 font-medium"></tbody>
                     </table>
                 </div>
+            </div>
+
+            <!-- [INDIHOME] Ringkasan Call Center per Unit / Lokasi (CC Bandung, CC Semarang, dst.) -->
+            <div id="ccBreakdownSection" class="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-6 overflow-hidden">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <span class="p-2 rounded-xl bg-rose-50 text-rose-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg></span>
+                        Rincian Call Center per Unit Name (CC Bandung & CC Semarang)
+                    </h2>
+                    <div class="ccFilterWrap flex items-center gap-2 bg-rose-50/90 border border-rose-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-[11px] font-bold text-rose-700 uppercase tracking-wide">Filter CC:</label>
+                        <select class="ccFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer" onchange="setCcFilter(this.value)">
+                            <option value="all">Semua Call Center</option>
+                            <option value="bandung">CC Bandung</option>
+                            <option value="semarang">CC Semarang</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-500 mb-3">Ringkasan performa Call Center berdasarkan kolom <code class="font-bold text-slate-700">unit_name</code> (CC Bandung & CC Semarang) per periode minggu beserta Grand Total.</p>
+                <div id="ccBreakdownCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </div>
 
             <!-- [INDIHOME] Rincian tNPS per Source (IVR, Saltik, Dyandra, dst.) -->
@@ -277,7 +297,7 @@
                     <div id="momoTableFilterWrap" class="flex items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterTable" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="overall">Momo / Tomo (GraPARI)</option>
+                            <option value="national">Nasional (Momo / Tomo)</option>
                             <option value="area">Per Area (Momo / Tomo)</option>
                             <option value="regional">Per Regional (Momo / Tomo)</option>
                         </select>
@@ -486,6 +506,7 @@
                 document.getElementById('momoChartFilterWrap').style.display = "flex";
                 document.getElementById('momoTableFilterWrap').style.display = "flex";
                 document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "flex");
+                document.getElementById('ccBreakdownSection').style.display = "block";
             } else {
                 btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition-all shadow-md shadow-blue-600/20";
                 btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
@@ -498,6 +519,7 @@
                 document.getElementById('momoChartFilterWrap').style.display = "none";
                 document.getElementById('momoTableFilterWrap').style.display = "none";
                 document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "none");
+                document.getElementById('ccBreakdownSection').style.display = "none";
             }
 
             updateMasterInfo();
@@ -856,7 +878,7 @@
         }
 
         // Label kolom total (kolom ke-6) di ketiga tabel
-        let currentMomoFilter = 'overall'; // 'overall' | 'area' | 'regional'
+        let currentMomoFilter = 'national'; // 'national' | 'area' | 'regional'
         let currentCcFilter = 'all';     // 'all' | 'bandung' | 'semarang'
 
         function setMomoFilter(val) {
@@ -1225,7 +1247,7 @@
             if (currentMode === 'indihome') {
                 let modeSuffix = currentMomoFilter === 'area' ? 'Per Area'
                                : currentMomoFilter === 'regional' ? 'Per Regional'
-                               : 'GraPARI';
+                               : 'Nasional';
                 momoChartTitle.lastChild.textContent = ` Analisis tNPS Bisnis Model / Momo / Tomo (Khusus GraPARI • ${modeSuffix})`;
                 momoTableTitle.lastChild.textContent = ` Tabel Rekapitulasi Bisnis Model / Momo / Tomo (Khusus GraPARI • ${modeSuffix}) & Grand Total`;
                 if (showDimCol) {
@@ -1273,24 +1295,35 @@
                     }
                 }
 
-                // Momo / Tomo di mode IndiHome: KHUSUS GraPARI saja
+                // Momo / Tomo di mode IndiHome: KHUSUS GraPARI saja, dan abaikan nilai 'Unspecified'
                 let includeInMomo = currentMode === 'indihome' ? item.Is_GraPARI : true;
-                if (includeInMomo) {
-                    let mt = item.MomoTomo;
+                let mt = item.MomoTomo;
+                let isUnspecifiedMomo = !mt || mt.toLowerCase() === 'unspecified' || mt.toLowerCase() === 'unknown' || mt === '-';
+                if (includeInMomo && !isUnspecifiedMomo) {
                     let dimVal = '';
+                    let skipDim = false;
                     if (currentMode === 'indihome') {
-                        if (currentMomoFilter === 'area') dimVal = item.Area || 'Unspecified Area';
-                        else if (currentMomoFilter === 'regional') dimVal = item.Regional || 'Unspecified Regional';
+                        if (currentMomoFilter === 'area') {
+                            dimVal = item.Area || '';
+                            if (!dimVal || dimVal.toLowerCase().includes('unspecified')) skipDim = true;
+                        } else if (currentMomoFilter === 'regional') {
+                            dimVal = item.Regional || '';
+                            if (!dimVal || dimVal.toLowerCase().includes('unspecified')) skipDim = true;
+                        } else {
+                            dimVal = 'Nasional';
+                        }
                     }
-                    momoPeriods.add(p);
-                    let mk = `${p}${SEP}${dimVal}${SEP}${mt}`;
-                    if (!momoGroup[mk]) {
-                        momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                    if (!skipDim) {
+                        momoPeriods.add(p);
+                        let mk = `${p}${SEP}${dimVal}${SEP}${mt}`;
+                        if (!momoGroup[mk]) {
+                            momoGroup[mk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                        }
+                        momoGroup[mk].promotor += item.Promoter;
+                        momoGroup[mk].detractor += item.Detractor;
+                        momoGroup[mk].passive += item.Passive;
+                        momoGroup[mk].total += item.Total;
                     }
-                    momoGroup[mk].promotor += item.Promoter;
-                    momoGroup[mk].detractor += item.Detractor;
-                    momoGroup[mk].passive += item.Passive;
-                    momoGroup[mk].total += item.Total;
                 }
             });
 
@@ -1568,7 +1601,115 @@
                 `;
                 momoTbody.appendChild(tr);
             });
+
+            // 4. Render Kartu Rincian Call Center (CC Bandung, CC Semarang, dst. dari unit_name)
+            renderCallCenterBreakdown(data, sortedPeriods);
+        }
+
+        function renderCallCenterBreakdown(data, sortedPeriods) {
+            const SEP = '|||';
+            let ccSection = document.getElementById('ccBreakdownSection');
+            let cardsWrap = document.getElementById('ccBreakdownCards');
+            if (!ccSection || !cardsWrap) return;
+
+            if (currentMode !== 'indihome') {
+                ccSection.style.display = 'none';
+                return;
+            }
+            ccSection.style.display = 'block';
+
+            let ccByPeriod = {};
+            let ccTotals = {};
+            const emptyCc = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
+
+            data.forEach(item => {
+                if (item.Mapped_CTP !== 'Call Center') return;
+                if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) return;
+
+                let ccName = '';
+                if (item.CC_Site === 'bandung') ccName = 'CC BANDUNG';
+                else if (item.CC_Site === 'semarang') ccName = 'CC SEMARANG';
+                else ccName = (item.UnitName || 'CALL CENTER LAINNYA').toUpperCase();
+
+                let pk = `${item.Period}${SEP}${ccName}`;
+                ccByPeriod[pk] = ccByPeriod[pk] || emptyCc();
+                ccTotals[ccName] = ccTotals[ccName] || emptyCc();
+
+                [ccByPeriod[pk], ccTotals[ccName]].forEach(d => {
+                    d.promotor += item.Promoter;
+                    d.detractor += item.Detractor;
+                    d.passive += item.Passive;
+                    d.total += item.Total;
+                });
+            });
+
+            // Urutkan CC Bandung & CC Semarang di depan, lalu sisanya berdasarkan volume terbesar
+            let ccNames = Object.keys(ccTotals).sort((a, b) => {
+                let prioA = a.includes('BANDUNG') ? 0 : (a.includes('SEMARANG') ? 1 : 2);
+                let prioB = b.includes('BANDUNG') ? 0 : (b.includes('SEMARANG') ? 1 : 2);
+                if (prioA !== prioB) return prioA - prioB;
+                return ccTotals[b].total - ccTotals[a].total || a.localeCompare(b);
+            });
+
+            cardsWrap.innerHTML = '';
+            if (ccNames.length === 0) {
+                cardsWrap.innerHTML = `<div class="col-span-full text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-4">Tidak ada data Call Center yang cocok dengan filter yang dipilih.</div>`;
+                return;
+            }
+
+            ccNames.forEach((cn, idx) => {
+                let card = document.createElement('div');
+                card.className = "rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm";
+                let rowsHtml = sortedPeriods.map(p => {
+                    let d = ccByPeriod[`${p}${SEP}${cn}`];
+                    if (!d) return '';
+                    let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : '0.00';
+                    return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+                        <td class="px-2.5 py-2.5 font-semibold text-slate-700 whitespace-nowrap">${formatPeriod(p)}</td>
+                        <td class="px-2.5 py-2.5 text-center">${d.detractor}</td>
+                        <td class="px-2.5 py-2.5 text-center">${d.passive}</td>
+                        <td class="px-2.5 py-2.5 text-center">${d.promotor}</td>
+                        <td class="px-2.5 py-2.5 text-center font-semibold">${d.total}</td>
+                        <td class="px-2.5 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">${npsVal}%</td>
+                    </tr>`;
+                }).join('');
+
+                let tot = ccTotals[cn];
+                let totNps = tot.total > 0 ? (((tot.promotor - tot.detractor) / tot.total) * 100).toFixed(2) : '0.00';
+                card.innerHTML = `
+                    <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
+                        <h4 class="font-extrabold text-slate-800 text-sm">${cn}</h4>
+                        <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CC ${idx + 1}</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-[11px] sm:text-xs text-slate-600">
+                            <thead class="bg-white text-slate-500 uppercase tracking-wide">
+                                <tr>
+                                    <th class="px-2.5 py-2.5 text-left">Week</th>
+                                    <th class="px-2.5 py-2.5 text-center">D</th>
+                                    <th class="px-2.5 py-2.5 text-center">P</th>
+                                    <th class="px-2.5 py-2.5 text-center">Prom</th>
+                                    <th class="px-2.5 py-2.5 text-center">Total</th>
+                                    <th class="px-2.5 py-2.5 text-right">TNPS</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                            <tfoot>
+                                <tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
+                                    <td class="px-2.5 py-3" colspan="1">Grand Total</td>
+                                    <td class="px-2.5 py-3 text-center">${tot.detractor}</td>
+                                    <td class="px-2.5 py-3 text-center">${tot.passive}</td>
+                                    <td class="px-2.5 py-3 text-center">${tot.promotor}</td>
+                                    <td class="px-2.5 py-3 text-center">${tot.total}</td>
+                                    <td class="px-2.5 py-3 text-right text-rose-700">${totNps}%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>`;
+                cardsWrap.appendChild(card);
+            });
         }
     </script>
 </body>
 </html>
+Menganalisis
