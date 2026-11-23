@@ -68,6 +68,18 @@
         .rowbtn:hover td { background: #f6f7fb; }
         .progress { height: 8px; background: #e6e9f1; border-radius: 999px; overflow: hidden; }
         .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--navy), var(--red)); transition: width .2s; }
+        .topic { scroll-margin-top: 130px; }
+        .topic-head { display: flex; gap: 14px; align-items: flex-start; padding: 18px 0 14px; border-top: 2px solid #dde1ea; }
+        .topic-head .tag { width: 6px; align-self: stretch; border-radius: 6px; background: var(--accent, var(--navy)); flex: none; }
+        .topic-head h2 { font-size: 20px; font-weight: 700; line-height: 1.3; }
+        .topic-head p { font-size: 14px; color: var(--muted); margin-top: 2px; max-width: 78ch; }
+        .topic:first-of-type .topic-head { border-top: 0; padding-top: 4px; }
+        .navlink { font-size: 13px; font-weight: 600; color: var(--muted); padding: 6px 12px; border-radius: 999px; white-space: nowrap; }
+        .navlink:hover { background: #eceef4; color: var(--ink); }
+        .navlink .dot { display: inline-block; width: 8px; height: 8px; border-radius: 999px; margin-right: 6px; background: var(--accent); }
+        .stat-box { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: #fff; }
+        .stat-box .num { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+        .stat-box .lbl { font-size: 12px; color: var(--muted); }
         @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
@@ -95,18 +107,25 @@
         </div>
     </header>
 
-    <!-- ===================== INDIHOME (baru: per bulan Jan–Okt, CSV besar, TOMO/MOMO GraPARI) ===================== -->
+    <!-- ===================== INDIHOME ===================== -->
     <section id="ihApp">
-        <!-- Strip kontrol -->
-        <div class="bg-white border-b border-[var(--line)]">
-            <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-4 flex flex-col md:flex-row md:items-end gap-4">
+        <!-- Strip kontrol (sticky) -->
+        <div class="bg-white border-b border-[var(--line)] sticky top-0 z-20">
+            <div class="max-w-[1400px] mx-auto px-5 sm:px-8 pt-4 pb-3 flex flex-col md:flex-row md:items-end gap-4">
                 <div>
                     <label class="ctl-label" for="ihPeriod">Periode</label>
                     <select id="ihPeriod" class="ctl min-w-[190px]" disabled>
                         <option value="all">Jan–Okt (kumulatif)</option>
                     </select>
                 </div>
-                <div id="ihFileChip" class="hidden text-sm text-[var(--muted)] md:ml-2 md:pb-2">
+                <div>
+                    <span class="ctl-label">Basis responden</span>
+                    <div class="seg" role="group" aria-label="Basis responden">
+                        <button id="ihBasisAll" aria-pressed="true" onclick="ihSet({people:false})">Semua responden</button>
+                        <button id="ihBasisPeople" aria-pressed="false" onclick="ihSet({people:true})">People (CS)</button>
+                    </div>
+                </div>
+                <div id="ihFileChip" class="hidden text-sm text-[var(--muted)] md:pb-2">
                     <span class="font-semibold text-[var(--ink)]" id="ihFileName"></span>
                     <span id="ihFileMeta"></span>
                 </div>
@@ -114,101 +133,137 @@
                     <button id="ihExportBtn" onclick="ihExport()" class="hidden px-4 py-2.5 rounded-xl bg-[var(--navy-deep)] text-white text-sm font-semibold hover:opacity-90">Download rekap (.xlsx)</button>
                 </div>
             </div>
+            <nav id="ihNav" class="hidden max-w-[1400px] mx-auto px-4 sm:px-7 pb-2 flex gap-1 overflow-x-auto" aria-label="Topik">
+                <a class="navlink" href="#sec-assisted" style="--accent:#13265c"><span class="dot"></span>Assisted CTP</a>
+                <a class="navlink" href="#sec-lokasi" style="--accent:#e4002b"><span class="dot"></span>Lokasi CC & E-Care</a>
+                <a class="navlink" href="#sec-source" style="--accent:#7c3aed"><span class="dot"></span>Per source</a>
+                <a class="navlink" href="#sec-journey" style="--accent:#d97706"><span class="dot"></span>Journey per CTP</a>
+                <a class="navlink" href="#sec-wilayah" style="--accent:#12a594"><span class="dot"></span>Area, Region & Branch</a>
+                <a class="navlink" href="#sec-grapari" style="--accent:#2f6fde"><span class="dot"></span>GraPARI TOMO & MOMO</a>
+            </nav>
         </div>
 
-        <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-6 space-y-6">
+        <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-6">
             <!-- Kosong / loading -->
             <div id="ihEmpty" class="card p-10 sm:p-16 text-center">
                 <p id="ihEmptyTitle" class="text-lg font-bold">Upload file tNPS IndiHome untuk mulai</p>
-                <p id="ihEmptyText" class="text-sm text-[var(--muted)] mt-1 max-w-lg mx-auto">CSV (pemisah ; atau ,) atau Excel. File besar (300 MB+) dibaca bertahap, jadi browser tidak macet. Kolom yang dipakai: unit_type2, nps, Bulan, reason_desc, unit_name, area, region, Bisnis Model, source.</p>
+                <p id="ihEmptyText" class="text-sm text-[var(--muted)] mt-1 max-w-lg mx-auto">CSV (pemisah ; atau ,) atau Excel. File besar (300 MB+) dibaca bertahap, jadi browser tidak macet. Kolom yang dipakai: unit_type2, nps, Bulan, reason_desc, unit_name, area, region, branch, journey, Bisnis Model, Mitra, source.</p>
                 <div id="ihProgressWrap" class="hidden max-w-md mx-auto mt-6">
                     <div class="progress"><div id="ihProgressBar"></div></div>
                     <p id="ihProgressText" class="text-xs text-[var(--muted)] mt-2 tabular"></p>
                 </div>
             </div>
 
-            <div id="ihContent" class="hidden space-y-6">
+            <div id="ihContent" class="hidden space-y-8">
 
-                <!-- ============ BAGIAN A: Assisted CTP per bulan ============ -->
-                <section class="space-y-4" aria-labelledby="ihAssistedTitle">
-                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
-                        <div>
-                            <h2 id="ihAssistedTitle" class="text-xl font-bold">tNPS Assisted CTP — E-Care, Call Center, GraPARI</h2>
-                            <p class="text-sm text-[var(--muted)]">Assisted = Call Center + GraPARI + E-Care (unit_type2 Socmed). DigiPos, MyTelkomsel, Landing Page, dan Others tidak ikut dihitung.</p>
-                        </div>
-                        <div class="flex flex-wrap gap-3">
-                            <div class="seg" role="group" aria-label="Basis responden">
-                                <button id="ihBasisAll" aria-pressed="true" onclick="ihSet({people:false})">Semua responden</button>
-                                <button id="ihBasisPeople" aria-pressed="false" onclick="ihSet({people:true})">People (CS)</button>
-                            </div>
-                            <div class="seg" role="group" aria-label="Periode tabel">
+                <!-- ============ 1. Assisted CTP ============ -->
+                <section id="sec-assisted" class="topic space-y-4" style="--accent:#13265c">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div class="flex-1 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                            <div><h2>tNPS Assisted CTP — E-Care, Call Center, GraPARI</h2>
+                            <p>Assisted = Call Center + GraPARI + E-Care (unit_type2 Socmed). DigiPos, MyTelkomsel, Landing Page, dan Others tidak ikut dihitung.</p></div>
+                            <div class="seg self-start" role="group" aria-label="Periode tabel">
                                 <button id="ihGranMonth" aria-pressed="true" onclick="ihSet({gran:'month'})">Bulanan</button>
                                 <button id="ihGranWeek" aria-pressed="false" onclick="ihSet({gran:'week'})">Mingguan (rolling 4W)</button>
                             </div>
                         </div>
                     </div>
-
                     <div id="ihCtpCards" class="grid grid-cols-2 xl:grid-cols-4 gap-4"></div>
-
                     <div class="card p-5">
                         <h3 class="font-bold">Tren tNPS per CTP</h3>
-                        <p id="ihTrendSub" class="text-sm text-[var(--muted)] mb-3">Per bulan, semua responden</p>
+                        <p id="ihTrendSub" class="text-sm text-[var(--muted)] mb-3"></p>
                         <div class="relative h-72"><canvas id="ihTrendChart"></canvas></div>
                     </div>
-
                     <div id="ihCtpTables" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
-
-                    <details class="card p-5">
-                        <summary class="font-bold cursor-pointer">Rincian Call Center per lokasi & tNPS per source</summary>
-                        <div class="mt-4 space-y-5">
-                            <div>
-                                <h4 class="font-semibold mb-1">Call Center per lokasi (unit_name)</h4>
-                                <div id="ihSiteMatrix" class="overflow-x-auto"></div>
-                            </div>
-                            <div>
-                                <h4 class="font-semibold mb-1">Per source survei (semua unit_type2)</h4>
-                                <p class="text-sm text-[var(--muted)] mb-2">Metode tiap source berbeda (dyandra, ivr, saltik), jadi bandingkan antar bulan di dalam source yang sama.</p>
-                                <div id="ihSrcMatrix" class="overflow-x-auto"></div>
-                            </div>
-                        </div>
-                    </details>
                 </section>
 
-                <!-- ============ BAGIAN B: GraPARI TOMO & MOMO ============ -->
-                <section class="card overflow-hidden" aria-labelledby="ihBmTitle">
-                    <div class="px-5 sm:px-6 pt-5 pb-4 border-b border-[var(--line)]">
-                        <h2 id="ihBmTitle" class="text-xl font-bold">GraPARI TOMO & MOMO</h2>
-                        <p class="text-sm text-[var(--muted)]">Khusus unit_type2 GraPARI. Bisnis Model dari kolom file (kalau kosong, dari master unit_name). Area/Region GraPARI = yang paling sering muncul di baris surveinya.</p>
+                <!-- ============ 2. Lokasi CC & E-Care ============ -->
+                <section id="sec-lokasi" class="topic space-y-4" style="--accent:#e4002b">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div class="flex-1 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                            <div><h2>Rincian per lokasi — Call Center & E-Care</h2>
+                            <p>Dibagi menurut unit_name: Bandung, Semarang, dan lainnya (Contact Center, CX Agent, Virtual Assistant, dll.).</p></div>
+                            <div class="seg self-start" role="group" aria-label="CTP lokasi">
+                                <button id="ihLocCc" aria-pressed="true" onclick="ihSet({locCtp:1})">Call Center</button>
+                                <button id="ihLocEc" aria-pressed="false" onclick="ihSet({locCtp:3})">E-Care</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="px-5 sm:px-6 py-4 border-b border-[var(--line)] flex flex-col xl:flex-row xl:items-end gap-4">
+                    <div id="ihLocCards" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div>
+                </section>
+
+                <!-- ============ 3. Per source ============ -->
+                <section id="sec-source" class="topic space-y-4" style="--accent:#7c3aed">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div><h2>Per source survei × CTP</h2>
+                        <p>Tiap source dipisah per CTP. Metode survei dyandra, ivr, dan saltik berbeda, jadi bandingkan CTP di dalam source yang sama.</p></div>
+                    </div>
+                    <div id="ihSrcBoxes" class="space-y-4"></div>
+                </section>
+
+                <!-- ============ 4. Journey per CTP ============ -->
+                <section id="sec-journey" class="topic space-y-4" style="--accent:#d97706">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div class="flex-1 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                            <div><h2>Journey per CTP</h2>
+                            <p>Semua journey selalu tampil; pilih CTP untuk mengganti isinya.</p></div>
+                            <div class="seg self-start flex-wrap" role="group" aria-label="CTP journey" id="ihJourneyCtp"></div>
+                        </div>
+                    </div>
+                    <div class="card p-5"><div id="ihJourneyTable" class="overflow-x-auto"></div></div>
+                </section>
+
+                <!-- ============ 5. Area, Region, Branch ============ -->
+                <section id="sec-wilayah" class="topic space-y-4" style="--accent:#12a594">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div class="flex-1 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                            <div><h2>Nilai CTP per Area, Region & Branch</h2>
+                            <p>Area/region/branch mengikuti kolom di tiap baris survei (lokasi pelanggan). Klik judul kolom untuk mengurutkan.</p></div>
+                            <div class="flex flex-wrap items-end gap-3">
+                                <div class="seg" role="group" aria-label="Level wilayah">
+                                    <button id="ihGeoArea" aria-pressed="true" onclick="ihSet({geo:'area'})">Area</button>
+                                    <button id="ihGeoRegion" aria-pressed="false" onclick="ihSet({geo:'region'})">Region</button>
+                                    <button id="ihGeoBranch" aria-pressed="false" onclick="ihSet({geo:'branch'})">Branch</button>
+                                </div>
+                                <div><label class="ctl-label" for="ihGeoArea2">Area</label>
+                                    <select id="ihGeoArea2" class="ctl" onchange="ihSet({geoArea:+this.value, geoRegion:0})"></select></div>
+                                <div><label class="ctl-label" for="ihGeoRegion2">Region</label>
+                                    <select id="ihGeoRegion2" class="ctl" onchange="ihSet({geoRegion:+this.value})"></select></div>
+                                <input id="ihGeoSearch" type="search" placeholder="Cari nama…" class="ctl w-44" oninput="ihSet({geoSearch:this.value})">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-5"><div id="ihGeoTable" class="overflow-x-auto"></div></div>
+                </section>
+
+                <!-- ============ 6. GraPARI TOMO & MOMO ============ -->
+                <section id="sec-grapari" class="topic space-y-4" style="--accent:#2f6fde">
+                    <div class="topic-head"><span class="tag"></span>
+                        <div><h2>GraPARI TOMO & MOMO</h2>
+                        <p>Khusus unit_type2 GraPARI. Bisnis Model dari kolom file (kalau kosong, dari master unit_name). Area/Region GraPARI = yang paling sering muncul di baris surveinya. Bagian ini selalu menampilkan semua responden dan People (CS) berdampingan.</p></div>
+                    </div>
+                  <div class="card overflow-hidden">
+                    <div class="px-5 sm:px-6 py-4 border-b border-[var(--line)] flex flex-col xl:flex-row xl:flex-wrap xl:items-end gap-4">
                         <div class="seg self-start whitespace-nowrap" role="group" aria-label="Bisnis model">
-                            <button id="ihBmTomo" aria-pressed="true" onclick="ihSet({model:1, area:0, region:0, cat:null})">GraPARI TOMO</button>
-                            <button id="ihBmMomo" aria-pressed="false" onclick="ihSet({model:2, area:0, region:0, cat:null})">GraPARI MOMO</button>
+                            <button id="ihBmTomo" aria-pressed="true" onclick="ihSet({model:1, area:0, region:0, mitra:0, cat:null})">GraPARI TOMO</button>
+                            <button id="ihBmMomo" aria-pressed="false" onclick="ihSet({model:2, area:0, region:0, mitra:0, cat:null})">GraPARI MOMO</button>
                         </div>
-                        <div>
-                            <label class="ctl-label" for="ihArea">Area</label>
-                            <select id="ihArea" class="ctl min-w-[160px]" onchange="ihSet({area:+this.value, region:0, cat:null})"></select>
-                        </div>
-                        <div>
-                            <label class="ctl-label" for="ihRegion">Region</label>
-                            <select id="ihRegion" class="ctl min-w-[200px]" onchange="ihSet({region:+this.value, cat:null})"></select>
-                        </div>
-                        <div>
-                            <label class="ctl-label" for="ihTarget">Target tNPS (%)</label>
-                            <input id="ihTarget" type="number" step="1" class="ctl w-24 tabular" onchange="ihSet({target:+this.value || 0})">
-                        </div>
-                        <div>
-                            <label class="ctl-label" for="ihMinN">Min. responden</label>
-                            <input id="ihMinN" type="number" step="1" min="0" class="ctl w-24 tabular" onchange="ihSet({minN:Math.max(0, +this.value || 0)})">
-                        </div>
+                        <div><label class="ctl-label" for="ihArea">Area</label>
+                            <select id="ihArea" class="ctl min-w-[150px]" onchange="ihSet({area:+this.value, region:0, cat:null})"></select></div>
+                        <div><label class="ctl-label" for="ihRegion">Region</label>
+                            <select id="ihRegion" class="ctl min-w-[180px]" onchange="ihSet({region:+this.value, cat:null})"></select></div>
+                        <div><label class="ctl-label" for="ihMitra">Mitra</label>
+                            <select id="ihMitra" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({mitra:+this.value, cat:null})"></select></div>
+                        <div><label class="ctl-label" for="ihTarget">Target tNPS (%)</label>
+                            <input id="ihTarget" type="number" step="1" class="ctl w-24 tabular" onchange="ihSet({target:+this.value || 0})"></div>
+                        <div><label class="ctl-label" for="ihMinN">Min. responden</label>
+                            <input id="ihMinN" type="number" step="1" min="0" class="ctl w-24 tabular" onchange="ihSet({minN:Math.max(0, +this.value || 0)})"></div>
                         <label class="flex items-center gap-2 text-sm font-medium text-[var(--muted)] xl:pb-2.5 whitespace-nowrap">
                             <input id="ihSummary" type="checkbox" class="w-4 h-4" onchange="ihSet({summary:this.checked})"> Ringkasan saja
                         </label>
-                        <button id="ihUnmappedBtn" onclick="ihToggleUnmapped()" class="xl:ml-auto text-sm text-[var(--muted)] hover:text-[var(--ink)] underline-offset-2 hover:underline xl:pb-2.5 text-left"></button>
+                        <button id="ihUnmappedBtn" onclick="ihToggleUnmapped()" class="xl:ml-auto text-sm text-[var(--muted)] hover:text-[var(--ink)] hover:underline xl:pb-2.5 text-left"></button>
                     </div>
-
                     <div id="ihUnmappedPanel" class="hidden px-5 sm:px-6 py-4 bg-[#fbfbfd] border-b border-[var(--line)]"></div>
-
                     <div class="px-5 sm:px-6 py-3 flex flex-wrap items-center gap-2" id="ihCrumbs"></div>
 
                     <div class="bg-[var(--page)] px-5 sm:px-6 py-6 space-y-6">
@@ -228,27 +283,25 @@
                                 <div id="ihDist" class="mt-2"></div>
                             </div>
                         </div>
-
                         <div class="card p-5 sm:p-6">
                             <h3 class="font-bold">tNPS per Bulan</h3>
                             <p id="ihBmTrendSub" class="text-sm text-[var(--muted)] mb-4"></p>
                             <div id="ihBmBars" class="space-y-3"></div>
                         </div>
-
                         <div class="card p-5 sm:p-6" id="ihBmMonthlyCard">
                             <h3 class="font-bold mb-3">Rekap per Bulan</h3>
                             <div id="ihBmMonthly" class="overflow-x-auto"></div>
                         </div>
-
                         <div class="card p-5 sm:p-6" id="ihListCard">
                             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                                 <h3 id="ihListTitle" class="font-bold">Area dalam Nasional</h3>
-                                <input id="ihSearch" type="search" placeholder="Cari nama…" class="ctl w-full sm:w-64" oninput="ihSet({search:this.value})">
+                                <input id="ihSearch" type="search" placeholder="Cari nama GraPARI / mitra…" class="ctl w-full sm:w-72" oninput="ihSet({search:this.value})">
                             </div>
                             <div id="ihCatNote"></div>
                             <div id="ihList" class="overflow-x-auto"></div>
                         </div>
                     </div>
+                  </div>
                 </section>
             </div>
         </div>
@@ -614,7 +667,8 @@ class Dict {
 function createStore() {
     let cap = 1 << 19, n = 0;
     const spec = { month: Uint8Array, week: Uint8Array, ctp: Uint8Array, nps: Uint8Array, cs: Uint8Array, bm: Uint8Array,
-        site: Uint8Array, src: Uint8Array, unit: Uint32Array, area: Uint16Array, region: Uint16Array, u2: Uint16Array };
+        site: Uint8Array, src: Uint8Array, unit: Uint32Array, area: Uint16Array, region: Uint16Array, u2: Uint16Array,
+        branch: Uint16Array, journey: Uint16Array, mitra: Uint16Array };
     const a = {};
     for (const k in spec) a[k] = new spec[k](cap);
     return {
@@ -708,14 +762,15 @@ const WANT = {
     bulan: ['bulan', 'month', 'periode'], date: ['ts_call', 'survey_date', 'event_date', 'tanggal', 'date', 'tgl', 'created_at'],
     week: ['week', 'minggu'], reason: ['reason_desc'], unit: ['unit_name', 'unit name', 'nama_unit'],
     area: ['area', 'nama_area'], region: ['region', 'regional', 'nama_regional', 'treg'],
-    bm: ['bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo tomo'], source: ['source', 'sumber']
+    bm: ['bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo tomo'], source: ['source', 'sumber'],
+    branch: ['branch', 'cabang'], journey: ['journey'], mitra: ['mitra', 'nama mitra']
 };
 const normH = s => String(s).replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
 
 function makeIngestor() {
     const store = createStore();
     const dicts = { unit: new Dict(), area: new Dict(), region: new Dict(k => REGION_ALIAS[k.replace(/\s/g, '')] || k.replace(/\s/g, '')),
-        src: new Dict(), u2: new Dict() };
+        src: new Dict(), u2: new Dict(), branch: new Dict(), journey: new Dict(), mitra: new Dict() };
     const stats = { rows: 0, noNps: 0, noMonth: 0, years: {} };
     let idx = null;
     return {
@@ -762,7 +817,10 @@ function makeIngestor() {
                 unit: dicts.unit.id(unitRaw),
                 area: dicts.area.id(g('area')),
                 region: dicts.region.id(g('region')),
-                u2: dicts.u2.id(u2raw)
+                u2: dicts.u2.id(u2raw),
+                branch: dicts.branch.id(g('branch')),
+                journey: dicts.journey.id(g('journey')),
+                mitra: dicts.mitra.id(g('mitra'))
             });
         },
         finish() {
@@ -2465,7 +2523,9 @@ self.onmessage = async (e) => {
         let ihTrendChart = null;
         let ihShowUnmapped = false;
         const ihState = { period: 'all', gran: 'month', people: false, model: 1, area: 0, region: 0, summary: false,
-                          target: 45, minN: 30, search: '', cat: null, sort: { key: 'tnps', dir: -1 }, expanded: new Set() };
+                          target: 45, minN: 30, search: '', cat: null, sort: { key: 'tnps', dir: -1 }, expanded: new Set(),
+                          mitra: 0, locCtp: 1, journeyCtp: 0, geo: 'area', geoArea: 0, geoRegion: 0, geoSearch: '',
+                          geoSort: { key: 'n0', dir: -1 } };
         try {
             const p = JSON.parse(localStorage.getItem(IH_PREF_KEY) || '{}');
             if (typeof p.target === 'number') ihState.target = p.target;
@@ -2574,6 +2634,12 @@ self.onmessage = async (e) => {
             };
             IH.uArea = pickMode(cntA);
             IH.uRegion = pickMode(cntR);
+            const cntM = new Map();
+            for (let i = 0; i < d.n; i++) {
+                if (a.ctp[i] !== 2 || !a.mitra[i]) continue;
+                const k = a.unit[i] * 65536 + a.mitra[i]; cntM.set(k, (cntM.get(k) || 0) + 1);
+            }
+            IH.uMitra = pickMode(cntM);
 
             const sel = document.getElementById('ihPeriod');
             sel.innerHTML = `<option value="all">${IH.months.length ? IH_MONTHS[IH.months[0] - 1] + '–' + IH_MONTHS[IH.months[IH.months.length - 1] - 1] : 'Semua'} (kumulatif)</option>` +
@@ -2588,6 +2654,7 @@ self.onmessage = async (e) => {
             if (d.stats.noMonth) meta += ` · ${ihFmt(d.stats.noMonth)} baris tanpa bulan`;
             document.getElementById('ihFileMeta').textContent = meta;
             document.getElementById('ihFileChip').classList.remove('hidden');
+            document.getElementById('ihNav').classList.remove('hidden');
             document.getElementById('ihExportBtn').classList.remove('hidden');
             document.getElementById('ihEmpty').classList.add('hidden');
             document.getElementById('ihProgressWrap').classList.add('hidden');
@@ -2644,7 +2711,9 @@ self.onmessage = async (e) => {
 
         function ihCountTable(rows, opts = {}) {
             // rows: [{label, o, sel, cls}]
-            const head = `<tr><th>${opts.first || 'Bulan'}</th><th>Detractor</th><th>Passive</th><th>Promotor</th><th>Total Responden</th><th>tNPS</th>${opts.extraHead || ''}</tr>`;
+            const head = opts.compact
+                ? `<tr><th>${opts.first || 'Bulan'}</th><th title="Detractor">Det.</th><th title="Passive">Pas.</th><th title="Promotor">Prom.</th><th>Total</th><th>tNPS</th></tr>`
+                : `<tr><th>${opts.first || 'Bulan'}</th><th>Detractor</th><th>Passive</th><th>Promotor</th><th>Total Responden</th><th>tNPS</th>${opts.extraHead || ''}</tr>`;
             const body = rows.map(r => `<tr class="${r.cls || ''}${r.sel ? ' is-sel' : ''}">
                 <td>${r.label}</td><td class="tabular">${ihFmt(r.o[3])}</td><td class="tabular">${ihFmt(r.o[2])}</td>
                 <td class="tabular">${ihFmt(r.o[1])}</td><td class="tabular font-semibold">${ihFmt(ihTot(r.o))}</td>
@@ -2661,7 +2730,10 @@ self.onmessage = async (e) => {
             ['ihBasisAll', 'ihBasisPeople'].forEach((id, i) => document.getElementById(id).setAttribute('aria-pressed', String(ihState.people === (i === 1))));
             ['ihGranMonth', 'ihGranWeek'].forEach((id, i) => document.getElementById(id).setAttribute('aria-pressed', String((ihState.gran === 'week') === (i === 1))));
             ihRenderAssisted();
-            ihRenderMatrices();
+            ihRenderLocations();
+            ihRenderSources();
+            ihRenderJourney();
+            ihRenderGeo();
             ihRenderBm();
         }
 
@@ -2728,35 +2800,187 @@ self.onmessage = async (e) => {
             }).join('');
         }
 
-        function ihMatrix(groups, title) {
-            // groups: [{name, byM:{m:o}, total:o}]
-            const months = IH.months;
-            const head = `<tr><th>${title}</th>${months.map(m => `<th>${ihMonthLbl(m)}</th>`).join('')}<th>Total</th></tr>`;
-            const body = groups.map(g => `<tr><td>${ihEsc(g.name)}</td>${months.map(m => {
-                const o = g.byM[m]; return `<td title="${o ? ihFmt(ihTot(o)) + ' responden' : ''}">${o ? ihChip(ihNps(o)) : '–'}</td>`;
-            }).join('')}<td title="${ihFmt(ihTot(g.total))} responden">${ihChip(ihNps(g.total))} <span class="text-xs text-[var(--muted)]">${ihFmt(ihTot(g.total))}</span></td></tr>`).join('');
-            return `<table class="ih-table">${head}${body}</table>`;
-        }
+        // ---------- Helper umum ----------
+        const ihBasisOk = i => !ihState.people || IH.a.cs[i];
+        const ihCtpMatch = (ctpSel, c) => ctpSel === 0 ? (c >= 1 && c <= 3) : ctpSel === -1 ? true : c === ctpSel;
+        const IH_CTP_FILTERS = [
+            { id: 0, name: 'Assisted' }, { id: 1, name: 'Call Center' }, { id: 2, name: 'GraPARI' }, { id: 3, name: 'E-Care' },
+            { id: -1, name: 'Semua unit_type2' }
+        ];
+        const ihPeriodTxt = () => document.getElementById('periodPill').textContent;
+        const ihNChip = o => `${ihChip(ihNps(o))} <span class="text-xs text-[var(--muted)] tabular">${ihFmt(ihTot(o))}</span>`;
 
-        function ihRenderMatrices() {
-            const a = IH.a, people = ihState.people;
-            const site = {}, src = {};
-            const put = (map, key, m, s) => {
-                const g = map[key] || (map[key] = { byM: {}, total: ihNew() });
-                if (m) (g.byM[m] || (g.byM[m] = ihNew()))[s]++;
-                g.total[s]++;
-            };
+        // ---------- 2. Lokasi CC & E-Care ----------
+        function ihRenderLocations() {
+            const a = IH.a, ctp = ihState.locCtp;
+            document.getElementById('ihLocCc').setAttribute('aria-pressed', String(ctp === 1));
+            document.getElementById('ihLocEc').setAttribute('aria-pressed', String(ctp === 3));
+            const loc = {};
             for (let i = 0; i < IH.n; i++) {
                 const s = a.nps[i];
-                if (!s || (people && !a.cs[i])) continue;
-                put(src, a.src[i], a.month[i], s);
-                if (a.ctp[i] === 1) put(site, a.site[i], a.month[i], s);
+                if (a.ctp[i] !== ctp || !s || !ihBasisOk(i)) continue;
+                const g = loc[a.site[i]] || (loc[a.site[i]] = { byM: {}, total: ihNew() });
+                if (a.month[i]) (g.byM[a.month[i]] || (g.byM[a.month[i]] = ihNew()))[s]++;
+                g.total[s]++;
             }
-            const siteName = { 1: 'CC Bandung', 2: 'CC Semarang', 0: 'Call Center lainnya (Contact Center, CX Agent, dll.)' };
-            document.getElementById('ihSiteMatrix').innerHTML = ihMatrix([1, 2, 0].filter(k => site[k]).map(k => ({ name: siteName[k], ...site[k] })), 'Lokasi');
-            document.getElementById('ihSrcMatrix').innerHTML = ihMatrix(Object.keys(src).map(Number)
-                .sort((x, y) => ihTot(src[y].total) - ihTot(src[x].total))
-                .map(k => ({ name: IH.labels.src[k] || '(kosong)', ...src[k] })), 'Source');
+            const prefix = ctp === 1 ? 'CC' : 'E-Care';
+            const names = { 1: `${prefix} Bandung`, 2: `${prefix} Semarang`,
+                            0: ctp === 1 ? 'CC lainnya (Contact Center, CX Agent, dll.)' : 'Virtual Assistant & lainnya' };
+            const selMonth = ihState.period === 'all' ? null : +ihState.period;
+            const html = [1, 2, 0].filter(k => loc[k]).map(k => {
+                const g = loc[k];
+                const rows = IH.months.filter(m => g.byM[m]).map(m => ({ label: ihMonthLbl(m), o: g.byM[m], sel: m === selMonth }));
+                rows.push({ label: 'Total', o: g.total, cls: 'total' });
+                return `<div class="card p-4">
+                    <div class="flex items-baseline justify-between gap-2 mb-3">
+                        <h3 class="font-bold">${names[k]}</h3>
+                        <span class="text-sm text-[var(--muted)]">tNPS total <b class="text-[var(--ink)]">${ihPct(ihNps(g.total))}</b></span>
+                    </div>
+                    <div class="overflow-x-auto">${ihCountTable(rows, { compact: true })}</div>
+                </div>`;
+            }).join('');
+            document.getElementById('ihLocCards').innerHTML = html || '<p class="text-sm text-[var(--muted)]">Tidak ada data.</p>';
+        }
+
+        // ---------- 3. Source × CTP ----------
+        function ihCalcSources() {
+            const a = IH.a, src = {};
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i];
+                if (!s || !ihBasisOk(i) || !ihMonthOk(a.month[i])) continue;
+                const g = src[a.src[i]] || (src[a.src[i]] = [ihNew(), ihNew(), ihNew(), ihNew(), ihNew()]); // 0 luar assisted, 1 CC, 2 GraPARI, 3 E-Care, 4 total assisted
+                g[a.ctp[i]][s]++;
+                if (a.ctp[i]) g[4][s]++;
+            }
+            return src;
+        }
+        function ihStatBox(title, o, opts = {}) {
+            const t = ihTot(o);
+            return `<div class="stat-box ${opts.muted ? 'opacity-70' : ''}" style="${opts.accent ? `border-top:3px solid ${opts.accent}` : ''}">
+                <div class="flex items-center justify-between gap-2"><span class="font-semibold text-sm">${title}</span>${ihChip(ihNps(o))}</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 mt-3">
+                    <div><div class="num" style="color:var(--bad)">${ihFmt(o[3])}</div><div class="lbl">Detractor</div></div>
+                    <div><div class="num" style="color:#8a6406">${ihFmt(o[2])}</div><div class="lbl">Passive</div></div>
+                    <div><div class="num" style="color:#14703c">${ihFmt(o[1])}</div><div class="lbl">Promotor</div></div>
+                    <div><div class="num">${ihFmt(t)}</div><div class="lbl">Total</div></div>
+                </div>
+                ${opts.note ? `<div class="text-xs text-[var(--muted)] mt-2">${opts.note}</div>` : ''}
+            </div>`;
+        }
+        function ihRenderSources() {
+            const src = ihCalcSources();
+            const ids = Object.keys(src).map(Number).sort((x, y) => ihTot(src[y][4]) + ihTot(src[y][0]) - ihTot(src[x][4]) - ihTot(src[x][0]));
+            document.getElementById('ihSrcBoxes').innerHTML = ids.map(id => {
+                const g = src[id];
+                const boxes = [1, 2, 3].filter(c => ihTot(g[c]) > 0).map(c => ihStatBox(IH_CTP[c].name, g[c], { accent: IH_CTP[c].color }));
+                if (ihTot(g[4]) > 0) boxes.push(ihStatBox('Total Assisted', g[4], { accent: IH_CTP[0].color }));
+                if (ihTot(g[0]) > 0) boxes.push(ihStatBox('Di luar Assisted', g[0], { muted: true, note: 'DigiPos, MyTelkomsel, Landing Page, Others' }));
+                return `<div class="card p-4 sm:p-5">
+                    <div class="flex items-baseline justify-between gap-2 mb-3">
+                        <h3 class="text-lg font-bold">${ihEsc(IH.labels.src[id] || '(source kosong)')}</h3>
+                        <span class="text-sm text-[var(--muted)]">${ihEsc(ihPeriodTxt())}${ihState.people ? ' · People (CS)' : ''}</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">${boxes.join('')}</div>
+                </div>`;
+            }).join('') || '<p class="text-sm text-[var(--muted)]">Tidak ada data.</p>';
+        }
+
+        // ---------- 4. Journey per CTP ----------
+        function ihCalcJourney(ctpSel) {
+            const a = IH.a, jr = {};
+            IH.labels.journey.forEach((_, j) => { jr[j] = { byM: {}, total: ihNew() }; });
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i];
+                if (!s || !ihCtpMatch(ctpSel, a.ctp[i]) || !ihBasisOk(i)) continue;
+                const g = jr[a.journey[i]];
+                if (a.month[i]) (g.byM[a.month[i]] || (g.byM[a.month[i]] = ihNew()))[s]++;
+                if (ihMonthOk(a.month[i])) g.total[s]++;
+            }
+            return jr;
+        }
+        function ihRenderJourney() {
+            const ctpSel = ihState.journeyCtp;
+            document.getElementById('ihJourneyCtp').innerHTML = IH_CTP_FILTERS.map(f =>
+                `<button aria-pressed="${f.id === ctpSel}" onclick="ihSet({journeyCtp:${f.id}})">${f.name}</button>`).join('');
+            const jr = ihCalcJourney(ctpSel);
+            const ids = IH.labels.journey.map((_, j) => j).filter(j => j > 0 || ihTot(jr[0].total) > 0)
+                .sort((x, y) => ihTot(jr[y].total) - ihTot(jr[x].total) || IH.labels.journey[x].localeCompare(IH.labels.journey[y]));
+            const months = IH.months, selMonth = ihState.period === 'all' ? null : +ihState.period;
+            const tot = ihNew(); ids.forEach(j => ihAdd(tot, jr[j].total));
+            const head = `<tr><th>Journey</th><th>Detractor</th><th>Passive</th><th>Promotor</th><th>Total</th><th>tNPS</th>
+                ${months.map(m => `<th style="${m === selMonth ? 'background:#7a5a00' : ''}">${ihMonthLbl(m)}</th>`).join('')}</tr>`;
+            const row = (name, o, byM, cls = '') => `<tr class="${cls}"><td>${ihEsc(name)}</td>
+                <td class="tabular">${ihFmt(o[3])}</td><td class="tabular">${ihFmt(o[2])}</td><td class="tabular">${ihFmt(o[1])}</td>
+                <td class="tabular font-semibold">${ihFmt(ihTot(o))}</td><td>${ihChip(ihNps(o))}</td>
+                ${months.map(m => { const x = byM && byM[m]; return `<td title="${x ? ihFmt(ihTot(x)) + ' responden' : '0 responden'}">${x ? ihChip(ihNps(x)) : '<span class="text-[var(--muted)]">–</span>'}</td>`; }).join('')}</tr>`;
+            const byMTot = {}; ids.forEach(j => Object.entries(jr[j].byM).forEach(([m, o]) => ihAdd(byMTot[m] || (byMTot[m] = ihNew()), o)));
+            const body = ids.map(j => row(IH.labels.journey[j] || '(journey kosong)', jr[j].total, jr[j].byM)).join('') + row('Total', tot, byMTot, 'total');
+            const fname = IH_CTP_FILTERS.find(f => f.id === ctpSel).name;
+            document.getElementById('ihJourneyTable').innerHTML = `<p class="text-sm text-[var(--muted)] mb-3">${fname} · kolom D/P/Pr/tNPS = ${ihEsc(ihPeriodTxt())}; kolom bulan = tNPS tiap bulan${ihState.people ? ' · People (CS)' : ''}. Journey tanpa responden ditandai –.</p>
+                <table class="ih-table">${head}${body}</table>`;
+        }
+
+        // ---------- 5. Area / Region / Branch × CTP ----------
+        function ihCalcGeo(level, area, region) {
+            const a = IH.a, arr = level === 'area' ? a.area : level === 'region' ? a.region : a.branch, out = {};
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i], c = a.ctp[i];
+                if (!s || !c || !ihBasisOk(i) || !ihMonthOk(a.month[i])) continue;
+                if (area && a.area[i] !== area) continue;
+                if (region && a.region[i] !== region) continue;
+                const g = out[arr[i]] || (out[arr[i]] = [ihNew(), ihNew(), ihNew(), ihNew()]);
+                g[c][s]++; g[0][s]++;
+            }
+            return out;
+        }
+        function ihGeoSort(key) {
+            const s = ihState.geoSort;
+            ihSet({ geoSort: { key, dir: s.key === key ? -s.dir : (key === 'name' ? 1 : -1) } });
+        }
+        function ihRenderGeo() {
+            const a = IH.a, L = IH.labels, level = ihState.geo;
+            [['ihGeoArea', 'area'], ['ihGeoRegion', 'region'], ['ihGeoBranch', 'branch']].forEach(([id, v]) =>
+                document.getElementById(id).setAttribute('aria-pressed', String(level === v)));
+            // opsi filter
+            const areaSet = new Set(), regSet = new Set();
+            for (let i = 0; i < IH.n; i++) {
+                if (!a.ctp[i]) continue;
+                areaSet.add(a.area[i]);
+                if (!ihState.geoArea || a.area[i] === ihState.geoArea) regSet.add(a.region[i]);
+            }
+            const areas = [...areaSet].filter(x => x).sort((x, y) => L.area[x].localeCompare(L.area[y], 'id', { numeric: true }));
+            const regs = [...regSet].filter(x => x).sort((x, y) => L.region[x].localeCompare(L.region[y], 'id'));
+            if (ihState.geoRegion && !regs.includes(ihState.geoRegion)) ihState.geoRegion = 0;
+            const selA = document.getElementById('ihGeoArea2'), selR = document.getElementById('ihGeoRegion2');
+            selA.innerHTML = '<option value="0">Semua Area</option>' + areas.map(x => `<option value="${x}">${ihEsc(L.area[x])}</option>`).join('');
+            selA.value = ihState.geoArea;
+            selR.innerHTML = '<option value="0">Semua Region</option>' + regs.map(x => `<option value="${x}">${ihEsc(L.region[x])}</option>`).join('');
+            selR.value = ihState.geoRegion;
+            selR.disabled = level === 'area';
+            selA.disabled = false;
+
+            const geo = ihCalcGeo(level, ihState.geoArea, level === 'area' ? 0 : ihState.geoRegion);
+            const lab = level === 'area' ? L.area : level === 'region' ? L.region : L.branch;
+            const q = ihState.geoSearch.trim().toLowerCase();
+            let ids = Object.keys(geo).map(Number);
+            if (q) ids = ids.filter(id => (lab[id] || '').toLowerCase().includes(q));
+            const { key, dir } = ihState.geoSort;
+            const v = id => key === 'name' ? (lab[id] || '~') : key.startsWith('n') ? ihTot(geo[id][+key.slice(1)]) : (ihNps(geo[id][+key.slice(1)]) ?? -999);
+            ids.sort((x, y) => { const p = v(x), r = v(y); return (typeof p === 'string' ? p.localeCompare(r, 'id', { numeric: true }) : p - r) * dir; });
+            const tot = [ihNew(), ihNew(), ihNew(), ihNew()];
+            ids.forEach(id => geo[id].forEach((o, c) => ihAdd(tot[c], o)));
+            const arrow = k => key === k ? (dir < 0 ? ' ↓' : ' ↑') : '';
+            const lvlName = level === 'area' ? 'Area' : level === 'region' ? 'Region' : 'Branch';
+            const head = `<tr><th><button class="font-semibold" onclick="ihGeoSort('name')">${lvlName}${arrow('name')}</button></th>
+                ${IH_CTP.map(c => `<th><button class="font-semibold" onclick="ihGeoSort('t${c.id}')">${c.id === 0 ? 'Assisted' : c.name} tNPS${arrow('t' + c.id)}</button>
+                    <button class="font-normal opacity-80 ml-1" onclick="ihGeoSort('n${c.id}')" title="Urutkan menurut jumlah responden">n${arrow('n' + c.id)}</button></th>`).join('')}</tr>`;
+            const row = (name, g, cls = '') => `<tr class="${cls}"><td>${ihEsc(name)}</td>${g.map(o => `<td>${ihTot(o) ? ihNChip(o) : '<span class="text-[var(--muted)]">–</span>'}</td>`).join('')}</tr>`;
+            const body = ids.map(id => row(lab[id] || `(${lvlName.toLowerCase()} kosong)`, geo[id])).join('') + (ids.length ? row('Total', tot, 'total') : '');
+            const scope = [ihState.geoArea ? L.area[ihState.geoArea] : '', level !== 'area' && ihState.geoRegion ? L.region[ihState.geoRegion] : ''].filter(Boolean).join(' · ') || 'Nasional';
+            document.getElementById('ihGeoTable').innerHTML = ids.length
+                ? `<p class="text-sm text-[var(--muted)] mb-3">${ids.length} ${lvlName.toLowerCase()} · ${ihEsc(scope)} · ${ihEsc(ihPeriodTxt())}${ihState.people ? ' · People (CS)' : ''}. Angka kecil di samping tNPS = jumlah responden.</p>
+                   <table class="ih-table">${head}${body}</table>`
+                : '<p class="text-sm text-[var(--muted)]">Tidak ada yang cocok dengan pencarian.</p>';
         }
 
         // ---------- Bagian B: TOMO / MOMO ----------
@@ -2782,9 +3006,11 @@ self.onmessage = async (e) => {
             if (document.getElementById('ihSearch').value !== ihState.search) document.getElementById('ihSearch').value = ihState.search;
 
             // Opsi area & region (dari baris GraPARI model ini)
-            const areaCnt = {}, regCnt = {};
+            const areaCnt = {}, regCnt = {}, mitraCnt = {};
             for (let i = 0; i < IH.n; i++) {
                 if (a.ctp[i] !== 2 || a.bm[i] !== model) continue;
+                const um = IH.uArea[a.unit[i]], ur = IH.uRegion[a.unit[i]];
+                if ((!ihState.area || um === ihState.area) && (!ihState.region || ur === ihState.region)) mitraCnt[a.mitra[i]] = 1;
                 const ua = IH.uArea[a.unit[i]];
                 areaCnt[ua] = 1;
                 if (!ihState.area || ua === ihState.area) regCnt[IH.uRegion[a.unit[i]]] = 1;
@@ -2798,9 +3024,14 @@ self.onmessage = async (e) => {
             document.getElementById('ihArea').value = ihState.area;
             document.getElementById('ihRegion').innerHTML = `<option value="0">Semua Region</option>` + regs.map(x => `<option value="${x}">${ihEsc(L.region[x])}</option>`).join('');
             document.getElementById('ihRegion').value = ihState.region;
+            const mitras = Object.keys(mitraCnt).map(Number).filter(x => x).sort((x, y) => L.mitra[x].localeCompare(L.mitra[y], 'id'));
+            if (ihState.mitra && !mitras.includes(ihState.mitra)) ihState.mitra = 0;
+            document.getElementById('ihMitra').innerHTML = `<option value="0">Semua Mitra (${mitras.length})</option>` + mitras.map(x => `<option value="${x}">${ihEsc(L.mitra[x])}</option>`).join('');
+            document.getElementById('ihMitra').value = ihState.mitra;
 
             // Agregasi scope
             const inScope = i => a.ctp[i] === 2 && a.bm[i] === model && a.nps[i]
+                && (!ihState.mitra || a.mitra[i] === ihState.mitra)
                 && (!ihState.area || IH.uArea[a.unit[i]] === ihState.area) && (!ihState.region || IH.uRegion[a.unit[i]] === ihState.region);
             const tot = ihNew(), totCs = ihNew(), byM = {}, byMcs = {};
             const units = {};   // unit -> {o, cs, byM, area:{}, region:{}}
@@ -2850,8 +3081,9 @@ self.onmessage = async (e) => {
             const crumbs = [`<span class="crumb" ${ihState.area ? 'role="button" tabindex="0" onclick="ihSet({area:0,region:0,cat:null})"' : ''}>Nasional</span>`];
             if (ihState.area) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb" ${ihState.region ? 'role="button" tabindex="0" onclick="ihSet({region:0,cat:null})"' : ''}>${ihEsc(L.area[ihState.area])}</span>`);
             if (ihState.region) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb">${ihEsc(L.region[ihState.region])}</span>`);
+            if (ihState.mitra) crumbs.push(`<span class="crumb" style="background:#e6eefc;color:#1d4fb8" role="button" tabindex="0" onclick="ihSet({mitra:0,cat:null})" title="Hapus filter mitra">Mitra: ${ihEsc(L.mitra[ihState.mitra])} ✕</span>`);
             document.getElementById('ihCrumbs').innerHTML = crumbs.join('');
-            const scopeName = ihState.region ? L.region[ihState.region] : ihState.area ? L.area[ihState.area] : 'Nasional';
+            const scopeName = (ihState.region ? L.region[ihState.region] : ihState.area ? L.area[ihState.area] : 'Nasional') + (ihState.mitra ? ` · ${L.mitra[ihState.mitra]}` : '');
 
             // KPI
             const v = ihNps(tot), vcs = ihNps(totCs);
@@ -2910,7 +3142,7 @@ self.onmessage = async (e) => {
             if (showUnits) {
                 items = activeUnits.filter(uid => !ihState.cat || ihCategory(units[uid].o) === ihState.cat).map(uid => {
                     const u = units[uid];
-                    return { id: uid, name: L.unit[uid] || '(tanpa nama)', sub: [L.area[IH.uArea[uid]], L.region[IH.uRegion[uid]]].filter(Boolean).join(' · '), o: u.o, cs: u.cs, cat: ihCategory(u.o), byM: u.byM };
+                    return { id: uid, name: L.unit[uid] || '(tanpa nama)', mitra: L.mitra[IH.uMitra[uid]] || '–', sub: [L.area[IH.uArea[uid]], L.region[IH.uRegion[uid]]].filter(Boolean).join(' · '), o: u.o, cs: u.cs, cat: ihCategory(u.o), byM: u.byM };
                 });
             } else {
                 items = Object.keys(groups).map(Number).map(gid => ({
@@ -2918,7 +3150,7 @@ self.onmessage = async (e) => {
                     o: groups[gid].o, cs: groups[gid].cs, nUnits: groups[gid].units.size, cat: ihCategory(groups[gid].o)
                 }));
             }
-            if (q) items = items.filter(x => x.name.toLowerCase().includes(q) || (x.sub || '').toLowerCase().includes(q));
+            if (q) items = items.filter(x => x.name.toLowerCase().includes(q) || (x.sub || '').toLowerCase().includes(q) || (x.mitra || '').toLowerCase().includes(q));
             const sk = ihState.sort.key, dir = ihState.sort.dir;
             const val = x => sk === 'name' ? x.name : sk === 'n' ? ihTot(x.o) : sk === 'people' ? (ihNps(x.cs) ?? -999) : (ihNps(x.o) ?? -999);
             items.sort((x, y) => { const p = val(x), r = val(y); return (typeof p === 'string' ? p.localeCompare(r, 'id') : p - r) * dir; });
@@ -2933,7 +3165,7 @@ self.onmessage = async (e) => {
                 const on = sk === key;
                 return `<th class="${cls}"><button class="font-semibold" onclick="ihSort('${key}')">${label}${on ? (dir < 0 ? ' ↓' : ' ↑') : ''}</button></th>`;
             };
-            const head = `<tr>${th('name', showUnits ? 'GraPARI' : level === 'area' ? 'Area' : 'Region')}${showUnits ? '' : '<th>GraPARI</th>'}
+            const head = `<tr>${th('name', showUnits ? 'GraPARI' : level === 'area' ? 'Area' : 'Region')}${showUnits ? '<th style="text-align:left">Mitra</th>' : '<th>GraPARI</th>'}
                 ${th('n', 'Responden')}<th>% Promotor</th><th>% Detractor</th>${th('tnps', 'tNPS')}<th class="min-w-[140px]"></th>${th('people', 'People')}<th>Kategori</th></tr>`;
             const body = items.map(x => {
                 const t = ihTot(x.o), v = ihNps(x.o);
@@ -2941,7 +3173,7 @@ self.onmessage = async (e) => {
                 const open = showUnits && ihState.expanded.has(x.id);
                 let html = `<tr class="rowbtn" tabindex="0" onclick="${click}" onkeydown="if(event.key==='Enter'){${click}}">
                     <td>${ihEsc(x.name)}${x.sub && (ihState.cat || q) ? `<div class="text-xs font-normal text-[var(--muted)]">${ihEsc(x.sub)}</div>` : ''}</td>
-                    ${showUnits ? '' : `<td class="tabular">${ihFmt(x.nUnits)}</td>`}
+                    ${showUnits ? `<td style="text-align:left;font-weight:400;white-space:normal;min-width:160px" class="text-xs">${ihEsc(x.mitra)}</td>` : `<td class="tabular">${ihFmt(x.nUnits)}</td>`}
                     <td class="tabular">${ihFmt(t)}</td>
                     <td class="tabular">${t ? ihPct(x.o[1] / t * 100, 1) : '–'}</td>
                     <td class="tabular">${t ? ihPct(x.o[3] / t * 100, 1) : '–'}</td>
@@ -2950,7 +3182,7 @@ self.onmessage = async (e) => {
                     <td class="tabular">${ihPct(ihNps(x.cs), 1)} <span class="text-xs text-[var(--muted)]">(${ihFmt(ihTot(x.cs))})</span></td>
                     <td><span class="chip ${IH_CAT[x.cat].chip}">${IH_CAT[x.cat].name}</span></td></tr>`;
                 if (open) {
-                    html += `<tr><td colspan="9" class="!text-left bg-[#fafbfd]"><div class="flex flex-wrap gap-2 py-1">${IH.months.map(m => {
+                    html += `<tr><td colspan="10" class="!text-left bg-[#fafbfd]"><div class="flex flex-wrap gap-2 py-1">${IH.months.map(m => {
                         const o = x.byM[m]; return `<span class="text-xs border border-[var(--line)] rounded-lg px-2 py-1 bg-white">${IH_MONTHS[m - 1]}: <b>${o ? ihPct(ihNps(o), 1) : '–'}</b> <span class="text-[var(--muted)]">${o ? ihFmt(ihTot(o)) : 0}</span></span>`;
                     }).join('')}</div></td></tr>`;
                 }
@@ -3010,12 +3242,27 @@ self.onmessage = async (e) => {
                 const aoaM = [['Bulan', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People']];
                 IH.months.filter(m => byM[m]).forEach(m => { const x = byM[m]; aoaM.push([ihMonthLbl(m), x.o[3], x.o[2], x.o[1], ihTot(x.o), r2(ihNps(x.o)), r2(ihNps(x.cs)), ihTot(x.cs)]); });
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaM), `${name}_Bulanan`);
-                const aoaU = [['GraPARI', 'Area', 'Region', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People', 'Kategori']];
+                const aoaU = [['GraPARI', 'Mitra', 'Area', 'Region', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People', 'Kategori']];
                 Object.keys(units).map(Number).sort((x, y) => ((ihCategory(units[x].o) === 'na') - (ihCategory(units[y].o) === 'na')) || ((ihNps(units[y].o) ?? -999) - (ihNps(units[x].o) ?? -999))).forEach(uid => {
                     const u = units[uid];
-                    aoaU.push([L.unit[uid] || '(tanpa nama)', L.area[u.area], L.region[u.region], u.o[3], u.o[2], u.o[1], ihTot(u.o), r2(ihNps(u.o)), r2(ihNps(u.cs)), ihTot(u.cs), IH_CAT[ihCategory(u.o)].name]);
+                    aoaU.push([L.unit[uid] || '(tanpa nama)', L.mitra[IH.uMitra[uid]] || '', L.area[u.area], L.region[u.region], u.o[3], u.o[2], u.o[1], ihTot(u.o), r2(ihNps(u.o)), r2(ihNps(u.cs)), ihTot(u.cs), IH_CAT[ihCategory(u.o)].name]);
                 });
                 XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaU), `${name}_per_GraPARI`);
+            });
+            const ctpName = c => IH_CTP[c].name;
+            const src = ihCalcSources();
+            const aoaS = [['Source', 'CTP', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)']];
+            Object.keys(src).forEach(id => [1, 2, 3, 4, 0].forEach(c => { const o = src[id][c]; if (ihTot(o)) aoaS.push([L.src[id] || '(kosong)', c === 4 ? 'Total Assisted' : c === 0 ? 'Di luar Assisted' : ctpName(c), o[3], o[2], o[1], ihTot(o), r2(ihNps(o))]); }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaS), 'Source_x_CTP');
+            const aoaJ = [['CTP', 'Journey', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)']];
+            [0, 1, 2, 3].forEach(c => { const jr = ihCalcJourney(c); L.journey.forEach((jn, j) => { const o = jr[j].total; if (j || ihTot(o)) aoaJ.push([c === 0 ? 'Assisted' : ctpName(c), jn || '(kosong)', o[3], o[2], o[1], ihTot(o), r2(ihNps(o))]); }); });
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaJ), 'Journey_x_CTP');
+            ['area', 'region', 'branch'].forEach(level => {
+                const geo = ihCalcGeo(level, 0, 0), lab = L[level];
+                const aoaG = [[level.toUpperCase(), ...IH_CTP.flatMap(c => [`${c.id === 0 ? 'Assisted' : c.name} tNPS (%)`, `${c.id === 0 ? 'Assisted' : c.name} Responden`])]];
+                Object.keys(geo).map(Number).sort((x, y) => (lab[x] || '').localeCompare(lab[y] || '', 'id', { numeric: true }))
+                    .forEach(id => aoaG.push([lab[id] || '(kosong)', ...geo[id].flatMap(o => [r2(ihNps(o)), ihTot(o)])]));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaG), `CTP_per_${level}`);
             });
             XLSX.writeFile(wb, `rekap_tnps_indihome_${ihState.period === 'all' ? 'jan-okt' : IH_MONTHS[+ihState.period - 1].toLowerCase()}_${IH.year}.xlsx`);
         }
