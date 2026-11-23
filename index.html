@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telkomsel tNPS Analytics Dashboard (IndiHome & Mobile)</title>
+    <title>IndiHome tNPS Analytics Dashboard</title>
 
     <!-- Tailwind CSS v4 -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
@@ -83,7 +83,7 @@
             color: #ffffff;
             box-shadow: 0 2px 6px rgba(11, 22, 51, 0.22);
         }
-        .week-btn-group {
+        .period-btn-group {
             display: inline-flex;
             flex-wrap: wrap;
             align-items: center;
@@ -93,7 +93,7 @@
             border-radius: 10px;
             border: 1px solid #e2e8f0;
         }
-        .week-pill-btn {
+        .period-pill-btn {
             padding: 5px 11px;
             font-size: 11px;
             font-weight: 700;
@@ -103,11 +103,11 @@
             cursor: pointer;
             white-space: nowrap;
         }
-        .week-pill-btn:hover {
+        .period-pill-btn:hover {
             color: #0f172a;
             background: rgba(255, 255, 255, 0.6);
         }
-        .week-pill-btn.active {
+        .period-pill-btn.active {
             background: #0f172a;
             color: #ffffff;
             box-shadow: 0 1px 4px rgba(15, 23, 42, 0.2);
@@ -166,23 +166,18 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="kpi-badge bg-red-50 text-[#b91c1c] border border-red-200">
                                 <span class="w-2 h-2 rounded-full bg-[#dc2626]"></span>
-                                KPI & CX Monitoring
+                                IndiHome KPI & CX Monitoring
                             </span>
                             <span class="kpi-badge bg-slate-100 text-slate-600 border border-slate-200">
                                 tNPS Analytics
                             </span>
                         </div>
-                        <h1 id="mainTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">📊 IndiHome tNPS Analytics Dashboard</h1>
-                        <p id="subTitle" class="text-xs sm:text-sm text-slate-500">Formula: (Promotor - Detractor) / Grand Total • Periode berdasarkan kolom Bulan (fallback ts_call)</p>
+                        <h1 id="mainTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">IndiHome tNPS Analytics Dashboard</h1>
+                        <p id="subTitle" class="text-xs sm:text-sm text-slate-500">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP: unit_type2 • Category: nps • Periode: Bulan • GraPARI: Bisnis Model & Mitra</p>
                     </div>
 
-                    <!-- Mode Switcher & Upload -->
+                    <!-- Upload File IndiHome -->
                     <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
-                        <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
-                            <button id="modeIndihome" onclick="switchMode('indihome')" class="flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg bg-[#dc2626] text-white transition-all shadow-sm">IndiHome</button>
-                            <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
-                        </div>
-
                         <label id="uploadBtnLabel" class="cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm active:scale-[0.99] transition-all">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                             <span id="uploadBtnText">Upload File IndiHome</span>
@@ -201,21 +196,15 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row sm:items-center gap-2.5 flex-wrap">
-                        <div id="weekFilterContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Filter Bulan:</label>
-                            <select id="weekFilter" class="border-0 bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer">
+                        <div id="bulanFilterContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
+                            <label for="bulanFilter" class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Filter Bulan:</label>
+                            <select id="bulanFilter" class="border-0 bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer">
                                 <option value="all">Semua Bulan di File</option>
                             </select>
                         </div>
 
-                        <!-- [MOBILE] Info master Bisnis Model -->
-                        <div id="masterInfoContainer" class="hidden items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl">
-                            <span id="masterInfo" class="text-xs font-semibold text-blue-900"></span>
-                            <button onclick="resetBisnisModelMaster()" class="text-xs font-bold text-blue-700 hover:text-blue-950 underline">Reset</button>
-                        </div>
-
                         <div id="sheetSelectorContainer" class="hidden flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
-                            <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sheet:</label>
+                            <label for="sheetSelector" class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Sheet:</label>
                             <select id="sheetSelector" class="border-0 bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"></select>
                         </div>
                     </div>
@@ -229,7 +218,7 @@
                 <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             </div>
             <p id="placeholderTitle" class="text-base sm:text-lg font-bold text-slate-800">Belum ada file data IndiHome yang diunggah</p>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl mx-auto">Klik tombol upload di atas untuk memuat file (.xlsx, .xls, .csv, .txt). Untuk file &gt;250–300 MB, gunakan format <strong>.csv</strong> agar dibaca bertahap (streaming) tanpa kehabisan memori browser.</p>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl mx-auto">Klik tombol upload di atas untuk memuat file (.xlsx, .xls, .csv, .txt). Untuk file besar, format <strong>.csv</strong> akan diproses secara bertahap (streaming) agar tetap ringan.</p>
         </div>
 
         <!-- Dashboard Content Container -->
@@ -241,7 +230,7 @@
                     <div class="kpi-section-header flex items-center justify-between gap-2">
                         <div>
                             <span class="text-[11px] font-bold uppercase tracking-wider text-[#dc2626]">KPI Utama</span>
-                            <h2 class="text-base font-extrabold text-slate-900">Tren tNPS (%) Per CTP</h2>
+                            <h2 class="text-base font-extrabold text-slate-900">Tren tNPS (%) Per CTP (unit_type2)</h2>
                         </div>
                         <span class="kpi-badge bg-red-50 text-[#b91c1c] border border-red-100">Trend</span>
                     </div>
@@ -275,9 +264,9 @@
                             </div>
 
                             <!-- Toggle Per Wilayah / Per Mitra -->
-                            <div id="momoSubModeWrap" class="seg-pill-group">
-                                <button type="button" id="btnSubWilayah" onclick="setMomoSubMode('wilayah')" class="seg-btn active-sub">Per Wilayah</button>
-                                <button type="button" id="btnSubMitra" onclick="setMomoSubMode('mitra')" class="seg-btn">Per Mitra</button>
+                            <div id="grapariSubModeWrap" class="seg-pill-group">
+                                <button type="button" id="btnSubWilayah" onclick="setGrapariSubMode('wilayah')" class="seg-btn active-sub">Per Wilayah</button>
+                                <button type="button" id="btnSubMitra" onclick="setGrapariSubMode('mitra')" class="seg-btn">Per Mitra</button>
                             </div>
 
                             <!-- Basis Perhitungan: People CS (default) / All Survey -->
@@ -302,9 +291,9 @@
                                 </select>
                             </div>
 
-                            <!-- Dropdown Mitra -->
+                            <!-- Dropdown Mitra (Khusus GraPARI) -->
                             <div class="flex flex-col gap-1">
-                                <label for="grapariMitraFilter" class="text-[11px] font-semibold text-slate-600 leading-none">Mitra</label>
+                                <label for="grapariMitraFilter" class="text-[11px] font-semibold text-slate-600 leading-none">Mitra (GraPARI)</label>
                                 <select id="grapariMitraFilter" onchange="setGrapariMitra(this.value)" class="grapari-select">
                                     <option value="ALL">Semua Mitra</option>
                                 </select>
@@ -334,7 +323,7 @@
                 </div>
 
                 <div id="grapariBodyContent" class="p-5 space-y-6">
-                    <!-- Ringkasan Kartu Per Periode -->
+                    <!-- Ringkasan Kartu Per Periode Bulan -->
                     <div id="grapariWeekCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
 
                     <!-- Detail Grafik & Tabel (disembunyikan saat "Ringkasan saja" dicentang) -->
@@ -348,7 +337,7 @@
                             <table id="grapariTable" class="min-w-[780px] w-full text-left border-collapse text-xs sm:text-sm">
                                 <thead>
                                     <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
-                                        <th id="thGrapariPeriod" class="p-3.5">Periode (Bulan)</th>
+                                        <th id="thGrapariPeriod" class="p-3.5">Bulan</th>
                                         <th id="thGrapariGroup" class="p-3.5">Cakupan</th>
                                         <th class="p-3.5 text-center">Detractor</th>
                                         <th class="p-3.5 text-center">Passive</th>
@@ -372,8 +361,8 @@
                         <h2 class="text-base font-extrabold text-slate-900">Tabel Rinci tNPS (%) & Grand Total CTP</h2>
                     </div>
                     <div class="flex flex-wrap items-center gap-2.5">
-                        <div id="ctpWeekButtons" class="week-btn-group">
-                            <button type="button" class="week-pill-btn active" onclick="setTableWeek('ctp', 'all')">Semua Bulan</button>
+                        <div id="ctpPeriodButtons" class="period-btn-group">
+                            <button type="button" class="period-pill-btn active" onclick="setTablePeriod('ctp', 'all')">Semua Bulan</button>
                         </div>
                         <div class="ccFilterWrap flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
                             <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Call Center:</label>
@@ -390,7 +379,7 @@
                     <table id="summaryTable" class="min-w-[760px] w-full text-left border-collapse text-xs sm:text-sm">
                         <thead>
                             <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
-                                <th id="thPeriod1" class="p-3.5">Periode (Bulan)</th>
+                                <th id="thPeriod1" class="p-3.5">Bulan</th>
                                 <th id="thCtp1" class="p-3.5">unit_type2 (CTP)</th>
                                 <th class="p-3.5 text-center">Detractor</th>
                                 <th class="p-3.5 text-center">Passive</th>
@@ -404,7 +393,7 @@
                 </div>
             </section>
 
-            <!-- [INDIHOME] Ringkasan Call Center per Unit / Lokasi -->
+            <!-- Ringkasan Call Center per Unit / Lokasi -->
             <section id="ccBreakdownSection" class="kpi-card p-5 overflow-hidden">
                 <div class="kpi-section-header flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
@@ -424,7 +413,7 @@
                 <div id="ccBreakdownCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </section>
 
-            <!-- [INDIHOME] Rincian tNPS per Source (Fokus Call Center, GraPARI & Socmed) -->
+            <!-- Rincian tNPS per Source (Fokus Call Center, GraPARI & Socmed) -->
             <section id="sourceSection" class="kpi-card p-5 overflow-hidden">
                 <div class="kpi-section-header flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
@@ -450,8 +439,8 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
                     <h3 class="text-sm font-extrabold text-slate-800">Rincian Source per CTP (Call Center • GraPARI • Socmed)</h3>
                     <div class="flex flex-wrap items-center gap-2">
-                        <div id="sourceWeekButtons" class="week-btn-group">
-                            <button type="button" class="week-pill-btn active" onclick="setTableWeek('source', 'all')">Semua Bulan</button>
+                        <div id="sourcePeriodButtons" class="period-btn-group">
+                            <button type="button" class="period-pill-btn active" onclick="setTablePeriod('source', 'all')">Semua Bulan</button>
                         </div>
                         <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1 rounded-xl">
                             <label for="sourceFilterValue" class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Filter Source:</label>
@@ -465,8 +454,8 @@
                     <table id="sourceTable" class="min-w-[820px] w-full text-left border-collapse text-xs sm:text-sm">
                         <thead>
                             <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
-                                <th id="thPeriodSrc" class="p-3.5">Periode (Bulan)</th>
-                                <th class="p-3.5">CTP</th>
+                                <th id="thPeriodSrc" class="p-3.5">Bulan</th>
+                                <th class="p-3.5">CTP (unit_type2)</th>
                                 <th id="thSourceName" class="p-3.5">Source</th>
                                 <th class="p-3.5 text-center">Detractor</th>
                                 <th class="p-3.5 text-center">Passive</th>
@@ -488,8 +477,8 @@
                         <h2 class="text-base font-extrabold text-slate-900">Tabel Rinci tNPS People Customer Service (%) & Grand Total</h2>
                     </div>
                     <div class="flex flex-wrap items-center gap-2.5">
-                        <div id="csWeekButtons" class="week-btn-group">
-                            <button type="button" class="week-pill-btn active" onclick="setTableWeek('cs', 'all')">Semua Bulan</button>
+                        <div id="csPeriodButtons" class="period-btn-group">
+                            <button type="button" class="period-pill-btn active" onclick="setTablePeriod('cs', 'all')">Semua Bulan</button>
                         </div>
                         <div class="ccFilterWrap flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
                             <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Call Center:</label>
@@ -506,7 +495,7 @@
                     <table id="csTable" class="min-w-[800px] w-full text-left border-collapse text-xs sm:text-sm">
                         <thead>
                             <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
-                                <th id="thPeriod2" class="p-3.5">Periode (Bulan)</th>
+                                <th id="thPeriod2" class="p-3.5">Bulan</th>
                                 <th id="thCtp2" class="p-3.5">unit_type2 (CTP) - People CS</th>
                                 <th class="p-3.5 text-center">Detractor (CS)</th>
                                 <th class="p-3.5 text-center">Passive (CS)</th>
@@ -523,7 +512,6 @@
     </div>
 
     <script>
-        let currentMode = 'indihome';
         let currentWorkbook = null;
         let globalRawData = [];
         let npsChartInstance = null;
@@ -536,203 +524,196 @@
         let streamingAgg = null;
 
         let grapariModel = 'TOMO';
-        let momoSubMode = 'wilayah';
+        let grapariSubMode = 'wilayah';
         let grapariBasis = 'people';
         let grapariAreaFilter = 'ALL';
         let grapariRegionFilter = 'ALL';
         let grapariMitraFilter = 'ALL';
         let grapariSummaryOnly = false;
 
-        let tableWeekSelection = { ctp: 'all', source: 'all', cs: 'all' };
+        let tablePeriodSelection = { ctp: 'all', source: 'all', cs: 'all' };
         let sourceValueFilter = 'ALL';
+        let currentCcFilter = 'all';
 
         let latestProcessedData = [];
         let latestSortedPeriods = [];
 
-        const SEED_BISNIS_MODEL = {"GraPARI Abepura":"TOMO","GraPARI Airmadidi":"TOMO","GraPARI Ambon":"TOMO","GraPARI Amlapura":"TOMO","GraPARI Ampana":"TOMO","GraPARI Amuntai":"MOMO","GraPARI Amurang":"MOMO","GraPARI Atambua":"TOMO","GraPARI BSD":"TOMO","GraPARI Baa Rote":"MOMO","GraPARI Bagan Batu":"MOMO","GraPARI Bagan Siapiapi":"MOMO","GraPARI Bajawa":"TOMO","GraPARI Balaikarangan":"TOMO","GraPARI Balaraja":"MOMO","GraPARI Balige":"MOMO","GraPARI Balikpapan A Yani":"TOMO","GraPARI Banda Aceh":"TOMO","GraPARI Bandar Jaya":"MOMO","GraPARI Bandar Sribawono":"MOMO","GraPARI Bandung Elektronik Center":"MOMO","GraPARI Banggai":"TOMO","GraPARI Bangka":"TOMO","GraPARI Bangkalan":"MOMO","GraPARI Bangkinang":"MOMO","GraPARI Banjar":"TOMO","GraPARI Banjarbaru HM Noor":"TOMO","GraPARI Banjarmasin":"TOMO","GraPARI Banjarnegara":"MOMO","GraPARI Bantaeng":"TOMO","GraPARI Bantarkalong":"MOMO","GraPARI Bantul":"MOMO","GraPARI Banyumanik":"MOMO","GraPARI Banyuwangi":"MOMO","GraPARI Barabai":"MOMO","GraPARI Barito Selatan":"MOMO","GraPARI Barong Tongkok":"TOMO","GraPARI Barru":"MOMO","GraPARI Bassura City Mall Jakarta":"MOMO","GraPARI Batam Center":"TOMO","GraPARI Batang":"MOMO","GraPARI Batu":"MOMO","GraPARI Batu Sangkar":"MOMO","GraPARI Batulicin":"MOMO","GraPARI Baturaja":"MOMO","GraPARI Bau Bau":"TOMO","GraPARI Bekasi Cyber Park":"TOMO","GraPARI Belitang":"MOMO","GraPARI Belitung":"MOMO","GraPARI Bengkalis":"MOMO","GraPARI Bengkayang":"TOMO","GraPARI Bengkulu":"TOMO","GraPARI Betung":"MOMO","GraPARI Biak":"TOMO","GraPARI Bima":"TOMO","GraPARI Binjai Supermall":"TOMO","GraPARI Bintan":"MOMO","GraPARI Bintaro Jaya Xchange":"MOMO","GraPARI Bireun":"MOMO","GraPARI Bitung":"TOMO","GraPARI Blitar":"MOMO","GraPARI Blora":"MOMO","GraPARI Bogor":"TOMO","GraPARI Bojonegoro":"MOMO","GraPARI Bojongsoang":"MOMO","GraPARI Bondowoso":"MOMO","GraPARI Bone":"TOMO","GraPARI Bontang":"TOMO","GraPARI Boyolali":"MOMO","GraPARI Brebes":"MOMO","GraPARI Bukit Tinggi":"TOMO","GraPARI Bula":"MOMO","GraPARI Bulukumba":"TOMO","GraPARI Bumiayu":"MOMO","GraPARI Cengkareng":"MOMO","GraPARI Central Park Jakarta":"TOMO","GraPARI Ciamis":"MOMO","GraPARI Cianjur":"MOMO","GraPARI Cibinong":"TOMO","GraPARI Cicurug":"MOMO","GraPARI Cikampek":"MOMO","GraPARI Cikarang":"TOMO","GraPARI Cikupa":"MOMO","GraPARI Cilacap":"MOMO","GraPARI Ciledug Cirebon":"MOMO","GraPARI Cilegon":"MOMO","GraPARI Cimahi":"TOMO","GraPARI Ciputat":"MOMO","GraPARI Cirebon":"TOMO","GraPARI Cirebon Super Blok":"MOMO","GraPARI Curup":"MOMO","GraPARI Dabo Singkep":"TOMO","GraPARI Dago":"MOMO","GraPARI Demak":"MOMO","GraPARI Dobo":"TOMO","GraPARI Dompu":"TOMO","GraPARI Dramaga":"MOMO","GraPARI Dumai":"TOMO","GraPARI Duri":"MOMO","GraPARI Emporium Pluit Jakarta":"MOMO","GraPARI Ende":"TOMO","GraPARI Enrekang":"TOMO","GraPARI Flamboyan":"MOMO","GraPARI Garut":"MOMO","GraPARI Gatsu Tengah Denpasar":"MOMO","GraPARI Genteng":"MOMO","GraPARI Gorontalo":"TOMO","GraPARI Gowa":"MOMO","GraPARI Graha Merah Putih":"TOMO","GraPARI Grand Batam Mall":"TOMO","GraPARI Gresik":"TOMO","GraPARI Gunung Kidul":"MOMO","GraPARI Gunung Sitoli":"MOMO","GraPARI ITC Depok":"MOMO","GraPARI Indralaya":"MOMO","GraPARI Indramayu":"MOMO","GraPARI Jambi":"TOMO","GraPARI Jatibarang":"MOMO","GraPARI Jayapura":"TOMO","GraPARI Jember":"TOMO","GraPARI Jeneponto":"TOMO","GraPARI Jepara":"TOMO","GraPARI Jimbaran":"TOMO","GraPARI Jombang":"TOMO","GraPARI Kabanjahe":"MOMO","GraPARI Kaimana":"TOMO","GraPARI Kalabahi":"TOMO","GraPARI Kalianda":"MOMO","GraPARI Kalibata":"TOMO","GraPARI Kandangan":"MOMO","GraPARI Kapten Muslim":"MOMO","GraPARI Karanganyar":"TOMO","GraPARI Kasongan":"MOMO","GraPARI Kayu Agung":"MOMO","GraPARI Kebumen":"MOMO","GraPARI Kediri":"TOMO","GraPARI Kefamenanu":"TOMO","GraPARI Kembangan":"MOMO","GraPARI Kendal":"TOMO","GraPARI Kendari":"TOMO","GraPARI Kepanjen":"MOMO","GraPARI Ketapang":"TOMO","GraPARI Kisaran":"TOMO","GraPARI Klaten":"MOMO","GraPARI Kolaka":"MOMO","GraPARI Kosambi":"MOMO","GraPARI Kota Bangun":"MOMO","GraPARI Kota Pinang":"MOMO","GraPARI Kotabaru":"TOMO","GraPARI Kotabumi":"MOMO","GraPARI Kotamobagu":"TOMO","GraPARI Kraksaan":"MOMO","GraPARI Kroya":"MOMO","GraPARI Kuala Kapuas":"TOMO","GraPARI Kubu Raya":"MOMO","GraPARI Kudus":"TOMO","GraPARI Kulonprogo":"MOMO","GraPARI Kuningan":"MOMO","GraPARI Kupang":"TOMO","GraPARI Kuranji":"MOMO","GraPARI Kuta":"TOMO","GraPARI Kutacane":"MOMO","GraPARI Kwandang":"TOMO","GraPARI Labuan Bajo":"MOMO","GraPARI Labuan Pandeglang":"MOMO","GraPARI Labuan pandeglang":"MOMO","GraPARI Labuha":"MOMO","GraPARI Lahat":"MOMO","GraPARI Lambaro":"MOMO","GraPARI Lamongan":"MOMO","GraPARI Lampung Majapahit":"TOMO","GraPARI Langowan":"TOMO","GraPARI Langsa":"MOMO","GraPARI Larantuka":"TOMO","GraPARI Lembang":"MOMO","GraPARI Lembong":"TOMO","GraPARI Lhokseumawe":"TOMO","GraPARI Living World Pekanbaru":"TOMO","GraPARI Loajanan":"MOMO","GraPARI Lombok Timur":"MOMO","GraPARI Lombok Utara":"MOMO","GraPARI Lubuk Alung":"MOMO","GraPARI Lubuk Basung":"MOMO","GraPARI Lubuk Linggau":"TOMO","GraPARI Lubuk Pakam":"MOMO","GraPARI Lubuk Sikaping":"MOMO","GraPARI Lumajang":"MOMO","GraPARI MDP Palembang":"MOMO","GraPARI Madiun Pahlawan":"TOMO","GraPARI Magelang":"TOMO","GraPARI Magetan":"TOMO","GraPARI Majalaya":"MOMO","GraPARI Majalengka":"MOMO","GraPARI Majenang":"MOMO","GraPARI Majene":"TOMO","GraPARI Makale":"MOMO","GraPARI Makassar":"TOMO","GraPARI Makassar Balaikota":"TOMO","GraPARI Malaka":"MOMO","GraPARI Malang":"TOMO","GraPARI Malang Blimbing":"MOMO","GraPARI Malili":"MOMO","GraPARI Malinau":"MOMO","GraPARI Mall Ambassador Jakarta":"MOMO","GraPARI Mall Balikpapan Baru":"TOMO","GraPARI Mall Cijantung Jakarta":"MOMO","GraPARI Mall Cinere":"MOMO","GraPARI Mall Grand Cibubur":"TOMO","GraPARI Mall Kelapa Gading Jakarta":"TOMO","GraPARI Mall Kota Kasablanka Jakarta":"TOMO","GraPARI Mall Nagoya Hill Batam":"MOMO","GraPARI Mall Panakukang Makassar":"MOMO","GraPARI Mall Panbill Batam":"TOMO","GraPARI Mall Sarinah":"TOMO","GraPARI Mall Technomart Karawang":"MOMO","GraPARI Maluk":"MOMO","GraPARI Mamasa":"MOMO","GraPARI Mamuju":"MOMO","GraPARI Manado":"TOMO","GraPARI Manna":"MOMO","GraPARI Manokwari":"TOMO","GraPARI Margorejo":"TOMO","GraPARI Marisa":"MOMO","GraPARI Maros":"TOMO","GraPARI Masamba":"TOMO","GraPARI Masohi":"MOMO","GraPARI Mataram":"TOMO","GraPARI Maumere":"TOMO","GraPARI Medan":"TOMO","GraPARI Medan Karyajasa":"MOMO","GraPARI Medan Marelan":"MOMO","GraPARI Merangin":"MOMO","GraPARI Merauke":"TOMO","GraPARI Meteorologi":"MOMO","GraPARI Metro Lampung":"MOMO","GraPARI Metro Trade Center Bandung":"MOMO","GraPARI Meulaboh":"TOMO","GraPARI Miko Mall Bandung":"MOMO","GraPARI Mojokerto":"TOMO","GraPARI Morowali":"MOMO","GraPARI Muara Bungo":"MOMO","GraPARI Muara Enim":"MOMO","GraPARI Muara Jawa":"MOMO","GraPARI Muara Teweh":"TOMO","GraPARI Muko Muko":"MOMO","GraPARI Mungkid":"TOMO","GraPARI Nabire":"MOMO","GraPARI Namlea":"TOMO","GraPARI Nanga Pinoh":"TOMO","GraPARI Natar":"MOMO","GraPARI Natuna":"MOMO","GraPARI Negara":"MOMO","GraPARI Ngabang":"TOMO","GraPARI Nganjuk":"MOMO","GraPARI Ngawi":"TOMO","GraPARI Nunukan":"MOMO","GraPARI Obi":"MOMO","GraPARI PGC Jakarta":"MOMO","GraPARI Pacitan":"MOMO","GraPARI Padalarang":"MOMO","GraPARI Padang":"TOMO","GraPARI Padang Panjang":"MOMO","GraPARI Padang Sidempuan":"TOMO","GraPARI Pahlawan Semarang":"TOMO","GraPARI Painan":"TOMO","GraPARI Pakning":"MOMO","GraPARI Palangka Raya":"TOMO","GraPARI Palembang":"TOMO","GraPARI Palmerah":"TOMO","GraPARI Palopo":"MOMO","GraPARI Palu":"TOMO","GraPARI Pamanukan":"MOMO","GraPARI Pamekasan":"MOMO","GraPARI Pandaan":"MOMO","GraPARI Pandeglang":"MOMO","GraPARI Pangandaran":"MOMO","GraPARI Pangkajene":"TOMO","GraPARI Pangkal Pinang":"TOMO","GraPARI Pangkalan":"MOMO","GraPARI Pangkalan Bun":"MOMO","GraPARI Pangkalan Kerinci":"MOMO","GraPARI Pantai Indah Kapuk":"MOMO","GraPARI Panyabungan":"MOMO","GraPARI ParePare":"TOMO","GraPARI Parigi Moutong":"MOMO","GraPARI Parung":"TOMO","GraPARI Pasaman":"MOMO","GraPARI Passo":"TOMO","GraPARI Pasuruan":"TOMO","GraPARI Pati":"MOMO","GraPARI Payakumbuh":"TOMO","GraPARI Pekalongan":"TOMO","GraPARI Pekanbaru":"TOMO","GraPARI Pekanbaru Panam":"MOMO","GraPARI Pelabuhan Ratu":"TOMO","GraPARI Pelaihari":"MOMO","GraPARI Pemalang":"MOMO","GraPARI Pematang Siantar":"TOMO","GraPARI Penajam Propinsi":"TOMO","GraPARI Perawang Siak":"MOMO","GraPARI Perdagangan":"MOMO","GraPARI Pinrang":"MOMO","GraPARI Piru":"MOMO","GraPARI Plaza Medan Fair":"TOMO","GraPARI Polewali":"MOMO","GraPARI Pondok Indah":"TOMO","GraPARI Pondok Jati Sidoarjo":"MOMO","GraPARI Ponorogo":"MOMO","GraPARI Pontianak":"TOMO","GraPARI Poso":"MOMO","GraPARI Prabumulih":"MOMO","GraPARI Pringsewu":"MOMO","GraPARI Probolinggo":"TOMO","GraPARI Purbalingga":"TOMO","GraPARI Purwakarta":"TOMO","GraPARI Purwodadi":"MOMO","GraPARI Purwokerto":"TOMO","GraPARI Purworejo":"MOMO","GraPARI Putusibau":"MOMO","GraPARI Raha":"TOMO","GraPARI Raja Ampat":"TOMO","GraPARI Rancaekek":"TOMO","GraPARI Rangkasbitung":"MOMO","GraPARI Rantau Prapat":"TOMO","GraPARI Rantau Tapin":"MOMO","GraPARI Rawamangun":"TOMO","GraPARI Rembang":"MOMO","GraPARI Rengat":"MOMO","GraPARI Renon Denpasar":"TOMO","GraPARI Rimbo Bujang":"MOMO","GraPARI Ruteng":"TOMO","GraPARI Sabang":"TOMO","GraPARI Salatiga":"MOMO","GraPARI Samarinda":"TOMO","GraPARI Samarinda Awang Long":"TOMO","GraPARI Sambas":"MOMO","GraPARI Sampang":"MOMO","GraPARI Sampit":"MOMO","GraPARI Sangatta":"MOMO","GraPARI Sanggau":"TOMO","GraPARI Sarmi":"TOMO","GraPARI Sarolangun":"MOMO","GraPARI Saumlaki":"MOMO","GraPARI Sebrang Ulu":"MOMO","GraPARI Sei Danau":"MOMO","GraPARI Sei Rampah":"MOMO","GraPARI Sekayu":"MOMO","GraPARI Selat Panjang":"MOMO","GraPARI Selayar":"TOMO","GraPARI Sentani":"MOMO","GraPARI Serang":"TOMO","GraPARI Serui":"TOMO","GraPARI Sibolga":"TOMO","GraPARI Sidrap Pangkajene":"TOMO","GraPARI Sigli":"MOMO","GraPARI Singaparna":"MOMO","GraPARI Singaraja":"MOMO","GraPARI Singkawang":"MOMO","GraPARI Sinjai":"TOMO","GraPARI Sintang":"MOMO","GraPARI Situbondo":"MOMO","GraPARI Siwa":"TOMO","GraPARI Slawi":"TOMO","GraPARI Sleman":"TOMO","GraPARI Soe":"TOMO","GraPARI Solo":"TOMO","GraPARI Solok":"MOMO","GraPARI Solok Selatan":"MOMO","GraPARI Soppeng":"TOMO","GraPARI Soreang":"MOMO","GraPARI Soroako":"MOMO","GraPARI Sorong":"TOMO","GraPARI Sragen":"TOMO","GraPARI Stabat":"MOMO","GraPARI Subang":"TOMO","GraPARI Subulussalam":"MOMO","GraPARI Sudiang Makassar":"MOMO","GraPARI Sukabumi":"TOMO","GraPARI Sukanagara":"MOMO","GraPARI Sumarrecon Mall Serpong":"MOMO","GraPARI Sumbawa":"MOMO","GraPARI Sumber":"MOMO","GraPARI Sumedang":"MOMO","GraPARI Sumenep":"MOMO","GraPARI Sungai Penuh":"TOMO","GraPARI Sungai Rumbai":"MOMO","GraPARI Supermall Karawaci":"MOMO","GraPARI Supratman":"TOMO","GraPARI Surabaya Barat":"TOMO","GraPARI Surabaya Garuda":"TOMO","GraPARI Surabaya Manyar":"TOMO","GraPARI Surabaya Sudirman":"TOMO","GraPARI Tabanan":"MOMO","GraPARI Tahuna":"TOMO","GraPARI Takalar":"TOMO","GraPARI Takengon":"MOMO","GraPARI Taliwang":"MOMO","GraPARI Tambun":"MOMO","GraPARI Tanah Grogot":"MOMO","GraPARI Tangerang City":"MOMO","GraPARI Tanjung Balai Asahan":"MOMO","GraPARI Tanjung Balai Karimun":"MOMO","GraPARI Tanjung Batu Karimun":"MOMO","GraPARI Tanjung Morawa":"MOMO","GraPARI Tanjung Pinang":"TOMO","GraPARI Tanjung Redep":"MOMO","GraPARI Tanjung Selor":"MOMO","GraPARI Tanjung Tabalong":"MOMO","GraPARI Tarakan":"TOMO","GraPARI Tarutung":"MOMO","GraPARI Tasikmalaya":"TOMO","GraPARI Tawaeli":"TOMO","GraPARI Tebing Tinggi":"MOMO","GraPARI Tegal":"TOMO","GraPARI Teluk Kuantan":"MOMO","GraPARI Temanggung":"TOMO","GraPARI Tembagapura":"MOMO","GraPARI Tembilahan":"MOMO","GraPARI Tenggarong":"MOMO","GraPARI Terminal 3 Bandara Soetta":"TOMO","GraPARI Ternate":"MOMO","GraPARI Timika":"TOMO","GraPARI Tobelo":"TOMO","GraPARI Toboali":"MOMO","GraPARI Toli-Toli":"MOMO","GraPARI Tomohon":"MOMO","GraPARI Topoyo":"MOMO","GraPARI Toraja":"TOMO","GraPARI Trans Studio Mall Bandung":"MOMO","GraPARI Trenggalek":"MOMO","GraPARI Tropodo Sidoarjo":"MOMO","GraPARI Tual":"TOMO","GraPARI Tuban":"MOMO","GraPARI Tulang Bawang":"MOMO","GraPARI Tulungagung":"TOMO","GraPARI Tungkal Ilir":"MOMO","GraPARI Turen":"MOMO","GraPARI Ubud":"TOMO","GraPARI Ujung Batu":"MOMO","GraPARI Ujung Berung":"MOMO","GraPARI Unahaa":"TOMO","GraPARI Ungaran":"MOMO","GraPARI Waikabubak":"MOMO","GraPARI Waingapu":"MOMO","GraPARI Wajo":"TOMO","GraPARI Wamena":"MOMO","GraPARI Wanci":"MOMO","GraPARI Weda":"MOMO","GraPARI Wisma Alia Jakarta":"TOMO","GraPARI Wolter Monginsidi":"MOMO","GraPARI Wonogiri":"TOMO","GraPARI Wonosobo":"MOMO","GraPARI Yogyakarta":"TOMO","GraPARI Yos Sudarso":"TOMO","GraPARi Samarinda":"TOMO","GraPari Lembang":"MOMO","Grapari Malang":"TOMO","Grapari Nabire":"MOMO","Grapari Pasangkayu":"MOMO","Grapari Probolinggo":"TOMO","Grapari Raja Ampat":"TOMO","Grapari Sukoharjo":"MOMO","Grapari Tual":"TOMO","Grapari Unahaa":"TOMO"};
-        const MASTER_STORAGE_KEY = 'tnps_mobile_bisnis_model_master';
-        let bisnisModelMaster = loadBisnisModelMaster();
-
-        function loadBisnisModelMaster() {
-            let master = Object.assign({}, SEED_BISNIS_MODEL);
-            try {
-                let saved = localStorage.getItem(MASTER_STORAGE_KEY);
-                if (saved) Object.assign(master, JSON.parse(saved));
-            } catch (e) {}
-            return master;
-        }
-
-        function saveBisnisModelMaster() {
-            try { localStorage.setItem(MASTER_STORAGE_KEY, JSON.stringify(bisnisModelMaster)); } catch (e) {}
-        }
-
-        function resetBisnisModelMaster() {
-            if (!confirm('Kembalikan master Bisnis Model ke data bawaan (464 unit Okt 2026)?')) return;
-            try { localStorage.removeItem(MASTER_STORAGE_KEY); } catch (e) {}
-            bisnisModelMaster = Object.assign({}, SEED_BISNIS_MODEL);
-            if (isStreamingCsv && streamingFile) streamLargeCsv(streamingFile);
-            else if (globalRawData.length > 0) processAndRender();
-            updateMasterInfo();
-        }
-
-        function updateMasterInfo(extraText) {
-            let box = document.getElementById('masterInfoContainer');
-            let hasData = isStreamingCsv || globalRawData.length > 0;
-            let show = currentMode === 'mobile' && hasData;
-            box.classList.toggle('hidden', !show);
-            box.classList.toggle('flex', show);
-            document.getElementById('masterInfo').textContent =
-                `Master Bisnis Model: ${Object.keys(bisnisModelMaster).length} unit` + (extraText ? ` • ${extraText}` : '');
-        }
-
-        const MOBILE_CTP_MAP = {
-            callcenter: "CC",
-            gerai: "GraPARI",
-            grapari: "GraPARI",
-            grapari_lite: "GraPARI",
-            webservice: "Web service / Ecare"
+        const BULAN_MAP = {
+            '1': 'Jan', '01': 'Jan', 'jan': 'Jan', 'januari': 'Jan', 'january': 'Jan',
+            '2': 'Feb', '02': 'Feb', 'feb': 'Feb', 'februari': 'Feb', 'february': 'Feb',
+            '3': 'Mar', '03': 'Mar', 'mar': 'Mar', 'maret': 'Mar', 'march': 'Mar',
+            '4': 'Apr', '04': 'Apr', 'apr': 'Apr', 'april': 'Apr',
+            '5': 'Mei', '05': 'Mei', 'mei': 'Mei', 'may': 'Mei',
+            '6': 'Jun', '06': 'Jun', 'jun': 'Jun', 'juni': 'Jun', 'june': 'Jun',
+            '7': 'Jul', '07': 'Jul', 'jul': 'Jul', 'juli': 'Jul', 'july': 'Jul',
+            '8': 'Agu', '08': 'Agu', 'agu': 'Agu', 'ags': 'Agu', 'agustus': 'Agu', 'august': 'Agu',
+            '9': 'Sep', '09': 'Sep', 'sep': 'Sep', 'sept': 'Sep', 'september': 'Sep',
+            '10': 'Okt', 'okt': 'Okt', 'oct': 'Okt', 'oktober': 'Okt', 'october': 'Okt',
+            '11': 'Nov', 'nov': 'Nov', 'november': 'Nov',
+            '12': 'Des', 'des': 'Des', 'dec': 'Des', 'desember': 'Des', 'december': 'Des'
         };
 
-        function normKey(s) { return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, ''); }
+        const BULAN_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+        function normKey(s) {
+            return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, '');
+        }
+
         function getColAny(row, ...names) {
             let keys = Object.keys(row);
             for (let name of names) {
                 let k = keys.find(key => normKey(key) === normKey(name));
-                if (k !== undefined && row[k] !== undefined && String(row[k]).trim() !== '') return String(row[k]).trim();
+                if (k !== undefined && row[k] !== undefined && String(row[k]).trim() !== '') {
+                    return String(row[k]).trim();
+                }
             }
             return '';
         }
-        function hasColAny(row, name) {
-            return Object.keys(row).some(key => normKey(key) === normKey(name));
-        }
 
-        const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
-        function monthLabel(y, m) {
-            let mm = String(m).padStart(2, '0');
-            return `${y}-${mm} (${BULAN_ID[Number(m) - 1] || mm})`;
-        }
-
-        function normalizeMonthText(val) {
-            let s = String(val || '').trim();
-            if (!s) return '';
-            let iso = s.match(/^(\d{4})[-\/](\d{1,2})/);
-            if (iso && +iso[2] >= 1 && +iso[2] <= 12) return monthLabel(iso[1], +iso[2]);
-            let dmy = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
-            if (dmy && +dmy[2] >= 1 && +dmy[2] <= 12) return monthLabel(dmy[3], +dmy[2]);
-            return s;
-        }
-
-        function derivePeriodFromRow(row, mode) {
-            let bulan = getColAny(row, 'bulan', 'month', 'periode');
-            if (bulan) return normalizeMonthText(bulan);
-
-            let raw = mode === 'indihome'
-                ? getColAny(row, 'ts_call', 'survey_date', 'event_date', 'week')
-                : getColAny(row, 'survey_date', 'event_date', 'ts_call');
-            if (!raw) return 'General Period';
-
-            let norm = normalizeMonthText(raw);
-            if (norm && norm !== raw) return norm;
-
-            let m = raw.match(/^(\d{4})[-\/]?(\d{2})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[1], +m[2]);
-
-            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[3], +m[2]);
-
-            let n = Number(raw.replace(',', '.'));
-            if (!isNaN(n) && n > 20000 && n < 80000) {
-                let d = new Date(Math.round((n - 25569) * 86400000));
-                return monthLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
-            }
-            return raw;
-        }
-
-        function formatPeriod(p) {
-            return p;
-        }
-
-        function sortPeriodsList(periodSet) {
-            return Array.from(periodSet).sort((a, b) => {
-                let ya = a.match(/(\d{4})[-/](\d{2})/);
-                let yb = b.match(/(\d{4})[-/](\d{2})/);
-                if (ya && yb) {
-                    let keyA = `${ya[1]}-${ya[2].padStart(2, '0')}`;
-                    let keyB = `${yb[1]}-${yb[2].padStart(2, '0')}`;
-                    if (keyA !== keyB) return keyA.localeCompare(keyB);
+        function normalizeBulanValue(rawBulan, tsCall) {
+            let b = String(rawBulan || '').trim();
+            if (b) {
+                let ym = b.match(/^(\d{4})[-/](\d{1,2})$/);
+                if (ym) {
+                    let mName = BULAN_MAP[ym[2]] || BULAN_MAP[String(parseInt(ym[2], 10))];
+                    if (mName) return `${ym[1]}-${String(parseInt(ym[2], 10)).padStart(2, '0')} (${mName})`;
                 }
-                let idxA = BULAN_ID.findIndex(m => a.toLowerCase().includes(m.toLowerCase()));
-                let idxB = BULAN_ID.findIndex(m => b.toLowerCase().includes(m.toLowerCase()));
-                if (idxA !== -1 && idxB !== -1 && idxA !== idxB) return idxA - idxB;
+                let ymd = b.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+                if (ymd) {
+                    let mName = BULAN_MAP[ymd[2]] || BULAN_MAP[String(parseInt(ymd[2], 10))];
+                    if (mName) return `${ymd[1]}-${String(parseInt(ymd[2], 10)).padStart(2, '0')} (${mName})`;
+                }
+                let mOnly = BULAN_MAP[b.toLowerCase()];
+                if (mOnly) return mOnly;
+
+                let yrMonth = b.match(/^([a-zA-Z]+)\s+(\d{4})$/);
+                if (yrMonth) {
+                    let mName = BULAN_MAP[yrMonth[1].toLowerCase()];
+                    if (mName) return `${yrMonth[2]} (${mName})`;
+                }
+                return b;
+            }
+
+            let ts = String(tsCall || '').trim();
+            if (ts) {
+                let dMatch = ts.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+                if (dMatch) {
+                    let mNum = parseInt(dMatch[2], 10);
+                    let mName = BULAN_MAP[String(mNum)] || '';
+                    if (mName) return `${dMatch[1]}-${String(mNum).padStart(2, '0')} (${mName})`;
+                }
+                let dt = new Date(ts);
+                if (!isNaN(dt.getTime())) {
+                    let y = dt.getFullYear();
+                    let mNum = dt.getMonth() + 1;
+                    let mName = BULAN_MAP[String(mNum)] || '';
+                    if (y >= 2000 && y <= 2099 && mName) {
+                        return `${y}-${String(mNum).padStart(2, '0')} (${mName})`;
+                    }
+                }
+            }
+            return '';
+        }
+
+        function sortBulanList(bulanSet) {
+            return Array.from(bulanSet).sort((a, b) => {
+                let ya = a.match(/^(\d{4})[-/](\d{2})/);
+                let yb = b.match(/^(\d{4})[-/](\d{2})/);
+                if (ya && yb) {
+                    return `${ya[1]}-${ya[2]}`.localeCompare(`${yb[1]}-${yb[2]}`);
+                }
+                let ia = BULAN_ORDER.findIndex(m => a.toLowerCase().includes(m.toLowerCase()));
+                let ib = BULAN_ORDER.findIndex(m => b.toLowerCase().includes(m.toLowerCase()));
+                if (ia !== -1 && ib !== -1 && ia !== ib) return ia - ib;
                 return String(a).localeCompare(String(b));
             });
         }
 
-        function buildPeriodFilterOptionsFromSet(periodSet) {
-            let select = document.getElementById('weekFilter');
+        function buildBulanFilterOptions(bulanSet) {
+            let select = document.getElementById('bulanFilter');
             let previous = select.value;
-            let sorted = sortPeriodsList(periodSet);
+            let sorted = sortBulanList(bulanSet);
             let html = `<option value="all">Semua Bulan di File</option>`;
             sorted.forEach(p => {
                 html += `<option value="${p}">${p}</option>`;
             });
             select.innerHTML = html;
-            let stillExists = Array.from(select.options).some(o => o.value === previous);
-            select.value = stillExists ? previous : 'all';
+            select.value = sorted.includes(previous) ? previous : 'all';
         }
 
-        function buildWeekOptions() {
-            let periods = new Set();
-            globalRawData.forEach(row => {
-                let p = derivePeriodFromRow(row, currentMode);
-                if (p) periods.add(p);
-            });
-            buildPeriodFilterOptionsFromSet(periods);
-        }
+        function mapIndihomeRow(row) {
+            let unitType2 = getColAny(row, 'unit_type2').toLowerCase();
+            let npsRaw = getColAny(row, 'nps').toLowerCase();
+            let reasonDesc = getColAny(row, 'reason_desc');
+            let rawBulan = getColAny(row, 'bulan');
+            let tsCall = getColAny(row, 'ts_call');
+            let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
+            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
+            let regionalVal = getColAny(row, 'region', 'regional', 'nama_regional', 'treg') || '';
+            let mitraVal = getColAny(row, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner') || '';
+            let bisnisModelVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
 
-        function switchMode(mode) {
-            currentMode = mode;
-            let btnIndi = document.getElementById('modeIndihome');
-            let btnMobile = document.getElementById('modeMobile');
-            let uploadLabel = document.getElementById('uploadBtnLabel');
-            let uploadText = document.getElementById('uploadBtnText');
-            let mainTitle = document.getElementById('mainTitle');
-            let subTitle = document.getElementById('subTitle');
-            let placeholderTitle = document.getElementById('placeholderTitle');
-            let weekFilterContainer = document.getElementById('weekFilterContainer');
+            let bulanLabel = normalizeBulanValue(rawBulan, tsCall);
 
-            if (mode === 'indihome') {
-                btnIndi.className = "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg bg-[#dc2626] text-white transition-all shadow-sm";
-                btnMobile.className = "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
-                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm active:scale-[0.99] transition-all";
-                uploadText.textContent = "Upload File IndiHome";
-                mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Periode berdasarkan kolom Bulan (fallback ts_call)";
-                placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
-                weekFilterContainer.style.display = "flex";
-                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "flex");
-                document.getElementById('ccBreakdownSection').style.display = "block";
+            let isPromotor = 0, isDetractor = 0, isPassive = 0;
+            if (npsRaw !== '') {
+                let numScore = Number(npsRaw.replace(',', '.'));
+                if (!isNaN(numScore) && npsRaw.trim() !== '') {
+                    if (numScore >= 9) isPromotor = 1;
+                    else if (numScore >= 7) isPassive = 1;
+                    else if (numScore >= 0) isDetractor = 1;
+                } else {
+                    if (npsRaw.includes('promot')) isPromotor = 1;
+                    else if (npsRaw.includes('detract')) isDetractor = 1;
+                    else if (npsRaw.includes('passiv') || npsRaw.includes('pasif')) isPassive = 1;
+                }
+            }
+
+            let ctpGroup = "Call Center";
+            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
+                ctpGroup = "GraPARI";
+            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
+                ctpGroup = "Socmed";
+            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
+                ctpGroup = "Call Center";
             } else {
-                btnMobile.className = "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white transition-all shadow-sm";
-                btnIndi.className = "flex-1 sm:flex-none px-4 py-2 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
-                uploadLabel.className = "cursor-pointer inline-flex items-center justify-center w-full sm:w-auto px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm active:scale-[0.99] transition-all";
-                uploadText.textContent = "Upload File Mobile";
-                mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Count id_trx • CC, GraPARI, Web service / Ecare & People";
-                placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
-                weekFilterContainer.style.display = "none";
-                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "none");
-                document.getElementById('ccBreakdownSection').style.display = "none";
+                ctpGroup = unitType2 ? getColAny(row, 'unit_type2') : "Call Center";
             }
 
-            syncGrapariControlVisibility();
-            updateMasterInfo();
+            let targetReasons = [
+                "CUSTOMER SERVICE",
+                "Customer service cukup responsif",
+                "Customer service kurang responsif",
+                "Customer service responsif",
+                "Customer service tidak responsif",
+                "PELAYANAN PELANGGAN"
+            ];
+            let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
 
-            if (isStreamingCsv && streamingFile) {
-                streamLargeCsv(streamingFile);
-            } else if (globalRawData.length > 0) {
-                processAndRender();
-            }
+            let unitNameLower = unitName.toLowerCase();
+            let ccSite = 'other';
+            if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) ccSite = 'bandung';
+            else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
+
+            let hasTransaction = !!(tsCall || getColAny(row, 'id_trx') || getColAny(row, 'nd') || unitType2 || npsRaw);
+
+            return {
+                IsValid: hasTransaction && !!bulanLabel,
+                Period: bulanLabel,
+                Mapped_CTP: ctpGroup,
+                Is_GraPARI: ctpGroup === "GraPARI" || unitType2.includes('grapari') || unitType2.includes('plasa'),
+                CC_Site: ccSite,
+                UnitName: unitName,
+                Area: areaVal,
+                Regional: regionalVal,
+                Mitra: mitraVal,
+                MomoTomo: bisnisModelVal !== '' ? bisnisModelVal.toUpperCase() : 'Unspecified',
+                Is_CS: isCS,
+                Promoter: isPromotor,
+                Detractor: isDetractor,
+                Passive: isPassive,
+                Total: 1
+            };
         }
 
         function detectDelimiter(headerLine) {
@@ -881,9 +862,9 @@
             let colIdx = {};
             let sourceColName = document.getElementById('sourceColSelect').value || 'source';
             let sourceColIdx = -1;
-            let periodSet = new Set();
+            let bulanSet = new Set();
             let agg = createEmptyAgg();
-            let filterMode = document.getElementById('weekFilter').value;
+            let filterBulan = document.getElementById('bulanFilter').value;
 
             document.getElementById('sheetSelectorContainer').classList.add('hidden');
             document.getElementById('fileInfo').classList.remove('hidden');
@@ -918,45 +899,27 @@
                 const cells = parseDelimitedLine(line, delimiter);
                 const srcVal = sourceColIdx >= 0 && cells[sourceColIdx] !== undefined ? String(cells[sourceColIdx]).trim() : '(kosong)';
 
-                if (currentMode === 'indihome') {
-                    let pseudoRow = {
-                        unit_type2: getValByAliases(cells, 'unit_type2'),
-                        nps: getValByAliases(cells, 'nps'),
-                        category: getValByAliases(cells, 'category'),
-                        reason_desc: getValByAliases(cells, 'reason_desc'),
-                        bulan: getValByAliases(cells, 'bulan', 'month', 'periode'),
-                        ts_call: getValByAliases(cells, 'ts_call', 'survey_date', 'event_date'),
-                        unit_name: getValByAliases(cells, 'unit_name', 'unit name', 'nama_unit', 'unit'),
-                        area: getValByAliases(cells, 'area', 'nama_area', 'wilayah_area', 'area_name'),
-                        regional: getValByAliases(cells, 'region', 'regional', 'nama_regional', 'treg'),
-                        mitra: getValByAliases(cells, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner'),
-                        bisnis_model: getValByAliases(cells, 'bisnis model', 'bisnis_model', 'momo/tomo', 'momo')
-                    };
-                    let mapped = mapIndihomeRow(pseudoRow);
-                    if (!mapped.IsValid) return;
-                    periodSet.add(mapped.Period);
+                let pseudoRow = {
+                    id_trx: getValByAliases(cells, 'id_trx'),
+                    nd: getValByAliases(cells, 'nd'),
+                    ts_call: getValByAliases(cells, 'ts_call', 'ts_call.1'),
+                    unit_type2: getValByAliases(cells, 'unit_type2'),
+                    nps: getValByAliases(cells, 'nps'),
+                    reason_desc: getValByAliases(cells, 'reason_desc'),
+                    bulan: getValByAliases(cells, 'bulan'),
+                    unit_name: getValByAliases(cells, 'unit_name', 'unit name', 'nama_unit', 'unit'),
+                    area: getValByAliases(cells, 'area', 'nama_area', 'wilayah_area', 'area_name'),
+                    regional: getValByAliases(cells, 'region', 'regional', 'nama_regional', 'treg'),
+                    mitra: getValByAliases(cells, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner'),
+                    bisnis_model: getValByAliases(cells, 'bisnis model', 'bisnis_model', 'momo/tomo', 'momo')
+                };
 
-                    if (filterMode === 'all' || mapped.Period === filterMode) {
-                        accumulateMappedRow(agg, mapped, srcVal);
-                    }
-                } else {
-                    let pseudoRow = {
-                        unit_type: getValByAliases(cells, 'unit_type'),
-                        unit_name: getValByAliases(cells, 'unit_name'),
-                        area: getValByAliases(cells, 'area', 'nama_area', 'wilayah_area', 'area_name'),
-                        regional: getValByAliases(cells, 'region', 'regional', 'nama_regional', 'treg'),
-                        mitra: getValByAliases(cells, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner'),
-                        msisdn: getValByAliases(cells, 'msisdn'),
-                        id_trx: getValByAliases(cells, 'id_trx'),
-                        tnps: getValByAliases(cells, 'tnps', 'tnps type', 'nps', 'tnps category'),
-                        column2: getValByAliases(cells, 'column2'),
-                        bulan: getValByAliases(cells, 'bulan'),
-                        survey_date: getValByAliases(cells, 'survey_date', 'event_date')
-                    };
-                    let mappedList = mapMobileRows([pseudoRow]).rows;
-                    if (mappedList.length > 0) {
-                        accumulateMappedRow(agg, mappedList[0], srcVal);
-                    }
+                let mapped = mapIndihomeRow(pseudoRow);
+                if (!mapped.IsValid) return;
+                bulanSet.add(mapped.Period);
+
+                if (filterBulan === 'all' || mapped.Period === filterBulan) {
+                    accumulateMappedRow(agg, mapped, srcVal);
                 }
             }
 
@@ -986,24 +949,8 @@
             if (tail.trim()) processLine(tail);
 
             streamingAgg = agg;
-
-            if (currentMode === 'indihome') {
-                buildPeriodFilterOptionsFromSet(periodSet);
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
-                document.getElementById('thCtp1').textContent = "unit_type2 (CTP)";
-                document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
-                setTotalHeaders("Grand Total", "Grand Total (CS)");
-            } else {
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
-                document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
-                document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
-                setTotalHeaders("Count id_trx", "Count id_trx (CS)");
-            }
-
+            buildBulanFilterOptions(bulanSet);
             document.getElementById('rowCount').textContent = `${agg.validRows.toLocaleString()} baris terproses (streaming)`;
-            updateMasterInfo('mode streaming CSV');
             renderFromAggregated(agg);
         }
 
@@ -1023,12 +970,11 @@
                         : currentCcFilter === 'semarang' ? 'CC Semarang'
                         : 'Call Center';
 
-            let ctpList = currentMode === 'indihome'
-                ? [ccLabel, "GraPARI", "Socmed"]
-                : ["CC", "GraPARI", "Web service / Ecare"];
+            let ctpList = [ccLabel, "GraPARI", "Socmed"];
+            let sortedPeriods = sortBulanList(agg.periods);
 
             let group = {};
-            agg.periods.forEach(p => {
+            sortedPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
                     group[`${p}${SEP}${ctp}`] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
                 });
@@ -1037,16 +983,18 @@
             Object.entries(agg.ctpGroup).forEach(([k, val]) => {
                 let [p, rawCtp] = k.split(SEP);
                 let targetCtp = rawCtp;
-                if (currentMode === 'indihome' && rawCtp === 'Call Center') {
+                if (rawCtp === 'Call Center') {
                     if (currentCcFilter === 'bandung') {
                         let b = agg.ccGroup[`${p}${SEP}CC BANDUNG`];
-                        targetCtp = ccLabel;
-                        if (b) group[`${p}${SEP}${targetCtp}`] = { ...b, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                        if (b && group[`${p}${SEP}${ccLabel}`]) {
+                            group[`${p}${SEP}${ccLabel}`] = { ...b, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                        }
                         return;
                     } else if (currentCcFilter === 'semarang') {
                         let s = agg.ccGroup[`${p}${SEP}CC SEMARANG`];
-                        targetCtp = ccLabel;
-                        if (s) group[`${p}${SEP}${targetCtp}`] = { ...s, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                        if (s && group[`${p}${SEP}${ccLabel}`]) {
+                            group[`${p}${SEP}${ccLabel}`] = { ...s, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                        }
                         return;
                     } else {
                         targetCtp = ccLabel;
@@ -1057,78 +1005,14 @@
                 }
             });
 
-            let sortedPeriods = sortPeriodsList(agg.periods);
-
             latestSortedPeriods = sortedPeriods;
-            renderWeekButtons('ctpWeekButtons', 'ctp', sortedPeriods);
-            renderWeekButtons('csWeekButtons', 'cs', sortedPeriods);
+            renderPeriodButtons('ctpPeriodButtons', 'ctp', sortedPeriods);
+            renderPeriodButtons('csPeriodButtons', 'cs', sortedPeriods);
 
             renderChartsAndTablesFromGroup(group, ctpList, sortedPeriods);
             renderGrapariFromAgg(agg, sortedPeriods);
-
-            let ccSection = document.getElementById('ccBreakdownSection');
-            let cardsWrap = document.getElementById('ccBreakdownCards');
-            if (currentMode !== 'indihome') {
-                ccSection.style.display = 'none';
-            } else {
-                ccSection.style.display = 'block';
-                let ccTotals = {};
-                Object.entries(agg.ccGroup).forEach(([k, d]) => {
-                    let [, ccName] = k.split(SEP);
-                    if (currentCcFilter === 'bandung' && ccName !== 'CC BANDUNG') return;
-                    if (currentCcFilter === 'semarang' && ccName !== 'CC SEMARANG') return;
-                    if (!ccTotals[ccName]) ccTotals[ccName] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                    ccTotals[ccName].promotor += d.promotor;
-                    ccTotals[ccName].detractor += d.detractor;
-                    ccTotals[ccName].passive += d.passive;
-                    ccTotals[ccName].total += d.total;
-                });
-                let ccNames = Object.keys(ccTotals).sort();
-                cardsWrap.innerHTML = ccNames.length === 0
-                    ? `<div class="col-span-full text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-4">Tidak ada data Call Center untuk filter ini.</div>`
-                    : ccNames.map((cn, idx) => {
-                        let rowsHtml = sortedPeriods.map(p => {
-                            let d = agg.ccGroup[`${p}${SEP}${cn}`];
-                            if (!d) return '';
-                            let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : '0.00';
-                            return `<tr class="border-t border-slate-100 hover:bg-slate-50">
-                                <td class="px-2.5 py-2.5 font-semibold text-slate-700 whitespace-nowrap">${formatPeriod(p)}</td>
-                                <td class="px-2.5 py-2.5 text-center">${d.detractor}</td>
-                                <td class="px-2.5 py-2.5 text-center">${d.passive}</td>
-                                <td class="px-2.5 py-2.5 text-center">${d.promotor}</td>
-                                <td class="px-2.5 py-2.5 text-center font-semibold">${d.total}</td>
-                                <td class="px-2.5 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">${npsVal}%</td>
-                            </tr>`;
-                        }).join('');
-                        let tot = ccTotals[cn];
-                        let totNps = tot.total > 0 ? (((tot.promotor - tot.detractor) / tot.total) * 100).toFixed(2) : '0.00';
-                        return `<div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                            <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-                                <h4 class="font-extrabold text-slate-800 text-sm">${cn}</h4>
-                                <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CC ${idx + 1}</span>
-                            </div>
-                            <div class="overflow-x-auto"><table class="w-full text-[11px] sm:text-xs text-slate-600">
-                                <thead class="bg-white text-slate-500 uppercase tracking-wide"><tr>
-                                    <th class="px-2.5 py-2.5 text-left">Bulan</th><th class="px-2.5 py-2.5 text-center">D</th><th class="px-2.5 py-2.5 text-center">P</th>
-                                    <th class="px-2.5 py-2.5 text-center">Prom</th><th class="px-2.5 py-2.5 text-center">Total</th><th class="px-2.5 py-2.5 text-right">TNPS</th>
-                                </tr></thead>
-                                <tbody>${rowsHtml}</tbody>
-                                <tfoot><tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
-                                    <td class="px-2.5 py-3">Grand Total</td><td class="px-2.5 py-3 text-center">${tot.detractor}</td><td class="px-2.5 py-3 text-center">${tot.passive}</td>
-                                    <td class="px-2.5 py-3 text-center">${tot.promotor}</td><td class="px-2.5 py-3 text-center">${tot.total}</td>
-                                    <td class="px-2.5 py-3 text-right text-rose-700">${totNps}%</td>
-                                </tr></tfoot>
-                            </table></div></div>`;
-                    }).join('');
-            }
-
-            let sourceSection = document.getElementById('sourceSection');
-            if (currentMode === 'indihome') {
-                sourceSection.classList.remove('hidden');
-                renderSourceDetailFromMaps(sortedPeriods, agg.srcByPeriod, agg.srcPeriod, agg.srcTotal);
-            } else {
-                sourceSection.classList.add('hidden');
-            }
+            renderCcBreakdownFromMap(agg.ccGroup, sortedPeriods);
+            renderSourceDetailFromMaps(sortedPeriods, agg.srcByPeriod, agg.srcPeriod, agg.srcTotal);
         }
 
         function syncGrapariFilterDropdowns(areasSet, regionsSet, mitrasSet) {
@@ -1172,18 +1056,18 @@
                 : 'kpi-badge bg-slate-100 text-slate-700 border border-slate-200';
 
             let modeLabel = grapariModel === 'MOMO'
-                ? `GraPARI MOMO (${momoSubMode === 'mitra' ? 'Per Mitra' : 'Per Wilayah'})`
-                : `GraPARI TOMO (${momoSubMode === 'mitra' ? 'Per Mitra' : 'Per Wilayah'})`;
+                ? `GraPARI MOMO (${grapariSubMode === 'mitra' ? 'Per Mitra' : 'Per Wilayah'})`
+                : `GraPARI TOMO (${grapariSubMode === 'mitra' ? 'Per Mitra' : 'Per Wilayah'})`;
             document.getElementById('grapariActiveTitle').textContent = `${modeLabel} • ${basisLabel}`;
             document.getElementById('grapariChartTitle').textContent = `Tren tNPS ${modeLabel} (${basisLabel})`;
             document.getElementById('thGrapariNps').textContent = grapariBasis === 'people' ? 'tNPS People (%)' : 'tNPS (%)';
 
             let groupColLabel = 'Cakupan';
-            if (momoSubMode === 'mitra') groupColLabel = 'Mitra';
+            if (grapariSubMode === 'mitra') groupColLabel = 'Mitra';
             else if (grapariRegionFilter !== 'ALL') groupColLabel = 'Region';
             else if (grapariAreaFilter !== 'ALL') groupColLabel = 'Area';
             document.getElementById('thGrapariGroup').textContent = groupColLabel;
-            document.getElementById('thGrapariPeriod').textContent = "Periode (Bulan)";
+            document.getElementById('thGrapariPeriod').textContent = "Bulan";
 
             let sortedGroups = Array.from(groupsSet).sort((a, b) => a === 'Nasional' ? -1 : (b === 'Nasional' ? 1 : a.localeCompare(b)));
             if (sortedGroups.length === 0) sortedGroups = ['Nasional'];
@@ -1208,7 +1092,7 @@
                 card.className = "rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm";
                 card.innerHTML = `
                     <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-                        <h4 class="font-extrabold text-slate-800 text-sm">${formatPeriod(p)}</h4>
+                        <h4 class="font-extrabold text-slate-800 text-sm">${p}</h4>
                         <span class="text-[11px] font-extrabold ${grapariModel === 'MOMO' ? 'text-rose-700' : 'text-[#0b1633]'}">${totNps}%</span>
                     </div>
                     <div class="overflow-x-auto"><table class="w-full text-[11px] sm:text-xs text-slate-600">
@@ -1222,7 +1106,7 @@
                             <td class="px-2.5 py-2.5 text-center font-semibold">${r.d.total}</td><td class="px-2.5 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">${r.npsVal}%</td>
                         </tr>`).join('')}</tbody>
                         <tfoot><tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
-                            <td class="px-2.5 py-2.5">Total ${formatPeriod(p)}</td><td class="px-2.5 py-2.5 text-center">${totD}</td><td class="px-2.5 py-2.5 text-center">${totP}</td>
+                            <td class="px-2.5 py-2.5">Total ${p}</td><td class="px-2.5 py-2.5 text-center">${totD}</td><td class="px-2.5 py-2.5 text-center">${totP}</td>
                             <td class="px-2.5 py-2.5 text-center">${totPr}</td><td class="px-2.5 py-2.5 text-center">${totAll}</td>
                             <td class="px-2.5 py-2.5 text-right ${grapariModel === 'MOMO' ? 'text-rose-700' : 'text-[#0b1633]'}">${totNps}%</td>
                         </tr></tfoot>
@@ -1251,7 +1135,7 @@
             if (grapariChartInstance) grapariChartInstance.destroy();
             grapariChartInstance = new Chart(document.getElementById('grapariChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedPeriods.map(formatPeriod), datasets },
+                data: { labels: sortedPeriods, datasets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
@@ -1271,19 +1155,18 @@
                     groupTotals[gKey].promotor += d.promotor; groupTotals[gKey].detractor += d.detractor; groupTotals[gKey].passive += d.passive; groupTotals[gKey].total += d.total;
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors";
-                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td><td class="p-3.5 font-medium text-slate-800">${gKey}</td>
+                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${p}</td><td class="p-3.5 font-medium text-slate-800">${gKey}</td>
                         <td class="p-3.5 text-center">${d.detractor}</td><td class="p-3.5 text-center">${d.passive}</td><td class="p-3.5 text-center">${d.promotor}</td>
                         <td class="p-3.5 text-center font-semibold">${d.total}</td><td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>`;
                     tbody.appendChild(tr);
                 });
             });
-            let grandTotalLabel = "Grand Total (Periode Ini)";
             sortedGroups.forEach(gKey => {
                 let d = groupTotals[gKey];
                 let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
-                tr.innerHTML = `<td class="p-3.5">${grandTotalLabel}</td><td class="p-3.5">${gKey}</td>
+                tr.innerHTML = `<td class="p-3.5">Grand Total</td><td class="p-3.5">${gKey}</td>
                     <td class="p-3.5 text-center">${d.detractor}</td><td class="p-3.5 text-center">${d.passive}</td><td class="p-3.5 text-center">${d.promotor}</td>
                     <td class="p-3.5 text-center">${d.total}</td><td class="p-3.5 text-right ${grapariModel === 'MOMO' ? 'text-rose-700' : 'text-[#0b1633]'} font-extrabold">${npsVal}%</td>`;
                 tbody.appendChild(tr);
@@ -1307,7 +1190,7 @@
                 if (grapariMitraFilter !== 'ALL' && m !== grapariMitraFilter) return;
 
                 let gKey = 'Nasional';
-                if (momoSubMode === 'mitra') gKey = m;
+                if (grapariSubMode === 'mitra') gKey = m;
                 else if (grapariRegionFilter !== 'ALL') gKey = r;
                 else if (grapariAreaFilter !== 'ALL') gKey = a;
 
@@ -1359,7 +1242,7 @@
                 if (grapariMitraFilter !== 'ALL' && m !== grapariMitraFilter) return;
 
                 let gKey = 'Nasional';
-                if (momoSubMode === 'mitra') gKey = m || 'Non-Mitra / Unspecified';
+                if (grapariSubMode === 'mitra') gKey = m || 'Non-Mitra / Unspecified';
                 else if (grapariRegionFilter !== 'ALL') gKey = r || 'Nasional';
                 else if (grapariAreaFilter !== 'ALL') gKey = a || 'Nasional';
 
@@ -1390,7 +1273,7 @@
             if (npsChartInstance) npsChartInstance.destroy();
             npsChartInstance = new Chart(document.getElementById('npsChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedPeriods.map(formatPeriod), datasets: chartSets },
+                data: { labels: sortedPeriods, datasets: chartSets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
@@ -1411,7 +1294,7 @@
             if (csChartInstance) csChartInstance.destroy();
             csChartInstance = new Chart(document.getElementById('csChart').getContext('2d'), {
                 type: 'line',
-                data: { labels: sortedPeriods.map(formatPeriod), datasets: csSets },
+                data: { labels: sortedPeriods, datasets: csSets },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     plugins: { legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', weight: '600' } } } },
@@ -1419,9 +1302,9 @@
                 }
             });
 
-            let ctpWeekSel = tableWeekSelection.ctp || 'all';
-            let ctpTargetPeriods = ctpWeekSel === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === ctpWeekSel);
-            let ctpTotalLabel = ctpWeekSel !== 'all' ? `Total ${formatPeriod(ctpWeekSel)}` : "Grand Total (Periode Ini)";
+            let ctpSel = tablePeriodSelection.ctp || 'all';
+            let ctpTargetPeriods = ctpSel === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === ctpSel);
+            let ctpTotalLabel = ctpSel !== 'all' ? `Total ${ctpSel}` : "Grand Total";
 
             let tbody = document.querySelector('#summaryTable tbody');
             tbody.innerHTML = '';
@@ -1438,7 +1321,7 @@
                     ctpGrandTotals[ctp].total += d.total;
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors";
-                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td><td class="p-3.5 font-medium text-slate-800">${ctp}</td>
+                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${p}</td><td class="p-3.5 font-medium text-slate-800">${ctp}</td>
                         <td class="p-3.5 text-center text-slate-600">${d.detractor}</td><td class="p-3.5 text-center text-slate-600">${d.passive}</td>
                         <td class="p-3.5 text-center text-slate-600">${d.promotor}</td><td class="p-3.5 text-center font-semibold text-slate-700">${d.total}</td>
                         <td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>`;
@@ -1458,9 +1341,9 @@
                 tbody.appendChild(tr);
             });
 
-            let csWeekSel = tableWeekSelection.cs || 'all';
-            let csTargetPeriods = csWeekSel === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === csWeekSel);
-            let csTotalLabel = csWeekSel !== 'all' ? `Total ${formatPeriod(csWeekSel)}` : "Grand Total (Periode Ini)";
+            let csSel = tablePeriodSelection.cs || 'all';
+            let csTargetPeriods = csSel === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === csSel);
+            let csTotalLabel = csSel !== 'all' ? `Total ${csSel}` : "Grand Total";
 
             let csTbody = document.querySelector('#csTable tbody');
             csTbody.innerHTML = '';
@@ -1478,7 +1361,7 @@
                     csGrandTotals[ctp].total += tot;
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors";
-                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${formatPeriod(p)}</td><td class="p-3.5 font-medium text-slate-800">${ctp} (CS People)</td>
+                    tr.innerHTML = `<td class="p-3.5 font-semibold text-slate-700">${p}</td><td class="p-3.5 font-medium text-slate-800">${ctp} (CS People)</td>
                         <td class="p-3.5 text-center text-slate-600">${detr}</td><td class="p-3.5 text-center text-slate-600">${pass}</td>
                         <td class="p-3.5 text-center text-slate-600">${prom}</td><td class="p-3.5 text-center font-semibold text-slate-700">${tot}</td>
                         <td class="p-3.5 text-right font-bold text-slate-900">${npsVal}%</td>`;
@@ -1499,6 +1382,64 @@
             });
         }
 
+        function renderCcBreakdownFromMap(ccGroup, sortedPeriods) {
+            const SEP = '|||';
+            let cardsWrap = document.getElementById('ccBreakdownCards');
+            let ccTotals = {};
+            Object.entries(ccGroup).forEach(([k, d]) => {
+                let [, ccName] = k.split(SEP);
+                if (currentCcFilter === 'bandung' && ccName !== 'CC BANDUNG') return;
+                if (currentCcFilter === 'semarang' && ccName !== 'CC SEMARANG') return;
+                if (!ccTotals[ccName]) ccTotals[ccName] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                ccTotals[ccName].promotor += d.promotor;
+                ccTotals[ccName].detractor += d.detractor;
+                ccTotals[ccName].passive += d.passive;
+                ccTotals[ccName].total += d.total;
+            });
+
+            let ccNames = Object.keys(ccTotals).sort();
+            cardsWrap.innerHTML = ccNames.length === 0
+                ? `<div class="col-span-full text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-4">Tidak ada data Call Center untuk filter ini.</div>`
+                : ccNames.map((cn, idx) => {
+                    let rowsHtml = sortedPeriods.map(p => {
+                        let d = ccGroup[`${p}${SEP}${cn}`];
+                        if (!d) return '';
+                        let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : '0.00';
+                        return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+                            <td class="px-2.5 py-2.5 font-semibold text-slate-700 whitespace-nowrap">${p}</td>
+                            <td class="px-2.5 py-2.5 text-center">${d.detractor}</td>
+                            <td class="px-2.5 py-2.5 text-center">${d.passive}</td>
+                            <td class="px-2.5 py-2.5 text-center">${d.promotor}</td>
+                            <td class="px-2.5 py-2.5 text-center font-semibold">${d.total}</td>
+                            <td class="px-2.5 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">${npsVal}%</td>
+                        </tr>`;
+                    }).join('');
+                    let tot = ccTotals[cn];
+                    let totNps = tot.total > 0 ? (((tot.promotor - tot.detractor) / tot.total) * 100).toFixed(2) : '0.00';
+                    return `<div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
+                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
+                            <h4 class="font-extrabold text-slate-800 text-sm">${cn}</h4>
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CC ${idx + 1}</span>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-[11px] sm:text-xs text-slate-600">
+                            <thead class="bg-white text-slate-500 uppercase tracking-wide"><tr>
+                                <th class="px-2.5 py-2.5 text-left">Bulan</th><th class="px-2.5 py-2.5 text-center">D</th><th class="px-2.5 py-2.5 text-center">P</th>
+                                <th class="px-2.5 py-2.5 text-center">Prom</th><th class="px-2.5 py-2.5 text-center">Total</th><th class="px-2.5 py-2.5 text-right">TNPS</th>
+                            </tr></thead>
+                            <tbody>${rowsHtml}</tbody>
+                            <tfoot><tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
+                                <td class="px-2.5 py-3">Grand Total</td><td class="px-2.5 py-3 text-center">${tot.detractor}</td><td class="px-2.5 py-3 text-center">${tot.passive}</td>
+                                <td class="px-2.5 py-3 text-center">${tot.promotor}</td><td class="px-2.5 py-3 text-center">${tot.total}</td>
+                                <td class="px-2.5 py-3 text-right text-rose-700">${totNps}%</td>
+                            </tr></tfoot>
+                        </table></div></div>`;
+                }).join('');
+        }
+
+        function npsOf(d) {
+            return d.total > 0 ? ((d.promotor - d.detractor) / d.total) * 100 : 0;
+        }
+
         function renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal) {
             const SEP = '|||';
             const CORE_CTPS = ['Call Center', 'GraPARI', 'Socmed'];
@@ -1510,7 +1451,7 @@
 
             let sourceCol = document.getElementById('sourceColSelect').value || 'source';
             document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
-            document.getElementById('thPeriodSrc').textContent = "Periode (Bulan)";
+            document.getElementById('thPeriodSrc').textContent = "Bulan";
 
             const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
             let sourceNames = Object.keys(srcTotal).sort((a, b) => srcTotal[b].total - srcTotal[a].total || a.localeCompare(b));
@@ -1523,7 +1464,7 @@
                 sourceValueFilter = (prevSrc === 'ALL' || sourceNames.includes(prevSrc)) ? prevSrc : 'ALL';
                 srcFilterSel.value = sourceValueFilter;
             }
-            renderWeekButtons('sourceWeekButtons', 'source', sortedPeriods);
+            renderPeriodButtons('sourcePeriodButtons', 'source', sortedPeriods);
 
             let cardsWrap = document.getElementById('sourceSummaryCards');
             cardsWrap.innerHTML = '';
@@ -1536,7 +1477,7 @@
                     let d = srcPeriod[p + SEP + sn];
                     if (!d) return '';
                     return `<tr class="border-t border-slate-100 hover:bg-slate-50">
-                        ${sourceCardCell(formatPeriod(p), 'font-semibold text-slate-700 whitespace-nowrap')}
+                        ${sourceCardCell(p, 'font-semibold text-slate-700 whitespace-nowrap')}
                         ${sourceCardCell(d.detractor, 'text-center')}
                         ${sourceCardCell(d.passive, 'text-center')}
                         ${sourceCardCell(d.promotor, 'text-center')}
@@ -1566,7 +1507,7 @@
             });
 
             let palette = ['#0284c7', '#e11d48', '#16a34a', '#f59e0b', '#8b5cf6', '#0d9488'];
-            let chartLabels = sortedPeriods.map(formatPeriod).concat(['Total']);
+            let chartLabels = sortedPeriods.concat(['Total']);
             let datasets = sourceNames.slice(0, 8).map((sn, i) => ({
                 label: sn,
                 data: sortedPeriods.map(p => {
@@ -1590,8 +1531,8 @@
                 }
             });
 
-            let selectedWeek = tableWeekSelection.source || 'all';
-            let targetPeriods = selectedWeek === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === selectedWeek);
+            let selectedPeriod = tablePeriodSelection.source || 'all';
+            let targetPeriods = selectedPeriod === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === selectedPeriod);
             let activeSources = sourceValueFilter === 'ALL' ? sourceNames : sourceNames.filter(sn => sn === sourceValueFilter);
 
             let tbody = document.querySelector('#sourceTable tbody');
@@ -1624,7 +1565,7 @@
                         grandAll.promotor += d.promotor; grandAll.detractor += d.detractor; grandAll.passive += d.passive; grandAll.total += d.total;
 
                         appendRow(`
-                            <td class="p-3 font-semibold text-slate-700 whitespace-nowrap">${formatPeriod(p)}</td>
+                            <td class="p-3 font-semibold text-slate-700 whitespace-nowrap">${p}</td>
                             <td class="p-3"><span class="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md border ${st.badge}">${ctp}</span></td>
                             <td class="p-3 font-semibold text-slate-800">${src}</td>
                             ${metricCells(d, 'text-slate-900')}
@@ -1633,7 +1574,7 @@
                 });
 
                 if (hasAnyRow) {
-                    let subLabel = selectedWeek === 'all' ? 'Subtotal (Semua Bulan)' : `Subtotal (${formatPeriod(selectedWeek)})`;
+                    let subLabel = selectedPeriod === 'all' ? 'Subtotal (Semua Bulan)' : `Subtotal (${selectedPeriod})`;
                     appendRow(`
                         <td class="p-3 font-bold text-slate-800">${subLabel}</td>
                         <td class="p-3 font-extrabold text-slate-900">${ctp}</td>
@@ -1646,7 +1587,7 @@
             if (tbody.innerHTML === '') {
                 appendRow(`<td colspan="8" class="p-6 text-center text-xs text-slate-500">Tidak ada data Call Center, GraPARI, atau Socmed untuk filter ini.</td>`, "");
             } else {
-                let allLabel = selectedWeek === 'all' ? 'Grand Total (CC + GraPARI + Socmed)' : `Total ${formatPeriod(selectedWeek)} (CC + GraPARI + Socmed)`;
+                let allLabel = selectedPeriod === 'all' ? 'Grand Total (CC + GraPARI + Socmed)' : `Total ${selectedPeriod} (CC + GraPARI + Socmed)`;
                 appendRow(`
                     <td class="p-3.5 font-extrabold">${allLabel}</td>
                     <td class="p-3.5 font-extrabold">3 CTP Utama</td>
@@ -1654,6 +1595,172 @@
                     ${metricCells(grandAll, 'text-amber-300')}
                 `, "bg-slate-900 text-white font-bold");
             }
+        }
+
+        function setCcFilter(val) {
+            currentCcFilter = val;
+            document.querySelectorAll('.ccFilterSelect').forEach(el => { el.value = val; });
+            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
+            else if (globalRawData.length > 0) processAndRender();
+        }
+
+        function setTablePeriod(tableKey, periodVal) {
+            tablePeriodSelection[tableKey] = periodVal;
+            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
+            else if (latestProcessedData.length > 0) {
+                renderDashboard(latestProcessedData);
+                renderSourceDetail(latestProcessedData);
+            }
+        }
+
+        function setSourceValueFilter(val) {
+            sourceValueFilter = val;
+            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
+            else if (latestProcessedData.length > 0) renderSourceDetail(latestProcessedData);
+        }
+
+        function renderPeriodButtons(containerId, tableKey, sortedPeriods) {
+            let wrap = document.getElementById(containerId);
+            if (!wrap) return;
+            let activeVal = tablePeriodSelection[tableKey] || 'all';
+            if (activeVal !== 'all' && !sortedPeriods.includes(activeVal)) {
+                activeVal = 'all';
+                tablePeriodSelection[tableKey] = 'all';
+            }
+            let buttonsHtml = `<button type="button" class="period-pill-btn ${activeVal === 'all' ? 'active' : ''}" onclick="setTablePeriod('${tableKey}', 'all')">Semua Bulan</button>`;
+            sortedPeriods.forEach(p => {
+                let isAct = activeVal === p;
+                buttonsHtml += `<button type="button" class="period-pill-btn ${isAct ? 'active' : ''}" onclick="setTablePeriod('${tableKey}', '${p}')">${p}</button>`;
+            });
+            wrap.innerHTML = buttonsHtml;
+        }
+
+        function syncGrapariControlVisibility() {
+            let btnTomo = document.getElementById('btnGrapariTomo');
+            let btnMomo = document.getElementById('btnGrapariMomo');
+            let btnWilayah = document.getElementById('btnSubWilayah');
+            let btnMitra = document.getElementById('btnSubMitra');
+            let btnPeople = document.getElementById('btnBasisPeople');
+            let btnAll = document.getElementById('btnBasisAll');
+
+            if (grapariModel === 'TOMO') {
+                btnTomo.className = 'seg-btn active-tomo';
+                btnMomo.className = 'seg-btn';
+            } else {
+                btnTomo.className = 'seg-btn';
+                btnMomo.className = 'seg-btn active-momo';
+            }
+
+            if (grapariSubMode === 'wilayah') {
+                btnWilayah.className = 'seg-btn active-sub';
+                btnMitra.className = 'seg-btn';
+            } else {
+                btnWilayah.className = 'seg-btn';
+                btnMitra.className = 'seg-btn active-sub';
+            }
+
+            if (grapariBasis === 'people') {
+                btnPeople.className = 'seg-btn active-sub';
+                btnAll.className = 'seg-btn';
+            } else {
+                btnPeople.className = 'seg-btn';
+                btnAll.className = 'seg-btn active-sub';
+            }
+
+            document.getElementById('grapariDetailBlock').classList.toggle('hidden', grapariSummaryOnly);
+        }
+
+        function refreshGrapariSection() {
+            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
+            else if (latestProcessedData.length > 0) renderGrapariSection(latestProcessedData, latestSortedPeriods);
+        }
+
+        function setGrapariModel(model) { grapariModel = model; syncGrapariControlVisibility(); refreshGrapariSection(); }
+        function setGrapariSubMode(sub) { grapariSubMode = sub; syncGrapariControlVisibility(); refreshGrapariSection(); }
+        function setGrapariBasis(basis) { grapariBasis = basis; syncGrapariControlVisibility(); refreshGrapariSection(); }
+        function setGrapariArea(val) { grapariAreaFilter = val; refreshGrapariSection(); }
+        function setGrapariRegion(val) { grapariRegionFilter = val; refreshGrapariSection(); }
+        function setGrapariMitra(val) { grapariMitraFilter = val; refreshGrapariSection(); }
+        function setGrapariSummaryOnly(checked) { grapariSummaryOnly = checked; syncGrapariControlVisibility(); refreshGrapariSection(); }
+
+        function processAndRender() {
+            let filterBulan = document.getElementById('bulanFilter').value;
+            let sourceCol = document.getElementById('sourceColSelect').value || 'source';
+
+            let baseRows = globalRawData
+                .map(row => ({ ...mapIndihomeRow(row), Source: getColAny(row, sourceCol) || '(kosong)' }))
+                .filter(r => r.IsValid);
+
+            let processedData = filterBulan === 'all'
+                ? baseRows
+                : baseRows.filter(r => r.Period === filterBulan);
+
+            document.getElementById('rowCount').textContent = `${processedData.length.toLocaleString()} baris data aktif`;
+            renderDashboard(processedData);
+            renderSourceDetail(processedData);
+        }
+
+        function renderSourceDetail(data) {
+            const SEP = '|||';
+            const CORE_CTPS = ['Call Center', 'GraPARI', 'Socmed'];
+            const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
+            const addRow = (target, item) => {
+                target.promotor += item.Promoter; target.detractor += item.Detractor; target.passive += item.Passive; target.total += item.Total;
+            };
+            let coreData = data.filter(item => CORE_CTPS.includes(item.Mapped_CTP));
+            let periods = new Set(), byPeriod = {}, srcPeriod = {}, srcTotal = {};
+            coreData.forEach(item => {
+                periods.add(item.Period);
+                let k = [item.Period, item.Mapped_CTP, item.Source].join(SEP);
+                byPeriod[k] = byPeriod[k] || empty(); addRow(byPeriod[k], item);
+                let pk = item.Period + SEP + item.Source;
+                srcPeriod[pk] = srcPeriod[pk] || empty(); srcTotal[item.Source] = srcTotal[item.Source] || empty();
+                addRow(srcPeriod[pk], item); addRow(srcTotal[item.Source], item);
+            });
+            let sortedPeriods = sortBulanList(periods);
+            renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal);
+        }
+
+        function renderDashboard(data) {
+            const SEP = '|||';
+            let group = {}, periods = new Set();
+            let ccLabel = currentCcFilter === 'bandung' ? 'CC Bandung' : currentCcFilter === 'semarang' ? 'CC Semarang' : 'Call Center';
+            let ctpList = [ccLabel, "GraPARI", "Socmed"];
+
+            data.forEach(item => {
+                periods.add(item.Period);
+                let ctp = item.Mapped_CTP;
+                let includeInGroup = true;
+                if (ctp === 'Call Center') {
+                    if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) includeInGroup = false;
+                    ctp = ccLabel;
+                }
+                if (includeInGroup) {
+                    let k = `${item.Period}${SEP}${ctp}`;
+                    if (!group[k]) group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                    addCounts(group[k], item.Promoter, item.Detractor, item.Passive, item.Total, item.Is_CS);
+                }
+            });
+
+            let sortedPeriods = sortBulanList(periods);
+            latestProcessedData = data;
+            latestSortedPeriods = sortedPeriods;
+
+            renderPeriodButtons('ctpPeriodButtons', 'ctp', sortedPeriods);
+            renderPeriodButtons('csPeriodButtons', 'cs', sortedPeriods);
+            renderChartsAndTablesFromGroup(group, ctpList, sortedPeriods);
+            renderGrapariSection(data, sortedPeriods);
+
+            let ccByPeriod = {};
+            data.forEach(item => {
+                if (item.Mapped_CTP !== 'Call Center') return;
+                let ccName = item.CC_Site === 'bandung' ? 'CC BANDUNG' : (item.CC_Site === 'semarang' ? 'CC SEMARANG' : '');
+                if (!ccName) return;
+                let pk = `${item.Period}${SEP}${ccName}`;
+                if (!ccByPeriod[pk]) ccByPeriod[pk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+                addCounts(ccByPeriod[pk], item.Promoter, item.Detractor, item.Passive, item.Total, false);
+            });
+            renderCcBreakdownFromMap(ccByPeriod, sortedPeriods);
         }
 
         const WORKER_CODE = `
@@ -1718,8 +1825,13 @@
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
 
-            buildWeekOptions();
-            buildSourceColOptions();
+            let bulanSet = new Set();
+            globalRawData.forEach(row => {
+                let b = normalizeBulanValue(getColAny(row, 'bulan'), getColAny(row, 'ts_call'));
+                if (b) bulanSet.add(b);
+            });
+            buildBulanFilterOptions(bulanSet);
+            populateSourceSelectFromHeaders(Object.keys(globalRawData[0] || {}));
             processAndRender();
         }
 
@@ -1760,10 +1872,6 @@
                 return;
             }
 
-            if (sizeMB > 250) {
-                alert("Peringatan: File Excel/TXT di atas 250 MB berisiko menyebabkan Out of Memory pada tab browser. Jika error terjadi, simpan/export file ke format .CSV terlebih dahulu.");
-            }
-
             setLoading(`Sedang memproses file (${sizeMB.toFixed(1)} MB), mohon tunggu...`);
 
             try {
@@ -1802,7 +1910,13 @@
             loadSheetData(e.target.value);
         });
 
-        document.getElementById('weekFilter').addEventListener('change', function() {
+        document.getElementById('bulanFilter').addEventListener('change', function() {
+            if (isStreamingCsv && streamingFile) streamLargeCsv(streamingFile);
+            else if (globalRawData.length > 0) processAndRender();
+        });
+
+        document.getElementById('sourceColSelect').addEventListener('change', function() {
+            sourceValueFilter = 'ALL';
             if (isStreamingCsv && streamingFile) streamLargeCsv(streamingFile);
             else if (globalRawData.length > 0) processAndRender();
         });
@@ -1817,459 +1931,6 @@
             } else if (dataWorker) {
                 dataWorker.postMessage({ sheet: sheetName });
             }
-        }
-
-        function mapIndihomeRow(row) {
-            let unitType2 = getColAny(row, 'unit_type2').toLowerCase();
-            let npsVal = getColAny(row, 'nps').toLowerCase();
-            let categoryVal = getColAny(row, 'category').toLowerCase();
-            let reasonDesc = getColAny(row, 'reason_desc');
-            let periodVal = derivePeriodFromRow(row, 'indihome');
-            let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
-            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
-            let regionalVal = getColAny(row, 'region', 'regional', 'nama_regional', 'treg') || '';
-            let mitraVal = getColAny(row, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner') || '';
-            let momoVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
-            if (!momoVal && unitName && typeof bisnisModelMaster !== 'undefined' && bisnisModelMaster[unitName]) {
-                momoVal = bisnisModelMaster[unitName];
-            }
-
-            let isPromotor = 0, isDetractor = 0, isPassive = 0;
-            let targetNps = npsVal || categoryVal;
-
-            if (targetNps !== '') {
-                let numScore = Number(targetNps);
-                if (!isNaN(numScore) && targetNps.trim() !== '') {
-                    if (numScore >= 9) isPromotor = 1;
-                    else if (numScore >= 7) isPassive = 1;
-                    else if (numScore >= 0) isDetractor = 1;
-                } else {
-                    if (targetNps.includes('promot')) isPromotor = 1;
-                    else if (targetNps.includes('detract')) isDetractor = 1;
-                    else if (targetNps.includes('passiv')) isPassive = 1;
-                }
-            }
-
-            let ctpGroup = "Call Center";
-            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
-                ctpGroup = "GraPARI";
-            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
-                ctpGroup = "Socmed";
-            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
-                ctpGroup = "Call Center";
-            } else {
-                ctpGroup = unitType2 ? unitType2 : "Call Center";
-            }
-
-            let targetReasons = [
-                "CUSTOMER SERVICE",
-                "Customer service cukup responsif",
-                "Customer service kurang responsif",
-                "Customer service responsif",
-                "Customer service tidak responsif",
-                "PELAYANAN PELANGGAN"
-            ];
-            let isCS = targetReasons.some(r => reasonDesc.toLowerCase() === r.toLowerCase());
-
-            let unitNameLower = unitName.toLowerCase();
-            let ccSite = 'other';
-            if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) ccSite = 'bandung';
-            else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
-
-            let hasIdentity = !!(getColAny(row, 'id_trx') || getColAny(row, 'nd') || unitType2 || targetNps || reasonDesc);
-
-            return {
-                IsValid: hasIdentity && !!periodVal,
-                Period: periodVal,
-                Mapped_CTP: ctpGroup,
-                Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
-                CC_Site: ccSite,
-                UnitName: unitName,
-                Area: areaVal,
-                Regional: regionalVal,
-                Mitra: mitraVal,
-                MomoTomo: momoVal !== '' ? momoVal.toUpperCase() : 'Unspecified',
-                Is_CS: isCS,
-                Promoter: isPromotor,
-                Detractor: isDetractor,
-                Passive: isPassive,
-                Total: 1
-            };
-        }
-
-        function mapMobileRows(rawData) {
-            let sample = rawData[0] || {};
-            let hasBisnisModelCol = hasColAny(sample, 'bisnis model') || hasColAny(sample, 'momo/tomo');
-
-            let learned = 0;
-            if (hasBisnisModelCol) {
-                rawData.forEach(row => {
-                    let unitName = getColAny(row, 'unit_name');
-                    let bm = getColAny(row, 'bisnis model', 'momo/tomo');
-                    if (unitName && bm && bisnisModelMaster[unitName] !== bm) {
-                        bisnisModelMaster[unitName] = bm;
-                        learned++;
-                    }
-                });
-                if (learned > 0) saveBisnisModelMaster();
-            }
-
-            let stats = { noCategory: 0, fromMaster: 0, unmatchedUnits: new Set(), duplicateTrx: 0, emptyTrx: 0, excluded: {} };
-            let hasIdTrxCol = hasColAny(sample, 'id_trx');
-            let seenTrx = new Set();
-
-            let rows = rawData.map(row => {
-                let unitType = getColAny(row, 'unit_type').toLowerCase();
-                let unitName = getColAny(row, 'unit_name');
-                let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
-                let regionalVal = getColAny(row, 'region', 'regional', 'nama_regional', 'treg') || '';
-                let mitraVal = getColAny(row, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner') || '';
-                let msisdn = getColAny(row, 'msisdn').replace(/\s+/g, '');
-                let idTrx = getColAny(row, 'id_trx');
-                let isValidRow;
-                if (hasIdTrxCol) {
-                    if (idTrx === '') { isValidRow = false; stats.emptyTrx++; }
-                    else {
-                        isValidRow = true;
-                        if (seenTrx.has(idTrx)) stats.duplicateTrx++;
-                        else seenTrx.add(idTrx);
-                    }
-                } else {
-                    isValidRow = msisdn !== '';
-                }
-                let tNpsVal = getColAny(row, 'tnps', 'tnps type', 'nps', 'tnps category').toLowerCase();
-                let column2Val = getColAny(row, 'column2').toLowerCase();
-                let bulanVal = derivePeriodFromRow(row, 'mobile');
-
-                let bisnisModelVal = getColAny(row, 'bisnis model', 'momo/tomo', 'momo', 'tomo');
-                if (!bisnisModelVal && !hasBisnisModelCol && unitName && bisnisModelMaster[unitName]) {
-                    bisnisModelVal = bisnisModelMaster[unitName];
-                    stats.fromMaster++;
-                }
-                if (!bisnisModelVal) bisnisModelVal = 'Unspecified';
-
-                let isPromotor = 0, isDetractor = 0, isPassive = 0;
-                let targetNps = tNpsVal;
-
-                if (isValidRow && targetNps !== '') {
-                    if (targetNps.includes('promot')) {
-                        isPromotor = 1;
-                    } else if (targetNps.includes('detract')) {
-                        isDetractor = 1;
-                    } else if (targetNps.includes('passiv') || targetNps.includes('pasif')) {
-                        isPassive = 1;
-                    } else {
-                        let numScore = Number(targetNps.replace(',', '.'));
-                        if (!isNaN(numScore)) {
-                            if (numScore >= 9 && numScore <= 10) isPromotor = 1;
-                            else if (numScore >= 7 && numScore < 9) isPassive = 1;
-                            else if (numScore >= 0 && numScore < 7) isDetractor = 1;
-                        }
-                    }
-                }
-
-                let unitKey = unitType.trim().replace(/[\s\-]+/g, '_');
-                let ctpGroup = MOBILE_CTP_MAP[unitKey] || null;
-                let isGraPARI = ctpGroup === "GraPARI";
-                if (isValidRow && !ctpGroup) {
-                    let label = unitKey || '(unit_type kosong)';
-                    stats.excluded[label] = (stats.excluded[label] || 0) + 1;
-                    isValidRow = false;
-                }
-                if (isGraPARI && isValidRow && bisnisModelVal === 'Unspecified' && unitName) stats.unmatchedUnits.add(unitName);
-
-                let isCS = column2Val.includes('petugas layanan') || column2Val.includes('service officer');
-
-                if (isValidRow && !isPromotor && !isDetractor && !isPassive) stats.noCategory++;
-
-                return {
-                    IsValid: isValidRow,
-                    Period: bulanVal,
-                    Mapped_CTP: ctpGroup,
-                    Is_GraPARI: isGraPARI,
-                    UnitName: unitName,
-                    Area: areaVal,
-                    Regional: regionalVal,
-                    Mitra: mitraVal,
-                    MomoTomo: bisnisModelVal.toUpperCase(),
-                    Is_CS: isCS,
-                    Promoter: isPromotor,
-                    Detractor: isDetractor,
-                    Passive: isPassive,
-                    Total: isValidRow ? 1 : 0
-                };
-            }).filter(item => item.IsValid);
-
-            return { rows, stats, hasBisnisModelCol, learned, hasIdTrxCol };
-        }
-
-        let currentCcFilter = 'all';
-
-        function setCcFilter(val) {
-            currentCcFilter = val;
-            document.querySelectorAll('.ccFilterSelect').forEach(el => { el.value = val; });
-            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
-            else if (globalRawData.length > 0) processAndRender();
-        }
-
-        function setTableWeek(tableKey, periodVal) {
-            tableWeekSelection[tableKey] = periodVal;
-            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
-            else if (latestProcessedData.length > 0) {
-                renderDashboard(latestProcessedData);
-                if (currentMode === 'indihome') renderSourceDetail(latestProcessedData);
-            }
-        }
-
-        function setSourceValueFilter(val) {
-            sourceValueFilter = val;
-            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
-            else if (currentMode === 'indihome' && latestProcessedData.length > 0) {
-                renderSourceDetail(latestProcessedData);
-            }
-        }
-
-        function renderWeekButtons(containerId, tableKey, sortedPeriods) {
-            let wrap = document.getElementById(containerId);
-            if (!wrap) return;
-            let activeVal = tableWeekSelection[tableKey] || 'all';
-            if (activeVal !== 'all' && !sortedPeriods.includes(activeVal)) {
-                activeVal = 'all';
-                tableWeekSelection[tableKey] = 'all';
-            }
-            let buttonsHtml = `<button type="button" class="week-pill-btn ${activeVal === 'all' ? 'active' : ''}" onclick="setTableWeek('${tableKey}', 'all')">Semua Bulan</button>`;
-            sortedPeriods.forEach(p => {
-                let isAct = activeVal === p;
-                buttonsHtml += `<button type="button" class="week-pill-btn ${isAct ? 'active' : ''}" onclick="setTableWeek('${tableKey}', '${p}')">${p}</button>`;
-            });
-            wrap.innerHTML = buttonsHtml;
-        }
-
-        function syncGrapariControlVisibility() {
-            let btnTomo = document.getElementById('btnGrapariTomo');
-            let btnMomo = document.getElementById('btnGrapariMomo');
-            let btnWilayah = document.getElementById('btnSubWilayah');
-            let btnMitra = document.getElementById('btnSubMitra');
-            let btnPeople = document.getElementById('btnBasisPeople');
-            let btnAll = document.getElementById('btnBasisAll');
-
-            if (grapariModel === 'TOMO') {
-                btnTomo.className = 'seg-btn active-tomo';
-                btnMomo.className = 'seg-btn';
-            } else {
-                btnTomo.className = 'seg-btn';
-                btnMomo.className = 'seg-btn active-momo';
-            }
-
-            if (momoSubMode === 'wilayah') {
-                btnWilayah.className = 'seg-btn active-sub';
-                btnMitra.className = 'seg-btn';
-            } else {
-                btnWilayah.className = 'seg-btn';
-                btnMitra.className = 'seg-btn active-sub';
-            }
-
-            if (grapariBasis === 'people') {
-                btnPeople.className = 'seg-btn active-sub';
-                btnAll.className = 'seg-btn';
-            } else {
-                btnPeople.className = 'seg-btn';
-                btnAll.className = 'seg-btn active-sub';
-            }
-
-            document.getElementById('grapariDetailBlock').classList.toggle('hidden', grapariSummaryOnly);
-        }
-
-        function refreshGrapariSection() {
-            if (isStreamingCsv && streamingAgg) renderFromAggregated(streamingAgg);
-            else if (latestProcessedData.length > 0) renderGrapariSection(latestProcessedData, latestSortedPeriods);
-        }
-
-        function setGrapariModel(model) { grapariModel = model; syncGrapariControlVisibility(); refreshGrapariSection(); }
-        function setMomoSubMode(sub) { momoSubMode = sub; syncGrapariControlVisibility(); refreshGrapariSection(); }
-        function setGrapariBasis(basis) { grapariBasis = basis; syncGrapariControlVisibility(); refreshGrapariSection(); }
-        function setGrapariArea(val) { grapariAreaFilter = val; refreshGrapariSection(); }
-        function setGrapariRegion(val) { grapariRegionFilter = val; refreshGrapariSection(); }
-        function setGrapariMitra(val) { grapariMitraFilter = val; refreshGrapariSection(); }
-        function setGrapariSummaryOnly(checked) { grapariSummaryOnly = checked; syncGrapariControlVisibility(); refreshGrapariSection(); }
-
-        function setTotalHeaders(mainLabel, csLabel) {
-            document.querySelector('#summaryTable thead th:nth-child(6)').textContent = mainLabel;
-            document.querySelector('#csTable thead th:nth-child(6)').textContent = csLabel;
-        }
-
-        function processAndRender() {
-            let filterMode = document.getElementById('weekFilter').value;
-            let processedData = [];
-            let rowInfoText = '';
-
-            if (currentMode === 'indihome') {
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
-                document.getElementById('thCtp1').textContent = "unit_type2 (CTP)";
-                document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
-                setTotalHeaders("Grand Total", "Grand Total (CS)");
-
-                let sourceCol = document.getElementById('sourceColSelect').value || 'source';
-                let baseRows = globalRawData
-                    .map(row => ({ ...mapIndihomeRow(row), Source: getColAny(row, sourceCol) || '(kosong)' }))
-                    .filter(r => r.IsValid);
-
-                processedData = filterMode === 'all'
-                    ? baseRows
-                    : baseRows.filter(r => r.Period === filterMode);
-
-                rowInfoText = `${processedData.length.toLocaleString()} baris data aktif`;
-            } else {
-                document.getElementById('thPeriod1').textContent = "Periode (Bulan)";
-                document.getElementById('thPeriod2').textContent = "Periode (Bulan)";
-                document.getElementById('thCtp1').textContent = "Unit Type (CTP)";
-                document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
-                setTotalHeaders("Count id_trx", "Count id_trx (CS)");
-
-                let result = mapMobileRows(globalRawData);
-                processedData = result.rows;
-                rowInfoText = result.hasIdTrxCol
-                    ? `Count id_trx: ${processedData.length.toLocaleString()}`
-                    : `${processedData.length.toLocaleString()} baris data aktif (basis msisdn)`;
-            }
-
-            if (currentMode === 'indihome') updateMasterInfo();
-            document.getElementById('rowCount').textContent = rowInfoText;
-            renderDashboard(processedData);
-
-            let sourceSection = document.getElementById('sourceSection');
-            if (currentMode === 'indihome') {
-                sourceSection.classList.remove('hidden');
-                renderSourceDetail(processedData);
-            } else {
-                sourceSection.classList.add('hidden');
-            }
-        }
-
-        function buildSourceColOptions() {
-            let cols = Object.keys(globalRawData[0] || {});
-            populateSourceSelectFromHeaders(cols);
-        }
-
-        document.getElementById('sourceColSelect').addEventListener('change', function() {
-            sourceValueFilter = 'ALL';
-            if (isStreamingCsv && streamingFile) streamLargeCsv(streamingFile);
-            else if (globalRawData.length > 0) processAndRender();
-        });
-
-        function npsOf(d) {
-            return d.total > 0 ? ((d.promotor - d.detractor) / d.total) * 100 : 0;
-        }
-
-        function renderSourceDetail(data) {
-            const SEP = '|||';
-            const CORE_CTPS = ['Call Center', 'GraPARI', 'Socmed'];
-            const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
-            const addRow = (target, item) => {
-                target.promotor += item.Promoter; target.detractor += item.Detractor; target.passive += item.Passive; target.total += item.Total;
-            };
-            let coreData = data.filter(item => CORE_CTPS.includes(item.Mapped_CTP));
-            let periods = new Set(), byPeriod = {}, srcPeriod = {}, srcTotal = {};
-            coreData.forEach(item => {
-                periods.add(item.Period);
-                let k = [item.Period, item.Mapped_CTP, item.Source].join(SEP);
-                byPeriod[k] = byPeriod[k] || empty(); addRow(byPeriod[k], item);
-                let pk = item.Period + SEP + item.Source;
-                srcPeriod[pk] = srcPeriod[pk] || empty(); srcTotal[item.Source] = srcTotal[item.Source] || empty();
-                addRow(srcPeriod[pk], item); addRow(srcTotal[item.Source], item);
-            });
-            let sortedPeriods = sortPeriodsList(periods);
-            renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal);
-        }
-
-        function renderDashboard(data) {
-            const SEP = '|||';
-            let group = {}, periods = new Set();
-            let ccLabel = currentCcFilter === 'bandung' ? 'CC Bandung' : currentCcFilter === 'semarang' ? 'CC Semarang' : 'Call Center';
-            let ctpList = currentMode === 'indihome' ? [ccLabel, "GraPARI", "Socmed"] : ["CC", "GraPARI", "Web service / Ecare"];
-
-            data.forEach(item => {
-                periods.add(item.Period);
-                let ctp = item.Mapped_CTP;
-                let includeInGroup = true;
-                if (currentMode === 'indihome' && ctp === 'Call Center') {
-                    if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) includeInGroup = false;
-                    ctp = ccLabel;
-                }
-                if (includeInGroup) {
-                    let k = `${item.Period}${SEP}${ctp}`;
-                    if (!group[k]) group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
-                    addCounts(group[k], item.Promoter, item.Detractor, item.Passive, item.Total, item.Is_CS);
-                }
-            });
-
-            let sortedPeriods = sortPeriodsList(periods);
-            latestProcessedData = data;
-            latestSortedPeriods = sortedPeriods;
-
-            renderWeekButtons('ctpWeekButtons', 'ctp', sortedPeriods);
-            renderWeekButtons('csWeekButtons', 'cs', sortedPeriods);
-            renderChartsAndTablesFromGroup(group, ctpList, sortedPeriods);
-            renderGrapariSection(data, sortedPeriods);
-            renderCallCenterBreakdown(data, sortedPeriods);
-        }
-
-        function renderCallCenterBreakdown(data, sortedPeriods) {
-            const SEP = '|||';
-            let ccSection = document.getElementById('ccBreakdownSection');
-            let cardsWrap = document.getElementById('ccBreakdownCards');
-            if (!ccSection || !cardsWrap) return;
-            if (currentMode !== 'indihome') { ccSection.style.display = 'none'; return; }
-            ccSection.style.display = 'block';
-
-            let ccByPeriod = {}, ccTotals = {};
-            data.forEach(item => {
-                if (item.Mapped_CTP !== 'Call Center') return;
-                if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) return;
-                let ccName = item.CC_Site === 'bandung' ? 'CC BANDUNG' : (item.CC_Site === 'semarang' ? 'CC SEMARANG' : '');
-                if (!ccName) return;
-                let pk = `${item.Period}${SEP}${ccName}`;
-                if (!ccByPeriod[pk]) ccByPeriod[pk] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                if (!ccTotals[ccName]) ccTotals[ccName] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                [ccByPeriod[pk], ccTotals[ccName]].forEach(d => addCounts(d, item.Promoter, item.Detractor, item.Passive, item.Total, false));
-            });
-
-            let ccNames = Object.keys(ccTotals).sort();
-            cardsWrap.innerHTML = ccNames.length === 0
-                ? `<div class="col-span-full text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-4">Tidak ada data Call Center untuk filter ini.</div>`
-                : ccNames.map((cn, idx) => {
-                    let rowsHtml = sortedPeriods.map(p => {
-                        let d = ccByPeriod[`${p}${SEP}${cn}`];
-                        if (!d) return '';
-                        let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : '0.00';
-                        return `<tr class="border-t border-slate-100 hover:bg-slate-50">
-                            <td class="px-2.5 py-2.5 font-semibold text-slate-700 whitespace-nowrap">${formatPeriod(p)}</td>
-                            <td class="px-2.5 py-2.5 text-center">${d.detractor}</td><td class="px-2.5 py-2.5 text-center">${d.passive}</td>
-                            <td class="px-2.5 py-2.5 text-center">${d.promotor}</td><td class="px-2.5 py-2.5 text-center font-semibold">${d.total}</td>
-                            <td class="px-2.5 py-2.5 text-right font-bold text-slate-900 whitespace-nowrap">${npsVal}%</td>
-                        </tr>`;
-                    }).join('');
-                    let tot = ccTotals[cn];
-                    let totNps = tot.total > 0 ? (((tot.promotor - tot.detractor) / tot.total) * 100).toFixed(2) : '0.00';
-                    return `<div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-                        <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
-                            <h4 class="font-extrabold text-slate-800 text-sm">${cn}</h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-slate-500">CC ${idx + 1}</span>
-                        </div>
-                        <div class="overflow-x-auto"><table class="w-full text-[11px] sm:text-xs text-slate-600">
-                            <thead class="bg-white text-slate-500 uppercase tracking-wide"><tr>
-                                <th class="px-2.5 py-2.5 text-left">Bulan</th><th class="px-2.5 py-2.5 text-center">D</th><th class="px-2.5 py-2.5 text-center">P</th>
-                                <th class="px-2.5 py-2.5 text-center">Prom</th><th class="px-2.5 py-2.5 text-center">Total</th><th class="px-2.5 py-2.5 text-right">TNPS</th>
-                            </tr></thead>
-                            <tbody>${rowsHtml}</tbody>
-                            <tfoot><tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
-                                <td class="px-2.5 py-3">Grand Total</td><td class="px-2.5 py-3 text-center">${tot.detractor}</td><td class="px-2.5 py-3 text-center">${tot.passive}</td>
-                                <td class="px-2.5 py-3 text-center">${tot.promotor}</td><td class="px-2.5 py-3 text-center">${tot.total}</td>
-                                <td class="px-2.5 py-3 text-right text-rose-700">${totNps}%</td>
-                            </tr></tfoot>
-                        </table></div></div>`;
-                }).join('');
         }
     </script>
 </body>
