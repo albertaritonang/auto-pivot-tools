@@ -721,7 +721,7 @@
             }
 
             async function streamCsvFile(file, mode) {
-                const stream = file.stream();
+                const stream = typeof file.stream === 'function' ? file.stream() : new Response(file).body;
                 const reader = stream.getReader();
                 const decoder = new TextDecoder('utf-8');
                 let leftover = '';
@@ -739,7 +739,7 @@
                     'unit_name', 'unit_type', 'unit_type2', 'channel',
                     'reason_desc', 'area', 'region', 'regional', 'area_lacci',
                     'journey', 'source', 'sumber', 'bulan', 'month',
-                    'bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo', 'tomo', 'mitra'
+                    'bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo', 'tomo', 'mitra', 'week'
                 ];
 
                 while (true) {
@@ -1210,17 +1210,23 @@
                 let selectedMonth = currentIndihomeMonth || filterMode || 'all';
 
                 processedData = [];
+                let baseIndihomeCount = 0;
                 for (let i = 0; i < globalRawData.length; i++) {
                     let row = globalRawData[i];
                     let mapped = mapIndihomeRow(row);
                     if (!mapped.IsValid) continue;
+                    baseIndihomeCount++;
                     if (selectedMonth !== 'all' && mapped.Period !== selectedMonth) continue;
                     mapped.Source = getCol(row, sourceCol) || '(kosong)';
                     processedData.push(mapped);
                 }
+                if (globalRawData.length > 0 && baseIndihomeCount === 0) {
+                    alert("Mode IndiHome: 0 baris memiliki Bulan valid.\nPastikan kolom 'Bulan' (misal: Jan, Feb, ..., Okt) atau 'ts_call' berisi tanggal/bulan.\n\nKolom terdeteksi:\n" + detectedFileHeaders.join(', '));
+                }
 
+                let skippedMonthCount = globalRawData.length - baseIndihomeCount;
                 rowInfoText = selectedMonth === 'all'
-                    ? `${processedData.length.toLocaleString('id-ID')} baris data aktif (Semua Bulan)`
+                    ? `${processedData.length.toLocaleString('id-ID')} baris data aktif (Semua Bulan)` + (skippedMonthCount > 0 ? ` • ${skippedMonthCount.toLocaleString('id-ID')} baris tanpa Bulan` : '')
                     : `${processedData.length.toLocaleString('id-ID')} baris data aktif (Bulan: ${selectedMonth})`;
             } else {
                 isRollingView = false;
