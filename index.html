@@ -173,7 +173,7 @@
                             </span>
                         </div>
                         <h1 id="mainTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">IndiHome tNPS Analytics Dashboard</h1>
-                        <p id="subTitle" class="text-xs sm:text-sm text-slate-500">Formula: (Promotor - Detractor) / Grand Total (ts_call) • CTP: Call Center, GraPARI & Socmed (unit_type2) • Category: nps • Periode: Bulan</p>
+                        <p id="subTitle" class="text-xs sm:text-sm text-slate-500">Formula: (Promotor - Detractor) / Grand Total (ts_call) • All Respond: ts_call • tNPS: Bulat (%) • CTP: Call Center, GraPARI & Socmed (unit_type2)</p>
                     </div>
 
                     <!-- Upload File IndiHome -->
@@ -558,7 +558,7 @@
         const BULAN_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
         function normKey(s) {
-            return String(s).replace(/^\uFEFF/, '').toLowerCase().replace(/[\s_\-\/.]+/g, '');
+            return String(s).replace(/^﻿/, '').toLowerCase().replace(/[\s_\-\/.]+/g, '');
         }
 
         function getColAny(row, ...names) {
@@ -671,6 +671,8 @@
             let reasonDesc = getColAny(row, 'reason_desc');
             let rawBulan = getColAny(row, 'bulan');
             let tsCall = getColAny(row, 'ts_call');
+            let tsCallAlt = getColAny(row, 'ts_call.1');
+            let effectiveTsCall = tsCall || tsCallAlt;
             let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
             let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name');
             if (isNaToken(areaVal)) areaVal = '';
@@ -681,7 +683,7 @@
             let bisnisModelVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
             if (isNaToken(bisnisModelVal)) bisnisModelVal = '';
 
-            let bulanLabel = normalizeBulanValue(rawBulan, tsCall);
+            let bulanLabel = normalizeBulanValue(rawBulan, effectiveTsCall);
 
             let isPromotor = 0, isDetractor = 0, isPassive = 0;
             if (npsRaw !== '' && !isNaToken(npsRaw)) {
@@ -716,7 +718,7 @@
             if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) ccSite = 'bandung';
             else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
 
-            let hasTransaction = !!(tsCall || getColAny(row, 'id_trx') || getColAny(row, 'nd') || rawCtp || npsRaw);
+            let hasTransaction = !isNaToken(effectiveTsCall);
 
             return {
                 IsValid: hasTransaction && !!bulanLabel && !!coreCtp,
@@ -907,7 +909,7 @@
                 if (!line || !line.trim()) return;
                 if (!headers) {
                     delimiter = detectDelimiter(line);
-                    headers = parseDelimitedLine(line, delimiter).map(h => h.replace(/^\uFEFF/, '').trim());
+                    headers = parseDelimitedLine(line, delimiter).map(h => h.replace(/^﻿/, '').trim());
                     headers.forEach((h, i) => {
                         let nk = normKey(h);
                         if (nk && colIdx[nk] === undefined) colIdx[nk] = i;
@@ -924,11 +926,12 @@
                 let pseudoRow = {
                     id_trx: getValByAliases(cells, 'id_trx'),
                     nd: getValByAliases(cells, 'nd'),
-                    ts_call: getValByAliases(cells, 'ts_call', 'ts_call.1'),
+                    ts_call: getValByAliases(cells, 'ts_call'),
+                    'ts_call.1': getValByAliases(cells, 'ts_call.1'),
                     unit_type2: getValByAliases(cells, 'unit_type2'),
                     nps: getValByAliases(cells, 'nps'),
                     reason_desc: getValByAliases(cells, 'reason_desc'),
-                    bulan: getValByAliases(cells, 'bulan'),
+                    bulan: getValByAliases(cells, 'Bulan', 'bulan'),
                     unit_name: getValByAliases(cells, 'unit_name', 'unit name', 'nama_unit', 'unit'),
                     area: getValByAliases(cells, 'area', 'nama_area', 'wilayah_area', 'area_name'),
                     regional: getValByAliases(cells, 'region', 'regional', 'nama_regional', 'treg'),
@@ -1094,14 +1097,14 @@
                 sortedGroups.forEach(gKey => {
                     let d = bucket[`${p}${SEP}${gKey}`];
                     if (!d || d.total === 0) return;
-                    rowsInPeriod.push({ label: gKey, d, npsVal: (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) });
+                    rowsInPeriod.push({ label: gKey, d, npsVal: Math.round(((d.promotor - d.detractor) / d.total) * 100) });
                 });
                 if (rowsInPeriod.length === 0) return;
                 let totD = rowsInPeriod.reduce((a, b) => a + b.d.detractor, 0);
                 let totP = rowsInPeriod.reduce((a, b) => a + b.d.passive, 0);
                 let totPr = rowsInPeriod.reduce((a, b) => a + b.d.promotor, 0);
                 let totAll = rowsInPeriod.reduce((a, b) => a + b.d.total, 0);
-                let totNps = totAll > 0 ? (((totPr - totD) / totAll) * 100).toFixed(2) : '0.00';
+                let totNps = totAll > 0 ? Math.round(((totPr - totD) / totAll) * 100) : 0;
 
                 let card = document.createElement('div');
                 card.className = "rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm";
@@ -1142,7 +1145,7 @@
                     data: activePeriods.map(p => {
                         let d = bucket[`${p}${SEP}${gKey}`];
                         if (!d || d.total === 0) return null;
-                        return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
+                        return calcTnpsNum(d.promotor, d.detractor, d.total);
                     }),
                     borderColor: color, backgroundColor: color, tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true
                 };
@@ -1166,7 +1169,7 @@
                 sortedGroups.forEach(gKey => {
                     let d = bucket[`${p}${SEP}${gKey}`];
                     if (!d || d.total === 0) return;
-                    let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                    let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                     groupTotals[gKey].promotor += d.promotor; groupTotals[gKey].detractor += d.detractor; groupTotals[gKey].passive += d.passive; groupTotals[gKey].total += d.total;
                     let tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-50/80 transition-colors";
@@ -1179,7 +1182,7 @@
             sortedGroups.forEach(gKey => {
                 let d = groupTotals[gKey];
                 if (!d || d.total === 0) return;
-                let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `<td class="p-3.5">Grand Total</td><td class="p-3.5">${gKey}</td>
@@ -1286,7 +1289,7 @@
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}${SEP}${ctp}`];
                     if (!d || d.total === 0) return null;
-                    return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
+                    return calcTnpsNum(d.promotor, d.detractor, d.total);
                 });
                 return { label: labelName, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true };
             });
@@ -1308,7 +1311,7 @@
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}${SEP}${ctp}`];
                     if (!d || (d.cs_total || 0) === 0) return null;
-                    return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
+                    return calcTnpsNum(d.cs_promotor, d.cs_detractor, d.cs_total);
                 });
                 return { label: `${labelName} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true };
             });
@@ -1337,7 +1340,7 @@
                 ctpList.forEach(ctp => {
                     let d = group[`${p}${SEP}${ctp}`];
                     if (!d || d.total === 0) return;
-                    let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                    let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                     ctpGrandTotals[ctp].promotor += d.promotor;
                     ctpGrandTotals[ctp].detractor += d.detractor;
                     ctpGrandTotals[ctp].passive += d.passive;
@@ -1356,7 +1359,7 @@
             ctpList.forEach(ctp => {
                 let d = ctpGrandTotals[ctp];
                 if (!d || d.total === 0) return;
-                let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                 let displayCtp = ctp === 'Call Center' ? ccLabel : ctp;
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
@@ -1381,7 +1384,7 @@
                     let d = group[`${p}${SEP}${ctp}`];
                     if (!d || (d.cs_total || 0) === 0) return;
                     let prom = d.cs_promotor || 0, detr = d.cs_detractor || 0, pass = d.cs_passive || 0, tot = d.cs_total || 0;
-                    let npsVal = (((prom - detr) / tot) * 100).toFixed(2);
+                    let npsVal = Math.round(((prom - detr) / tot) * 100);
                     csGrandTotals[ctp].promotor += prom;
                     csGrandTotals[ctp].detractor += detr;
                     csGrandTotals[ctp].passive += pass;
@@ -1400,7 +1403,7 @@
             ctpList.forEach(ctp => {
                 let d = csGrandTotals[ctp];
                 if (!d || d.total === 0) return;
-                let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                 let displayCtp = ctp === 'Call Center' ? ccLabel : ctp;
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
@@ -1434,7 +1437,7 @@
                     let rowsHtml = sortedPeriods.map(p => {
                         let d = ccGroup[`${p}${SEP}${cn}`];
                         if (!d || d.total === 0) return '';
-                        let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
+                        let npsVal = Math.round(((d.promotor - d.detractor) / d.total) * 100);
                         return `<tr class="border-t border-slate-100 hover:bg-slate-50">
                             <td class="px-2.5 py-2.5 font-semibold text-slate-700 whitespace-nowrap">${p}</td>
                             <td class="px-2.5 py-2.5 text-center">${d.detractor}</td>
@@ -1445,7 +1448,7 @@
                         </tr>`;
                     }).join('');
                     let tot = ccTotals[cn];
-                    let totNps = tot.total > 0 ? (((tot.promotor - tot.detractor) / tot.total) * 100).toFixed(2) : '0.00';
+                    let totNps = tot.total > 0 ? Math.round(((tot.promotor - tot.detractor) / tot.total) * 100) : 0;
                     return `<div class="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
                         <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
                             <h4 class="font-extrabold text-slate-800 text-sm">${cn}</h4>
@@ -1464,6 +1467,16 @@
                             </tr></tfoot>
                         </table></div></div>`;
                 }).join('');
+        }
+
+        function formatTnpsInt(promotor, detractor, total) {
+            if (!total || total <= 0) return '0%';
+            return `${Math.round(((promotor - detractor) / total) * 100)}%`;
+        }
+
+        function calcTnpsNum(promotor, detractor, total) {
+            if (!total || total <= 0) return null;
+            return Math.round(((promotor - detractor) / total) * 100);
         }
 
         function npsOf(d) {
@@ -1513,7 +1526,7 @@
                         ${sourceCardCell(d.passive, 'text-center')}
                         ${sourceCardCell(d.promotor, 'text-center')}
                         ${sourceCardCell(d.total, 'text-center font-semibold')}
-                        ${sourceCardCell(npsOf(d).toFixed(2) + '%', 'text-right font-bold text-slate-900 whitespace-nowrap')}
+                        ${sourceCardCell(formatTnpsInt(d.promotor, d.detractor, d.total), 'text-right font-bold text-slate-900 whitespace-nowrap')}
                     </tr>`;
                 }).join('');
                 let total = srcTotal[sn];
@@ -1531,7 +1544,7 @@
                         <tfoot><tr class="bg-slate-100 border-t-2 border-slate-200 font-extrabold text-slate-900">
                             <td class="px-2.5 py-2.5">Total</td><td class="px-2.5 py-2.5 text-center">${total.detractor}</td><td class="px-2.5 py-2.5 text-center">${total.passive}</td>
                             <td class="px-2.5 py-2.5 text-center">${total.promotor}</td><td class="px-2.5 py-2.5 text-center">${total.total}</td>
-                            <td class="px-2.5 py-2.5 text-right text-sky-700">${npsOf(total).toFixed(2)}%</td>
+                            <td class="px-2.5 py-2.5 text-right text-sky-700">${formatTnpsInt(total.promotor, total.detractor, total.total)}</td>
                         </tr></tfoot>
                     </table></div>`;
                 cardsWrap.appendChild(card);
@@ -1547,8 +1560,8 @@
                 label: sn,
                 data: sortedPeriods.map(p => {
                     let d = srcPeriod[p + SEP + sn];
-                    return (d && d.total > 0) ? parseFloat(npsOf(d).toFixed(2)) : null;
-                }).concat([parseFloat(npsOf(srcTotal[sn]).toFixed(2))]),
+                    return (d && d.total > 0) ? calcTnpsNum(d.promotor, d.detractor, d.total) : null;
+                }).concat([calcTnpsNum(srcTotal[sn].promotor, srcTotal[sn].detractor, srcTotal[sn].total)]),
                 backgroundColor: palette[i % palette.length],
                 borderRadius: 4,
                 maxBarThickness: 28
@@ -1583,7 +1596,7 @@
                 <td class="p-3 text-center">${d.passive}</td>
                 <td class="p-3 text-center">${d.promotor}</td>
                 <td class="p-3 text-center font-semibold">${d.total}</td>
-                <td class="p-3 text-right font-extrabold ${npsCls}">${npsOf(d).toFixed(2)}%</td>`;
+                <td class="p-3 text-right font-extrabold ${npsCls}">${formatTnpsInt(d.promotor, d.detractor, d.total)}</td>`;
 
             let grandAll = empty();
             CORE_CTPS.forEach(ctp => {
@@ -1858,7 +1871,7 @@
 
             let bulanSet = new Set();
             globalRawData.forEach(row => {
-                let b = normalizeBulanValue(getColAny(row, 'bulan'), getColAny(row, 'ts_call'));
+                let b = normalizeBulanValue(getColAny(row, 'bulan'), getColAny(row, 'ts_call', 'ts_call.1'));
                 if (b) bulanSet.add(b);
             });
             buildBulanFilterOptions(bulanSet);
@@ -1966,3 +1979,4 @@
     </script>
 </body>
 </html>
+Menganalisis
