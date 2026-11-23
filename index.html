@@ -558,7 +558,7 @@
         const BULAN_ORDER = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
         function normKey(s) {
-            return String(s).replace(/^﻿/, '').toLowerCase().replace(/[\s_\-\/.]+/g, '');
+            return String(s).replace(/^[\uFEFF\xef\xbb\xbf]/, '').toLowerCase().replace(/[\s_\-\/.]+/g, '');
         }
 
         function getColAny(row, ...names) {
@@ -909,7 +909,7 @@
                 if (!line || !line.trim()) return;
                 if (!headers) {
                     delimiter = detectDelimiter(line);
-                    headers = parseDelimitedLine(line, delimiter).map(h => h.replace(/^﻿/, '').trim());
+                    headers = parseDelimitedLine(line, delimiter).map(h => h.replace(/^[\uFEFF\xef\xbb\xbf]/, '').trim());
                     headers.forEach((h, i) => {
                         let nk = normKey(h);
                         if (nk && colIdx[nk] === undefined) colIdx[nk] = i;
