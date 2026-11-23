@@ -358,7 +358,7 @@
                 <div class="kpi-section-header flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Rekapitulasi KPI</span>
-                        <h2 class="text-base font-extrabold text-slate-900">Tabel Rinci tNPS (%) & Grand Total CTP</h2>
+                        <h2 class="text-base font-extrabold text-slate-900">Tabel Rinci tNPS (%) & Grand Total CTP (unit_type2)</h2>
                     </div>
                     <div class="flex flex-wrap items-center gap-2.5">
                         <div id="ctpPeriodButtons" class="period-btn-group">
@@ -380,7 +380,7 @@
                         <thead>
                             <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
                                 <th id="thPeriod1" class="p-3.5">Bulan</th>
-                                <th id="thCtp1" class="p-3.5">unit_type2 (CTP)</th>
+                                <th id="thCtp1" class="p-3.5">CTP (unit_type2)</th>
                                 <th class="p-3.5 text-center">Detractor</th>
                                 <th class="p-3.5 text-center">Passive</th>
                                 <th class="p-3.5 text-center">Promotor</th>
@@ -413,31 +413,31 @@
                 <div id="ccBreakdownCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </section>
 
-            <!-- Rincian tNPS per Source (Fokus Call Center, GraPARI & Socmed) -->
+            <!-- Rincian tNPS per Source (IVR, Dyandra, Saltik) -->
             <section id="sourceSection" class="kpi-card p-5 overflow-hidden">
                 <div class="kpi-section-header flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                         <span class="text-[11px] font-bold uppercase tracking-wider text-sky-700">Source Performance</span>
-                        <h2 class="text-base font-extrabold text-slate-900">Rincian tNPS per Source (Call Center, GraPARI & Socmed)</h2>
+                        <h2 class="text-base font-extrabold text-slate-900">Rincian tNPS per Source (IVR, Dyandra, Saltik)</h2>
                     </div>
                     <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl">
                         <label for="sourceColSelect" class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Source:</label>
                         <select id="sourceColSelect" class="border-0 bg-transparent text-xs sm:text-sm font-bold text-slate-800 focus:outline-none cursor-pointer"></select>
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 mb-3.5">Menampilkan rincian source khusus untuk CTP <span class="font-bold text-slate-700">Call Center</span>, <span class="font-bold text-slate-700">GraPARI</span>, dan <span class="font-bold text-slate-700">Socmed</span>.</p>
+                <p class="text-xs text-slate-500 mb-3.5">Menampilkan rincian performa berdasarkan kolom <code class="font-bold text-slate-700">source</code> dan CTP <code class="font-bold text-slate-700">unit_type2</code>.</p>
 
                 <div class="rounded-xl border border-slate-200 bg-slate-50/40 p-3 mb-5">
                     <div class="relative w-full" id="sourceChartWrap" style="height: 310px;"><canvas id="sourceChart"></canvas></div>
                 </div>
 
                 <h3 class="text-sm font-extrabold text-slate-800 mb-1">Ringkasan per Source</h3>
-                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kartu terpisah untuk Call Center, GraPARI, dan Socmed.</p>
+                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kartu terpisah per bulan.</p>
                 <div id="sourceSummaryCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
 
-                <!-- 2. Rincian Source per CTP -->
+                <!-- 2. Rincian Source per CTP (unit_type2) -->
                 <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
-                    <h3 class="text-sm font-extrabold text-slate-800">Rincian Source per CTP (Call Center • GraPARI • Socmed)</h3>
+                    <h3 class="text-sm font-extrabold text-slate-800">Rincian Source per CTP (unit_type2)</h3>
                     <div class="flex flex-wrap items-center gap-2">
                         <div id="sourcePeriodButtons" class="period-btn-group">
                             <button type="button" class="period-pill-btn active" onclick="setTablePeriod('source', 'all')">Semua Bulan</button>
@@ -496,7 +496,7 @@
                         <thead>
                             <tr class="bg-slate-900 text-white uppercase font-bold text-[11px] tracking-wider">
                                 <th id="thPeriod2" class="p-3.5">Bulan</th>
-                                <th id="thCtp2" class="p-3.5">unit_type2 (CTP) - People CS</th>
+                                <th id="thCtp2" class="p-3.5">CTP (unit_type2) - People CS</th>
                                 <th class="p-3.5 text-center">Detractor (CS)</th>
                                 <th class="p-3.5 text-center">Passive (CS)</th>
                                 <th class="p-3.5 text-center">Promotor (CS)</th>
@@ -570,37 +570,47 @@
             return '';
         }
 
+        function isNaToken(val) {
+            let s = String(val || '').trim().toLowerCase();
+            return s === '' || s === '#n/a' || s === 'n/a' || s === 'na' || s === 'null' || s === 'undefined' || s === '-';
+        }
+
         function normalizeBulanValue(rawBulan, tsCall) {
             let b = String(rawBulan || '').trim();
-            if (b) {
+            if (b && !isNaToken(b)) {
+                let dotMatch = b.match(/^(\d{1,2})\s*\.\s*([a-zA-Z]+)/);
+                if (dotMatch) {
+                    let num = parseInt(dotMatch[1], 10);
+                    let mName = BULAN_MAP[dotMatch[2].toLowerCase()] || BULAN_MAP[String(num)];
+                    if (num >= 1 && num <= 12 && mName) return `${num}.${mName}`;
+                }
                 let ym = b.match(/^(\d{4})[-/](\d{1,2})$/);
                 if (ym) {
-                    let mName = BULAN_MAP[ym[2]] || BULAN_MAP[String(parseInt(ym[2], 10))];
-                    if (mName) return `${ym[1]}-${String(parseInt(ym[2], 10)).padStart(2, '0')} (${mName})`;
+                    let num = parseInt(ym[2], 10);
+                    let mName = BULAN_MAP[String(num)] || BULAN_MAP[ym[2]];
+                    if (num >= 1 && num <= 12 && mName) return `${num}.${mName}`;
                 }
                 let ymd = b.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
                 if (ymd) {
-                    let mName = BULAN_MAP[ymd[2]] || BULAN_MAP[String(parseInt(ymd[2], 10))];
-                    if (mName) return `${ymd[1]}-${String(parseInt(ymd[2], 10)).padStart(2, '0')} (${mName})`;
+                    let num = parseInt(ymd[2], 10);
+                    let mName = BULAN_MAP[String(num)] || BULAN_MAP[ymd[2]];
+                    if (num >= 1 && num <= 12 && mName) return `${num}.${mName}`;
                 }
                 let mOnly = BULAN_MAP[b.toLowerCase()];
-                if (mOnly) return mOnly;
-
-                let yrMonth = b.match(/^([a-zA-Z]+)\s+(\d{4})$/);
-                if (yrMonth) {
-                    let mName = BULAN_MAP[yrMonth[1].toLowerCase()];
-                    if (mName) return `${yrMonth[2]} (${mName})`;
+                if (mOnly) {
+                    let idx = BULAN_ORDER.indexOf(mOnly);
+                    return idx !== -1 ? `${idx + 1}.${mOnly}` : mOnly;
                 }
                 return b;
             }
 
             let ts = String(tsCall || '').trim();
-            if (ts) {
+            if (ts && !isNaToken(ts)) {
                 let dMatch = ts.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
                 if (dMatch) {
                     let mNum = parseInt(dMatch[2], 10);
                     let mName = BULAN_MAP[String(mNum)] || '';
-                    if (mName) return `${dMatch[1]}-${String(mNum).padStart(2, '0')} (${mName})`;
+                    if (mNum >= 1 && mNum <= 12 && mName) return `${mNum}.${mName}`;
                 }
                 let dt = new Date(ts);
                 if (!isNaN(dt.getTime())) {
@@ -608,23 +618,25 @@
                     let mNum = dt.getMonth() + 1;
                     let mName = BULAN_MAP[String(mNum)] || '';
                     if (y >= 2000 && y <= 2099 && mName) {
-                        return `${y}-${String(mNum).padStart(2, '0')} (${mName})`;
+                        return `${mNum}.${mName}`;
                     }
                 }
             }
             return '';
         }
 
+        function extractBulanRank(label) {
+            let dot = String(label || '').match(/^(\d{1,2})\./);
+            if (dot) return parseInt(dot[1], 10);
+            let idx = BULAN_ORDER.findIndex(m => String(label || '').toLowerCase().includes(m.toLowerCase()));
+            return idx !== -1 ? idx + 1 : 999;
+        }
+
         function sortBulanList(bulanSet) {
             return Array.from(bulanSet).sort((a, b) => {
-                let ya = a.match(/^(\d{4})[-/](\d{2})/);
-                let yb = b.match(/^(\d{4})[-/](\d{2})/);
-                if (ya && yb) {
-                    return `${ya[1]}-${ya[2]}`.localeCompare(`${yb[1]}-${yb[2]}`);
-                }
-                let ia = BULAN_ORDER.findIndex(m => a.toLowerCase().includes(m.toLowerCase()));
-                let ib = BULAN_ORDER.findIndex(m => b.toLowerCase().includes(m.toLowerCase()));
-                if (ia !== -1 && ib !== -1 && ia !== ib) return ia - ib;
+                let ra = extractBulanRank(a);
+                let rb = extractBulanRank(b);
+                if (ra !== rb) return ra - rb;
                 return String(a).localeCompare(String(b));
             });
         }
@@ -642,43 +654,42 @@
         }
 
         function mapIndihomeRow(row) {
-            let unitType2 = getColAny(row, 'unit_type2').toLowerCase();
+            let rawCtp = getColAny(row, 'unit_type2');
+            let unitType2Lower = rawCtp.toLowerCase();
             let npsRaw = getColAny(row, 'nps').toLowerCase();
             let reasonDesc = getColAny(row, 'reason_desc');
             let rawBulan = getColAny(row, 'bulan');
             let tsCall = getColAny(row, 'ts_call');
             let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
-            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
-            let regionalVal = getColAny(row, 'region', 'regional', 'nama_regional', 'treg') || '';
-            let mitraVal = getColAny(row, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner') || '';
+            let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name');
+            if (isNaToken(areaVal)) areaVal = '';
+            let regionalVal = getColAny(row, 'region', 'regional', 'nama_regional', 'treg');
+            if (isNaToken(regionalVal)) regionalVal = '';
+            let mitraVal = getColAny(row, 'mitra', 'mitra_pengelola', 'mitra pengelola', 'pengelola', 'partner');
+            if (isNaToken(mitraVal)) mitraVal = '';
             let bisnisModelVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
+            if (isNaToken(bisnisModelVal)) bisnisModelVal = '';
 
             let bulanLabel = normalizeBulanValue(rawBulan, tsCall);
 
             let isPromotor = 0, isDetractor = 0, isPassive = 0;
-            if (npsRaw !== '') {
-                let numScore = Number(npsRaw.replace(',', '.'));
-                if (!isNaN(numScore) && npsRaw.trim() !== '') {
-                    if (numScore >= 9) isPromotor = 1;
-                    else if (numScore >= 7) isPassive = 1;
-                    else if (numScore >= 0) isDetractor = 1;
-                } else {
-                    if (npsRaw.includes('promot')) isPromotor = 1;
-                    else if (npsRaw.includes('detract')) isDetractor = 1;
-                    else if (npsRaw.includes('passiv') || npsRaw.includes('pasif')) isPassive = 1;
+            if (npsRaw !== '' && !isNaToken(npsRaw)) {
+                if (npsRaw.includes('promot')) isPromotor = 1;
+                else if (npsRaw.includes('detract')) isDetractor = 1;
+                else if (npsRaw.includes('passiv') || npsRaw.includes('pasif')) isPassive = 1;
+                else {
+                    let numScore = Number(npsRaw.replace(',', '.'));
+                    if (!isNaN(numScore)) {
+                        if (numScore >= 9) isPromotor = 1;
+                        else if (numScore >= 7) isPassive = 1;
+                        else if (numScore >= 0) isDetractor = 1;
+                    }
                 }
             }
 
-            let ctpGroup = "Call Center";
-            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
-                ctpGroup = "GraPARI";
-            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
-                ctpGroup = "Socmed";
-            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
-                ctpGroup = "Call Center";
-            } else {
-                ctpGroup = unitType2 ? getColAny(row, 'unit_type2') : "Call Center";
-            }
+            let ctpName = (!isNaToken(rawCtp)) ? rawCtp : "Unspecified";
+            let isGrapari = unitType2Lower.includes('grapari') || unitType2Lower.includes('plasa');
+            let isCallCenter = unitType2Lower.includes('call') || unitType2Lower.includes('cc') || unitType2Lower.includes('ivr');
 
             let targetReasons = [
                 "CUSTOMER SERVICE",
@@ -695,13 +706,14 @@
             if (unitNameLower.includes('bandung') || unitNameLower.includes('bdg')) ccSite = 'bandung';
             else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
 
-            let hasTransaction = !!(tsCall || getColAny(row, 'id_trx') || getColAny(row, 'nd') || unitType2 || npsRaw);
+            let hasTransaction = !!(tsCall || getColAny(row, 'id_trx') || getColAny(row, 'nd') || rawCtp || npsRaw);
 
             return {
                 IsValid: hasTransaction && !!bulanLabel,
                 Period: bulanLabel,
-                Mapped_CTP: ctpGroup,
-                Is_GraPARI: ctpGroup === "GraPARI" || unitType2.includes('grapari') || unitType2.includes('plasa'),
+                Mapped_CTP: ctpName,
+                Is_GraPARI: isGrapari,
+                Is_CallCenter: isCallCenter,
                 CC_Site: ccSite,
                 UnitName: unitName,
                 Area: areaVal,
@@ -766,6 +778,7 @@
             return {
                 validRows: 0,
                 periods: new Set(),
+                ctps: new Set(),
                 ctpGroup: {},
                 ccGroup: {},
                 srcByPeriod: {},
@@ -796,6 +809,7 @@
             const SEP = '|||';
             agg.validRows++;
             agg.periods.add(item.Period);
+            agg.ctps.add(item.Mapped_CTP);
 
             let ctpKey = `${item.Period}${SEP}${item.Mapped_CTP}`;
             if (!agg.ctpGroup[ctpKey]) {
@@ -803,32 +817,30 @@
             }
             addCounts(agg.ctpGroup[ctpKey], item.Promoter, item.Detractor, item.Passive, item.Total, item.Is_CS);
 
-            if (item.Mapped_CTP === 'Call Center' && (item.CC_Site === 'bandung' || item.CC_Site === 'semarang')) {
+            if (item.Is_CallCenter && (item.CC_Site === 'bandung' || item.CC_Site === 'semarang')) {
                 let ccName = item.CC_Site === 'bandung' ? 'CC BANDUNG' : 'CC SEMARANG';
                 let ccKey = `${item.Period}${SEP}${ccName}`;
                 if (!agg.ccGroup[ccKey]) agg.ccGroup[ccKey] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
                 addCounts(agg.ccGroup[ccKey], item.Promoter, item.Detractor, item.Passive, item.Total, false);
             }
 
-            if (['Call Center', 'GraPARI', 'Socmed'].includes(item.Mapped_CTP)) {
-                let src = sourceVal || '(kosong)';
-                let k1 = `${item.Period}${SEP}${item.Mapped_CTP}${SEP}${src}`;
-                let k2 = `${item.Period}${SEP}${src}`;
-                if (!agg.srcByPeriod[k1]) agg.srcByPeriod[k1] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                if (!agg.srcPeriod[k2]) agg.srcPeriod[k2] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                if (!agg.srcTotal[src]) agg.srcTotal[src] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                addCounts(agg.srcByPeriod[k1], item.Promoter, item.Detractor, item.Passive, item.Total, false);
-                addCounts(agg.srcPeriod[k2], item.Promoter, item.Detractor, item.Passive, item.Total, false);
-                addCounts(agg.srcTotal[src], item.Promoter, item.Detractor, item.Passive, item.Total, false);
-            }
+            let src = (!isNaToken(sourceVal) ? sourceVal : '(kosong)');
+            let k1 = `${item.Period}${SEP}${item.Mapped_CTP}${SEP}${src}`;
+            let k2 = `${item.Period}${SEP}${src}`;
+            if (!agg.srcByPeriod[k1]) agg.srcByPeriod[k1] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+            if (!agg.srcPeriod[k2]) agg.srcPeriod[k2] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+            if (!agg.srcTotal[src]) agg.srcTotal[src] = { promotor: 0, detractor: 0, passive: 0, total: 0 };
+            addCounts(agg.srcByPeriod[k1], item.Promoter, item.Detractor, item.Passive, item.Total, false);
+            addCounts(agg.srcPeriod[k2], item.Promoter, item.Detractor, item.Passive, item.Total, false);
+            addCounts(agg.srcTotal[src], item.Promoter, item.Detractor, item.Passive, item.Total, false);
 
             if (item.Is_GraPARI) {
                 let a = (item.Area || '').trim();
                 let r = (item.Regional || '').trim();
                 let m = (item.Mitra || '').trim();
-                if (a && !a.toLowerCase().includes('unspecified')) agg.grapariAreas.add(a);
-                if (r && !r.toLowerCase().includes('unspecified')) agg.grapariRegions.add(r);
-                if (m && !m.toLowerCase().includes('unspecified')) agg.grapariMitras.add(m);
+                if (a) agg.grapariAreas.add(a);
+                if (r) agg.grapariRegions.add(r);
+                if (m) agg.grapariMitras.add(m);
 
                 let mt = String(item.MomoTomo || '').trim().toUpperCase();
                 if (mt !== 'TOMO' && mt !== 'MOMO') {
@@ -959,19 +971,15 @@
             let previous = select.value;
             let cleanCols = cols.map(c => c.trim()).filter(c => c !== '');
             select.innerHTML = cleanCols.map(c => `<option value="${c}">${c}</option>`).join('');
-            let preferred = [previous, 'source', 'unit_type2', 'unit_type', 'unit_name']
+            let preferred = [previous, 'source', 'unit_type2', 'unit_name']
                 .find(c => c && cleanCols.some(x => x.toLowerCase() === c.toLowerCase()));
             if (preferred) select.value = cleanCols.find(x => x.toLowerCase() === preferred.toLowerCase());
         }
 
         function renderFromAggregated(agg) {
             const SEP = '|||';
-            let ccLabel = currentCcFilter === 'bandung' ? 'CC Bandung'
-                        : currentCcFilter === 'semarang' ? 'CC Semarang'
-                        : 'Call Center';
-
-            let ctpList = [ccLabel, "GraPARI", "Socmed"];
             let sortedPeriods = sortBulanList(agg.periods);
+            let ctpList = Array.from(agg.ctps).sort((a, b) => String(a).localeCompare(String(b)));
 
             let group = {};
             sortedPeriods.forEach(p => {
@@ -981,27 +989,8 @@
             });
 
             Object.entries(agg.ctpGroup).forEach(([k, val]) => {
-                let [p, rawCtp] = k.split(SEP);
-                let targetCtp = rawCtp;
-                if (rawCtp === 'Call Center') {
-                    if (currentCcFilter === 'bandung') {
-                        let b = agg.ccGroup[`${p}${SEP}CC BANDUNG`];
-                        if (b && group[`${p}${SEP}${ccLabel}`]) {
-                            group[`${p}${SEP}${ccLabel}`] = { ...b, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
-                        }
-                        return;
-                    } else if (currentCcFilter === 'semarang') {
-                        let s = agg.ccGroup[`${p}${SEP}CC SEMARANG`];
-                        if (s && group[`${p}${SEP}${ccLabel}`]) {
-                            group[`${p}${SEP}${ccLabel}`] = { ...s, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
-                        }
-                        return;
-                    } else {
-                        targetCtp = ccLabel;
-                    }
-                }
-                if (group[`${p}${SEP}${targetCtp}`]) {
-                    group[`${p}${SEP}${targetCtp}`] = { ...val };
+                if (group[k]) {
+                    group[k] = { ...val };
                 }
             });
 
@@ -1012,7 +1001,7 @@
             renderChartsAndTablesFromGroup(group, ctpList, sortedPeriods);
             renderGrapariFromAgg(agg, sortedPeriods);
             renderCcBreakdownFromMap(agg.ccGroup, sortedPeriods);
-            renderSourceDetailFromMaps(sortedPeriods, agg.srcByPeriod, agg.srcPeriod, agg.srcTotal);
+            renderSourceDetailFromMaps(sortedPeriods, agg.srcByPeriod, agg.srcPeriod, agg.srcTotal, ctpList);
         }
 
         function syncGrapariFilterDropdowns(areasSet, regionsSet, mitrasSet) {
@@ -1217,9 +1206,9 @@
                 let a = (item.Area || '').trim();
                 let r = (item.Regional || '').trim();
                 let m = (item.Mitra || '').trim();
-                if (a && !a.toLowerCase().includes('unspecified')) areas.add(a);
-                if (r && !r.toLowerCase().includes('unspecified')) regions.add(r);
-                if (m && !m.toLowerCase().includes('unspecified')) mitras.add(m);
+                if (a) areas.add(a);
+                if (r) regions.add(r);
+                if (m) mitras.add(m);
                 let mt = String(item.MomoTomo || '').trim().toUpperCase();
                 if (mt !== 'TOMO' && mt !== 'MOMO') {
                     unmappedUnits.add(item.UnitName || '(tanpa unit_name)');
@@ -1258,16 +1247,21 @@
             renderGrapariViewCore(sortedPeriods, unmappedUnits.size, bucket, groupsSet);
         }
 
+        function getSeriesColor(idx) {
+            const palette = ['#dc2626', '#2563eb', '#16a34a', '#f97316', '#8b5cf6', '#0284c7', '#0d9488', '#db2777', '#ca8a04', '#4f46e5'];
+            return palette[idx % palette.length];
+        }
+
         function renderChartsAndTablesFromGroup(group, ctpList, sortedPeriods) {
             const SEP = '|||';
             let chartSets = ctpList.map((ctp, i) => {
-                let colors = ['#dc2626', '#2563eb', '#16a34a'];
+                let color = getSeriesColor(i);
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}${SEP}${ctp}`];
-                    if (!d || d.total === 0) return 0;
+                    if (!d || d.total === 0) return null;
                     return parseFloat((((d.promotor - d.detractor) / d.total) * 100).toFixed(2));
                 });
-                return { label: ctp, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 };
+                return { label: ctp, data: vals, borderColor: color, backgroundColor: color, tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true };
             });
 
             if (npsChartInstance) npsChartInstance.destroy();
@@ -1282,13 +1276,13 @@
             });
 
             let csSets = ctpList.map((ctp, i) => {
-                let colors = ['#f97316', '#8b5cf6', '#06b6d4'];
+                let color = getSeriesColor(i + 3);
                 let vals = sortedPeriods.map(p => {
                     let d = group[`${p}${SEP}${ctp}`];
-                    if (!d || d.cs_total === 0) return 0;
+                    if (!d || d.cs_total === 0) return null;
                     return parseFloat((((d.cs_promotor - d.cs_detractor) / d.cs_total) * 100).toFixed(2));
                 });
-                return { label: `${ctp} (CS People)`, data: vals, borderColor: colors[i], backgroundColor: colors[i], tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6 };
+                return { label: `${ctp} (CS People)`, data: vals, borderColor: color, backgroundColor: color, tension: 0.3, borderWidth: 3, pointRadius: 4, pointHoverRadius: 6, spanGaps: true };
             });
 
             if (csChartInstance) csChartInstance.destroy();
@@ -1313,8 +1307,9 @@
 
             ctpTargetPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}${SEP}${ctp}`] || { promotor: 0, detractor: 0, passive: 0, total: 0 };
-                    let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                    let d = group[`${p}${SEP}${ctp}`];
+                    if (!d || d.total === 0) return;
+                    let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
                     ctpGrandTotals[ctp].promotor += d.promotor;
                     ctpGrandTotals[ctp].detractor += d.detractor;
                     ctpGrandTotals[ctp].passive += d.passive;
@@ -1331,7 +1326,8 @@
 
             ctpList.forEach(ctp => {
                 let d = ctpGrandTotals[ctp];
-                let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                if (!d || d.total === 0) return;
+                let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `<td class="p-3.5">${ctpTotalLabel}</td><td class="p-3.5">${ctp}</td>
@@ -1352,9 +1348,10 @@
 
             csTargetPeriods.forEach(p => {
                 ctpList.forEach(ctp => {
-                    let d = group[`${p}${SEP}${ctp}`] || { cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
+                    let d = group[`${p}${SEP}${ctp}`];
+                    if (!d || (d.cs_total || 0) === 0) return;
                     let prom = d.cs_promotor || 0, detr = d.cs_detractor || 0, pass = d.cs_passive || 0, tot = d.cs_total || 0;
-                    let npsVal = tot > 0 ? (((prom - detr) / tot) * 100).toFixed(2) : "0.00";
+                    let npsVal = (((prom - detr) / tot) * 100).toFixed(2);
                     csGrandTotals[ctp].promotor += prom;
                     csGrandTotals[ctp].detractor += detr;
                     csGrandTotals[ctp].passive += pass;
@@ -1371,7 +1368,8 @@
 
             ctpList.forEach(ctp => {
                 let d = csGrandTotals[ctp];
-                let npsVal = d.total > 0 ? (((d.promotor - d.detractor) / d.total) * 100).toFixed(2) : "0.00";
+                if (!d || d.total === 0) return;
+                let npsVal = (((d.promotor - d.detractor) / d.total) * 100).toFixed(2);
                 let tr = document.createElement('tr');
                 tr.className = "bg-slate-100/90 font-bold text-slate-900 border-t border-slate-200";
                 tr.innerHTML = `<td class="p-3.5">${csTotalLabel}</td><td class="p-3.5">${ctp} (CS People)</td>
@@ -1440,15 +1438,8 @@
             return d.total > 0 ? ((d.promotor - d.detractor) / d.total) * 100 : 0;
         }
 
-        function renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal) {
+        function renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal, ctpList) {
             const SEP = '|||';
-            const CORE_CTPS = ['Call Center', 'GraPARI', 'Socmed'];
-            const CTP_STYLES = {
-                'Call Center': { badge: 'bg-rose-50 text-rose-700 border-rose-200', accent: 'text-rose-700' },
-                'GraPARI':     { badge: 'bg-blue-50 text-blue-700 border-blue-200', accent: 'text-blue-700' },
-                'Socmed':      { badge: 'bg-emerald-50 text-emerald-700 border-emerald-200', accent: 'text-emerald-700' }
-            };
-
             let sourceCol = document.getElementById('sourceColSelect').value || 'source';
             document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
             document.getElementById('thPeriodSrc').textContent = "Bulan";
@@ -1534,6 +1525,9 @@
             let selectedPeriod = tablePeriodSelection.source || 'all';
             let targetPeriods = selectedPeriod === 'all' ? sortedPeriods : sortedPeriods.filter(p => p === selectedPeriod);
             let activeSources = sourceValueFilter === 'ALL' ? sourceNames : sourceNames.filter(sn => sn === sourceValueFilter);
+            let orderedCtps = (ctpList && ctpList.length > 0) ? ctpList : Array.from(new Set(
+                Object.keys(byPeriod).map(k => k.split(SEP)[1])
+            )).sort();
 
             let tbody = document.querySelector('#sourceTable tbody');
             tbody.innerHTML = '';
@@ -1551,10 +1545,12 @@
                 <td class="p-3 text-right font-extrabold ${npsCls}">${npsOf(d).toFixed(2)}%</td>`;
 
             let grandAll = empty();
-            CORE_CTPS.forEach(ctp => {
-                let st = CTP_STYLES[ctp];
+            orderedCtps.forEach((ctp, idx) => {
                 let ctpSubtotal = empty();
                 let hasAnyRow = false;
+                let badgeColor = idx % 3 === 0 ? 'bg-rose-50 text-rose-700 border-rose-200'
+                    : (idx % 3 === 1 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200');
+                let accentColor = idx % 3 === 0 ? 'text-rose-700' : (idx % 3 === 1 ? 'text-blue-700' : 'text-emerald-700');
 
                 targetPeriods.forEach(p => {
                     activeSources.forEach(src => {
@@ -1566,7 +1562,7 @@
 
                         appendRow(`
                             <td class="p-3 font-semibold text-slate-700 whitespace-nowrap">${p}</td>
-                            <td class="p-3"><span class="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md border ${st.badge}">${ctp}</span></td>
+                            <td class="p-3"><span class="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-md border ${badgeColor}">${ctp}</span></td>
                             <td class="p-3 font-semibold text-slate-800">${src}</td>
                             ${metricCells(d, 'text-slate-900')}
                         `, "hover:bg-slate-50/90 transition-colors");
@@ -1579,18 +1575,18 @@
                         <td class="p-3 font-bold text-slate-800">${subLabel}</td>
                         <td class="p-3 font-extrabold text-slate-900">${ctp}</td>
                         <td class="p-3 text-xs text-slate-500">Semua Source terpilih</td>
-                        ${metricCells(ctpSubtotal, st.accent)}
+                        ${metricCells(ctpSubtotal, accentColor)}
                     `, "bg-slate-50 border-t border-b-2 border-slate-200 font-bold text-slate-900");
                 }
             });
 
             if (tbody.innerHTML === '') {
-                appendRow(`<td colspan="8" class="p-6 text-center text-xs text-slate-500">Tidak ada data Call Center, GraPARI, atau Socmed untuk filter ini.</td>`, "");
+                appendRow(`<td colspan="8" class="p-6 text-center text-xs text-slate-500">Tidak ada data untuk filter ini.</td>`, "");
             } else {
-                let allLabel = selectedPeriod === 'all' ? 'Grand Total (CC + GraPARI + Socmed)' : `Total ${selectedPeriod} (CC + GraPARI + Socmed)`;
+                let allLabel = selectedPeriod === 'all' ? 'Grand Total (Semua CTP)' : `Total ${selectedPeriod} (Semua CTP)`;
                 appendRow(`
                     <td class="p-3.5 font-extrabold">${allLabel}</td>
-                    <td class="p-3.5 font-extrabold">3 CTP Utama</td>
+                    <td class="p-3.5 font-extrabold">${orderedCtps.length} CTP</td>
                     <td class="p-3.5 text-xs text-slate-300">${activeSources.length} Source</td>
                     ${metricCells(grandAll, 'text-amber-300')}
                 `, "bg-slate-900 text-white font-bold");
@@ -1688,7 +1684,10 @@
             let sourceCol = document.getElementById('sourceColSelect').value || 'source';
 
             let baseRows = globalRawData
-                .map(row => ({ ...mapIndihomeRow(row), Source: getColAny(row, sourceCol) || '(kosong)' }))
+                .map(row => {
+                    let srcRaw = getColAny(row, sourceCol);
+                    return { ...mapIndihomeRow(row), Source: (!isNaToken(srcRaw) ? srcRaw : '(kosong)') };
+                })
                 .filter(r => r.IsValid);
 
             let processedData = filterBulan === 'all'
@@ -1702,15 +1701,14 @@
 
         function renderSourceDetail(data) {
             const SEP = '|||';
-            const CORE_CTPS = ['Call Center', 'GraPARI', 'Socmed'];
             const empty = () => ({ promotor: 0, detractor: 0, passive: 0, total: 0 });
             const addRow = (target, item) => {
                 target.promotor += item.Promoter; target.detractor += item.Detractor; target.passive += item.Passive; target.total += item.Total;
             };
-            let coreData = data.filter(item => CORE_CTPS.includes(item.Mapped_CTP));
-            let periods = new Set(), byPeriod = {}, srcPeriod = {}, srcTotal = {};
-            coreData.forEach(item => {
+            let periods = new Set(), ctps = new Set(), byPeriod = {}, srcPeriod = {}, srcTotal = {};
+            data.forEach(item => {
                 periods.add(item.Period);
+                ctps.add(item.Mapped_CTP);
                 let k = [item.Period, item.Mapped_CTP, item.Source].join(SEP);
                 byPeriod[k] = byPeriod[k] || empty(); addRow(byPeriod[k], item);
                 let pk = item.Period + SEP + item.Source;
@@ -1718,24 +1716,23 @@
                 addRow(srcPeriod[pk], item); addRow(srcTotal[item.Source], item);
             });
             let sortedPeriods = sortBulanList(periods);
-            renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal);
+            let sortedCtps = Array.from(ctps).sort((a, b) => String(a).localeCompare(String(b)));
+            renderSourceDetailFromMaps(sortedPeriods, byPeriod, srcPeriod, srcTotal, sortedCtps);
         }
 
         function renderDashboard(data) {
             const SEP = '|||';
-            let group = {}, periods = new Set();
-            let ccLabel = currentCcFilter === 'bandung' ? 'CC Bandung' : currentCcFilter === 'semarang' ? 'CC Semarang' : 'Call Center';
-            let ctpList = [ccLabel, "GraPARI", "Socmed"];
+            let group = {}, periods = new Set(), ctps = new Set();
 
             data.forEach(item => {
                 periods.add(item.Period);
                 let ctp = item.Mapped_CTP;
                 let includeInGroup = true;
-                if (ctp === 'Call Center') {
-                    if (currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) includeInGroup = false;
-                    ctp = ccLabel;
+                if (item.Is_CallCenter && currentCcFilter !== 'all' && item.CC_Site !== currentCcFilter) {
+                    includeInGroup = false;
                 }
                 if (includeInGroup) {
+                    ctps.add(ctp);
                     let k = `${item.Period}${SEP}${ctp}`;
                     if (!group[k]) group[k] = { promotor: 0, detractor: 0, passive: 0, total: 0, cs_promotor: 0, cs_detractor: 0, cs_passive: 0, cs_total: 0 };
                     addCounts(group[k], item.Promoter, item.Detractor, item.Passive, item.Total, item.Is_CS);
@@ -1743,6 +1740,7 @@
             });
 
             let sortedPeriods = sortBulanList(periods);
+            let ctpList = Array.from(ctps).sort((a, b) => String(a).localeCompare(String(b)));
             latestProcessedData = data;
             latestSortedPeriods = sortedPeriods;
 
@@ -1753,7 +1751,7 @@
 
             let ccByPeriod = {};
             data.forEach(item => {
-                if (item.Mapped_CTP !== 'Call Center') return;
+                if (!item.Is_CallCenter) return;
                 let ccName = item.CC_Site === 'bandung' ? 'CC BANDUNG' : (item.CC_Site === 'semarang' ? 'CC SEMARANG' : '');
                 if (!ccName) return;
                 let pk = `${item.Period}${SEP}${ccName}`;
