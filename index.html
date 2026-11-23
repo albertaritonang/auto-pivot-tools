@@ -50,7 +50,7 @@
                         Telkomsel CX Intelligence
                     </div>
                     <h1 id="mainTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
+                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Filter Bulanan (Jan–Okt) • Mendukung CSV > 300 MB (Streaming)</p>
                 </div>
                 
                 <!-- Pilihan Mode & Upload -->
@@ -80,13 +80,13 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-                    <div id="weekFilterContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
-                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Filter Minggu:</label>
-                        <select id="weekFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
-                            <option value="all">Semua Minggu di File (Full Month)</option>
-                            <option value="w40_43">Week 40 - Week 43 (Rolling 4W)</option>
-                            <option value="w44_48">Week 44 - Week 48 (Rolling 4W)</option>
-                            <option value="w49_52">Week 49 - Week 52 (Rolling 4W)</option>
+                    <div id="weekFilterContainer" class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
+                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Filter Bulan:</label>
+                        <div id="monthButtonGroup" class="flex flex-wrap items-center gap-1.5">
+                            <button type="button" onclick="setIndihomeMonthFilter('all')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-red-600 text-white shadow-sm">Semua Bulan</button>
+                        </div>
+                        <select id="weekFilter" class="hidden">
+                            <option value="all">Semua Bulan</option>
                         </select>
                     </div>
 
@@ -146,14 +146,20 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <h2 id="momoChartTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-indigo-50 text-indigo-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg></span>
-                        Analisis tNPS TOMO & MOMO (Khusus GraPARI • Nasional)
+                        Analisis tNPS People TOMO & MOMO (Khusus GraPARI • Nasional)
                     </h2>
-                    <div id="momoChartFilterWrap" class="flex items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
+                    <div id="momoChartFilterWrap" class="flex flex-wrap items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterChart" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="national">Nasional (TOMO & MOMO)</option>
                             <option value="area">Per Area (TOMO & MOMO)</option>
                             <option value="regional">Per Regional (TOMO & MOMO)</option>
+                            <option value="mitra">Per Mitra (TOMO & MOMO)</option>
+                        </select>
+                        <span class="text-slate-300">|</span>
+                        <label for="mitraSelectChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Mitra:</label>
+                        <select id="mitraSelectChart" onchange="setMitraFilter(this.value)" class="mitraFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+                            <option value="all">Semua Mitra</option>
                         </select>
                     </div>
                 </div>
@@ -219,7 +225,7 @@
                         </select>
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 mb-3">Ringkasan performa Call Center berdasarkan kolom <code class="font-bold text-slate-700">unit_name</code> (CC Bandung & CC Semarang) per periode minggu beserta Grand Total.</p>
+                <p class="text-xs text-slate-500 mb-3">Ringkasan performa Call Center berdasarkan kolom <code class="font-bold text-slate-700">unit_name</code> (CC Bandung & CC Semarang) per periode bulan beserta Grand Total.</p>
                 <div id="ccBreakdownCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </div>
 
@@ -235,11 +241,11 @@
                         <select id="sourceColSelect" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer"></select>
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 mb-3">Semua baris di file dihitung (sesuai filter minggu), termasuk unit_type2 di luar Call Center / GraPARI / Socmed seperti DigiPos dan Others.</p>
+                <p class="text-xs text-slate-500 mb-3">Semua baris di file dihitung (sesuai filter bulan), termasuk unit_type2 di luar Call Center / GraPARI / Socmed seperti DigiPos dan Others.</p>
                 <div class="relative w-full mb-5" id="sourceChartWrap" style="height: 320px;"><canvas id="sourceChart"></canvas></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan per Source</h3>
-                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kolom terpisah agar perbandingan Week dan tNPS lebih mudah dibaca.</p>
+                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kolom terpisah agar perbandingan Bulan dan tNPS lebih mudah dibaca.</p>
                 <div id="sourceSummaryCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Rincian Source per CTP (unit_type2)</h3>
@@ -301,14 +307,20 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <h2 id="momoTableTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-purple-50 text-purple-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
-                        Rekapitulasi TOMO Only & MOMO Only (Khusus GraPARI • Nasional) & Grand Total
+                        Rekapitulasi People TOMO Only & MOMO Only (Khusus GraPARI • Nasional) & Grand Total
                     </h2>
-                    <div id="momoTableFilterWrap" class="flex items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
+                    <div id="momoTableFilterWrap" class="flex flex-wrap items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterTable" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="national">Nasional (TOMO & MOMO)</option>
                             <option value="area">Per Area (TOMO & MOMO)</option>
                             <option value="regional">Per Regional (TOMO & MOMO)</option>
+                            <option value="mitra">Per Mitra (TOMO & MOMO)</option>
+                        </select>
+                        <span class="text-slate-300">|</span>
+                        <label for="mitraSelectTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Mitra:</label>
+                        <select id="mitraSelectTable" onchange="setMitraFilter(this.value)" class="mitraFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
+                            <option value="all">Semua Mitra</option>
                         </select>
                     </div>
                 </div>
@@ -463,6 +475,78 @@
             return 'General Period';
         }
 
+        const MONTH_ORDER_MAP = {
+            jan: 1, januari: 1, january: 1,
+            feb: 2, februari: 2, february: 2,
+            mar: 3, maret: 3, march: 3,
+            apr: 4, april: 4,
+            mei: 5, may: 5,
+            jun: 6, juni: 6, june: 6,
+            jul: 7, juli: 7, july: 7,
+            agu: 8, ags: 8, agustus: 8, aug: 8, august: 8,
+            sep: 9, sept: 9, september: 9,
+            okt: 10, oct: 10, oktober: 10, october: 10,
+            nov: 11, november: 11,
+            des: 12, dec: 12, desember: 12, december: 12
+        };
+
+        function getMonthSortKey(label) {
+            let s = String(label || '').trim().toLowerCase();
+            if (!s) return 999999;
+            let ym = s.match(/(\d{4})[-\/](\d{1,2})/);
+            if (ym) return parseInt(ym[1], 10) * 100 + parseInt(ym[2], 10);
+            let my = s.match(/^([a-z]+)[\s\-\/]*(\d{2,4})$/);
+            if (my && MONTH_ORDER_MAP[my[1]]) {
+                let yr = parseInt(my[2], 10);
+                if (yr < 100) yr += 2000;
+                return yr * 100 + MONTH_ORDER_MAP[my[1]];
+            }
+            for (let [k, idx] of Object.entries(MONTH_ORDER_MAP)) {
+                if (s === k || s.startsWith(k + ' ') || s.startsWith(k + '-') || s.includes('(' + k)) {
+                    let yrMatch = s.match(/20\d{2}/);
+                    let yr = yrMatch ? parseInt(yrMatch[0], 10) : 2026;
+                    return yr * 100 + idx;
+                }
+            }
+            let pureNum = parseInt(s.replace(/\D/g, ''), 10);
+            if (!isNaN(pureNum) && pureNum >= 1 && pureNum <= 12) return 202600 + pureNum;
+            return 999999;
+        }
+
+        function sortPeriodLabels(arr) {
+            return arr.sort((a, b) => {
+                let ka = getMonthSortKey(a);
+                let kb = getMonthSortKey(b);
+                if (ka !== kb) return ka - kb;
+                let numA = parseInt(String(a).replace(/\D/g, ''), 10) || 0;
+                let numB = parseInt(String(b).replace(/\D/g, ''), 10) || 0;
+                return numA !== 0 && numB !== 0 ? numA - numB : String(a).localeCompare(String(b));
+            });
+        }
+
+        function deriveIndihomeBulan(row) {
+            let b = getColAny(row, 'bulan', 'month');
+            if (b) {
+                let n = Number(b);
+                if (!isNaN(n) && n >= 1 && n <= 12 && b.length <= 2) {
+                    return BULAN_ID[n - 1];
+                }
+                return b;
+            }
+            let raw = getColAny(row, 'ts_call', 'ts_call.1');
+            if (!raw) return '';
+            let m = raw.match(/^(\d{4})[-\/](\d{2})/);
+            if (m && +m[2] >= 1 && +m[2] <= 12) return BULAN_ID[+m[2] - 1];
+            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+            if (m && +m[2] >= 1 && +m[2] <= 12) return BULAN_ID[+m[2] - 1];
+            let num = Number(raw.replace(',', '.'));
+            if (!isNaN(num) && num > 20000 && num < 80000) {
+                let d = new Date(Math.round((num - 25569) * 86400000));
+                return BULAN_ID[d.getUTCMonth()];
+            }
+            return '';
+        }
+
         function formatPeriod(p) {
             if (!isRollingView) return p;
             let n = parseInt(String(p).replace(/\D/g, ''));
@@ -479,41 +563,70 @@
             return WEEK_RANGES[filterMode];
         }
 
+        let currentIndihomeMonth = 'all';
+
+        function setIndihomeMonthFilter(val) {
+            currentIndihomeMonth = val;
+            let select = document.getElementById('weekFilter');
+            if (select) select.value = val;
+            renderMonthButtons();
+            if (globalRawData.length > 0) processAndRender();
+        }
+
+        let availableIndihomeMonths = [];
+
+        function renderMonthButtons() {
+            let wrap = document.getElementById('monthButtonGroup');
+            if (!wrap) return;
+            let allActive = currentIndihomeMonth === 'all';
+            let html = `<button type="button" onclick="setIndihomeMonthFilter('all')" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${allActive ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600'}">Semua Bulan</button>`;
+            availableIndihomeMonths.forEach(m => {
+                let active = currentIndihomeMonth === m;
+                let safeVal = m.replace(/'/g, "\\'");
+                html += `<button type="button" onclick="setIndihomeMonthFilter('${safeVal}')" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${active ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600'}">${m}</button>`;
+            });
+            wrap.innerHTML = html;
+        }
+
         function buildWeekOptions() {
             let select = document.getElementById('weekFilter');
-            let previous = select.value;
+            let previous = currentIndihomeMonth || select.value;
 
-            let weeks = new Set();
+            let months = new Set();
             globalRawData.forEach(row => {
-                let m = getCol(row, 'week').match(/\d+/);
-                if (m) {
-                    let n = parseInt(m[0]);
-                    if (n > 0) weeks.add(n);
-                }
+                let b = row.__bulan !== undefined ? row.__bulan : deriveIndihomeBulan(row);
+                if (b) months.add(b);
             });
-            let sortedWeeks = Array.from(weeks).sort((a, b) => a - b);
+            availableIndihomeMonths = sortPeriodLabels(Array.from(months));
 
-            let html = `<option value="all">Semua Minggu di File (Full Month)</option>`;
-
-            if (sortedWeeks.length > 0) {
-                html += `<optgroup label="Per Minggu (Rolling 4W)">`;
-                sortedWeeks.forEach(n => {
-                    let start = Math.max(1, n - (ROLLING_WINDOW - 1));
-                    html += `<option value="wk_${n}">Week ${n} (W${start}–W${n})</option>`;
-                });
-                html += `</optgroup>`;
-            }
-
-            html += `<optgroup label="Rentang Minggu (Rolling 4W)">
-                <option value="w40_43">Week 40 - Week 43</option>
-                <option value="w44_48">Week 44 - Week 48</option>
-                <option value="w49_52">Week 49 - Week 52</option>
-            </optgroup>`;
-
+            let html = `<option value="all">Semua Bulan</option>`;
+            availableIndihomeMonths.forEach(m => {
+                html += `<option value="${m}">${m}</option>`;
+            });
             select.innerHTML = html;
 
-            let stillExists = Array.from(select.options).some(o => o.value === previous);
-            select.value = stillExists ? previous : 'all';
+            let stillExists = previous === 'all' || availableIndihomeMonths.includes(previous);
+            currentIndihomeMonth = stillExists ? previous : 'all';
+            select.value = currentIndihomeMonth;
+            renderMonthButtons();
+        }
+
+        function buildMitraOptions() {
+            let mitras = new Set();
+            globalRawData.forEach(row => {
+                let m = row.__mitra !== undefined ? row.__mitra : getColAny(row, 'mitra');
+                if (m && m.toLowerCase() !== 'unspecified' && m !== '-') mitras.add(m);
+            });
+            let sortedMitras = Array.from(mitras).sort((a, b) => a.localeCompare(b));
+            let html = `<option value="all">Semua Mitra</option>` + sortedMitras.map(m => `<option value="${m}">${m}</option>`).join('');
+            document.querySelectorAll('.mitraFilterSelect').forEach(sel => {
+                let prev = currentMitraFilter || sel.value;
+                sel.innerHTML = html;
+                sel.value = (prev === 'all' || sortedMitras.includes(prev)) ? prev : 'all';
+            });
+            if (currentMitraFilter !== 'all' && !sortedMitras.includes(currentMitraFilter)) {
+                currentMitraFilter = 'all';
+            }
         }
 
         function switchMode(mode) {
@@ -533,7 +646,7 @@
                 uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all";
                 uploadText.textContent = "Upload File IndiHome";
                 mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Filter Bulanan (Jan–Okt) • Mendukung CSV > 300 MB (Streaming)";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
                 document.getElementById('momoChartFilterWrap').style.display = "flex";
@@ -565,14 +678,154 @@
         const WORKER_CODE = `
             importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
             let wb = null;
+
+            function detectDelimiter(headerLine) {
+                let candidates = [',', ';', '\t', '|'];
+                let best = ',';
+                let maxCount = -1;
+                let inQuotes = false;
+                let counts = { ',': 0, ';': 0, '\t': 0, '|': 0 };
+                for (let i = 0; i < headerLine.length; i++) {
+                    let ch = headerLine[i];
+                    if (ch === '"') inQuotes = !inQuotes;
+                    else if (!inQuotes && counts[ch] !== undefined) counts[ch]++;
+                }
+                for (let c of candidates) {
+                    if (counts[c] > maxCount) { maxCount = counts[c]; best = c; }
+                }
+                return best;
+            }
+
+            function parseCsvLine(line, delim) {
+                let res = [];
+                let cur = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    let ch = line[i];
+                    if (ch === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            cur += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (ch === delim && !inQuotes) {
+                        res.push(cur);
+                        cur = '';
+                    } else {
+                        cur += ch;
+                    }
+                }
+                res.push(cur);
+                return res;
+            }
+
+            async function streamCsvFile(file, mode) {
+                const stream = file.stream();
+                const reader = stream.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let leftover = '';
+                let headers = null;
+                let delim = ',';
+                let rows = [];
+                let totalBytesRead = 0;
+                const totalBytes = file.size || 1;
+                let lastProgressReport = 0;
+
+                // Untuk mode IndiHome, simpan hanya kolom yang relevan agar file > 300MB (1-2 juta baris) tetap ringan di RAM
+                let colMap = null;
+                const targetCols = [
+                    'id_trx', 'ts_call', 'ts_call.1', 'category', 'nps',
+                    'unit_name', 'unit_type', 'unit_type2', 'channel',
+                    'reason_desc', 'area', 'region', 'regional', 'area_lacci',
+                    'journey', 'source', 'sumber', 'bulan', 'month',
+                    'bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo', 'tomo', 'mitra'
+                ];
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (value) {
+                        totalBytesRead += value.byteLength;
+                        leftover += decoder.decode(value, { stream: !done });
+                    } else if (done) {
+                        leftover += decoder.decode();
+                    }
+
+                    let lines = leftover.split(/\r?\n/);
+                    leftover = done ? '' : lines.pop();
+
+                    for (let i = 0; i < lines.length; i++) {
+                        let line = lines[i];
+                        if (!line || !line.trim()) continue;
+                        if (!headers) {
+                            line = line.replace(/^\uFEFF/, '');
+                            delim = detectDelimiter(line);
+                            headers = parseCsvLine(line, delim).map(h => h.trim());
+                            if (mode === 'indihome') {
+                                colMap = [];
+                                headers.forEach((h, idx) => {
+                                    let low = h.toLowerCase().trim();
+                                    if (targetCols.includes(low) || low.includes('momo') || low.includes('tomo') || low.includes('bisnis') || low.includes('mitra') || low.includes('bulan')) {
+                                        colMap.push({ idx, name: h });
+                                    }
+                                });
+                                if (colMap.length === 0) {
+                                    colMap = headers.map((h, idx) => ({ idx, name: h }));
+                                }
+                            }
+                            continue;
+                        }
+
+                        let vals = parseCsvLine(line, delim);
+                        if (mode === 'indihome' && colMap) {
+                            let obj = {};
+                            for (let c = 0; c < colMap.length; c++) {
+                                let m = colMap[c];
+                                obj[m.name] = vals[m.idx] !== undefined ? vals[m.idx] : '';
+                            }
+                            rows.push(obj);
+                        } else {
+                            let obj = {};
+                            for (let c = 0; c < headers.length; c++) {
+                                obj[headers[c]] = vals[c] !== undefined ? vals[c] : '';
+                            }
+                            rows.push(obj);
+                        }
+                    }
+
+                    if (totalBytesRead - lastProgressReport > 15 * 1024 * 1024 || done) {
+                        lastProgressReport = totalBytesRead;
+                        let pct = Math.min(99, Math.round((totalBytesRead / totalBytes) * 100));
+                        self.postMessage({
+                            type: 'progress',
+                            pct,
+                            mb: (totalBytesRead / 1048576).toFixed(1),
+                            totalMb: (totalBytes / 1048576).toFixed(1),
+                            count: rows.length
+                        });
+                    }
+
+                    if (done) break;
+                }
+
+                self.postMessage({ type: 'sheets', sheetNames: ['CSV Data'], isCsv: true });
+                self.postMessage({ type: 'rows', rows, headers: headers || [] });
+            }
+
             self.onmessage = async (e) => {
                 try {
                     if (e.data.file) {
-                        const buf = await e.data.file.arrayBuffer();
-                        wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true, cellStyles: false });
-                        self.postMessage({ type: 'sheets', sheetNames: wb.SheetNames });
+                        const file = e.data.file;
+                        const nameLower = (file.name || '').toLowerCase();
+                        if (nameLower.endsWith('.csv') || nameLower.endsWith('.txt')) {
+                            await streamCsvFile(file, e.data.mode || 'indihome');
+                        } else {
+                            const buf = await file.arrayBuffer();
+                            wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true, cellStyles: false });
+                            self.postMessage({ type: 'sheets', sheetNames: wb.SheetNames });
+                        }
                     }
-                    if (e.data.sheet) {
+                    if (e.data.sheet && wb) {
                         const rows = XLSX.utils.sheet_to_json(wb.Sheets[e.data.sheet], { defval: '' });
                         self.postMessage({ type: 'rows', rows });
                     }
@@ -584,6 +837,7 @@
         let dataWorker = null;
         let useMainThread = false;
         let currentFile = null;
+        let detectedFileHeaders = [];
 
         function setLoading(msg) {
             document.getElementById('placeholder').classList.remove('hidden');
@@ -610,18 +864,26 @@
             else sheetContainer.classList.add('hidden');
         }
 
-        function onRowsLoaded(rows) {
+        function onRowsLoaded(rows, headers) {
             globalRawData = rows;
+            detectedFileHeaders = headers || Object.keys(globalRawData[0] || {});
             if (globalRawData.length === 0) {
-                alert("Sheet ini kosong!");
-                document.getElementById('placeholderTitle').textContent = "Sheet kosong.";
+                alert("File / Sheet ini kosong!");
+                document.getElementById('placeholderTitle').textContent = "File / Sheet kosong.";
                 return;
+            }
+            if (currentMode === 'indihome') {
+                for (let i = 0; i < globalRawData.length; i++) {
+                    globalRawData[i].__bulan = deriveIndihomeBulan(globalRawData[i]);
+                    globalRawData[i].__mitra = getColAny(globalRawData[i], 'mitra');
+                }
             }
             document.getElementById('fileInfo').classList.remove('hidden');
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
 
             buildWeekOptions();
+            buildMitraOptions();
             buildSourceColOptions();
             processAndRender();
         }
@@ -667,11 +929,15 @@
 
             dataWorker.onmessage = function(event) {
                 let msg = event.data;
-                if (msg.type === 'sheets') {
+                if (msg.type === 'progress') {
+                    setLoading(`Membaca CSV (${msg.mb} / ${msg.totalMb} MB • ${msg.pct}%) — ${msg.count.toLocaleString('id-ID')} baris dimuat...`);
+                } else if (msg.type === 'sheets') {
                     populateSheetSelector(msg.sheetNames);
-                    dataWorker.postMessage({ sheet: msg.sheetNames[0] });
+                    if (!msg.isCsv) {
+                        dataWorker.postMessage({ sheet: msg.sheetNames[0] });
+                    }
                 } else if (msg.type === 'rows') {
-                    onRowsLoaded(msg.rows);
+                    onRowsLoaded(msg.rows, msg.headers);
                 } else {
                     showLoadError(msg.message);
                 }
@@ -684,7 +950,7 @@
                 parseOnMainThread(currentFile);
             };
 
-            dataWorker.postMessage({ file });
+            dataWorker.postMessage({ file, mode: currentMode });
             e.target.value = '';
         });
 
@@ -716,20 +982,19 @@
 
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
+            let unitType = getCol(row, 'unit_type').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
             let categoryVal = getCol(row, 'category').toLowerCase();
             let reasonDesc = getCol(row, 'reason_desc');
-            let rawWeek = getCol(row, 'week');
+            let bulanVal = row.__bulan !== undefined ? row.__bulan : deriveIndihomeBulan(row);
             let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
             let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
             let regionalVal = getColAny(row, 'regional', 'region', 'nama_regional', 'treg') || '';
-            let momoVal = getColAny(row, 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'bisnis model', 'bisnis_model', 'momo', 'tomo');
+            let momoVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
+            let mitraVal = row.__mitra !== undefined ? row.__mitra : getColAny(row, 'mitra');
             if (!momoVal && unitName && typeof bisnisModelMaster !== 'undefined' && bisnisModelMaster[unitName]) {
                 momoVal = bisnisModelMaster[unitName];
             }
-
-            let weekMatch = rawWeek.match(/\d+/);
-            let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
 
             let isPromotor = 0, isDetractor = 0, isPassive = 0;
             let targetNps = npsVal || categoryVal;
@@ -747,15 +1012,16 @@
                 }
             }
 
+            let combinedUnit = unitType2 || unitType;
             let ctpGroup = "Call Center";
-            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
+            if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa')) {
                 ctpGroup = "GraPARI";
-            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
+            } else if (combinedUnit.includes('socmed') || combinedUnit.includes('social') || combinedUnit.includes('saltik')) {
                 ctpGroup = "Socmed";
-            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
+            } else if (combinedUnit.includes('call') || combinedUnit.includes('cc') || combinedUnit.includes('ivr')) {
                 ctpGroup = "Call Center";
             } else {
-                ctpGroup = unitType2 ? unitType2 : "Call Center";
+                ctpGroup = combinedUnit ? combinedUnit : "Call Center";
             }
 
             let targetReasons = [
@@ -774,14 +1040,15 @@
             else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
 
             return {
-                IsValid: weekNum > 0,
-                WeekNum: weekNum,
+                IsValid: bulanVal !== '',
+                Period: bulanVal,
                 Mapped_CTP: ctpGroup,
-                Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
+                Is_GraPARI: combinedUnit.includes('grapari') || combinedUnit.includes('plasa'),
                 CC_Site: ccSite,
                 UnitName: unitName,
                 Area: areaVal,
                 Regional: regionalVal,
+                Mitra: mitraVal !== '' ? mitraVal : 'Unspecified',
                 MomoTomo: momoVal !== '' ? momoVal.toUpperCase() : 'Unspecified',
                 Is_CS: isCS,
                 Promoter: isPromotor,
@@ -890,7 +1157,8 @@
             return { rows, stats, hasBisnisModelCol, learned, hasIdTrxCol };
         }
 
-        let currentMomoFilter = 'national'; // 'national' | 'area' | 'regional'
+        let currentMomoFilter = 'national'; // 'national' | 'area' | 'regional' | 'mitra'
+        let currentMitraFilter = 'all';
         let currentCcFilter = 'all';     // 'all' | 'bandung' | 'semarang'
 
         function setMomoFilter(val) {
@@ -899,6 +1167,12 @@
             let fTable = document.getElementById('momoFilterTable');
             if (fChart) fChart.value = val;
             if (fTable) fTable.value = val;
+            if (globalRawData.length > 0) processAndRender();
+        }
+
+        function setMitraFilter(val) {
+            currentMitraFilter = val;
+            document.querySelectorAll('.mitraFilterSelect').forEach(el => { el.value = val; });
             if (globalRawData.length > 0) processAndRender();
         }
 
@@ -921,9 +1195,9 @@
             let rowInfoText = '';
 
             if (currentMode === 'indihome') {
-                isRollingView = filterMode !== 'all';
+                isRollingView = false;
 
-                let periodHeader = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
+                let periodHeader = "Periode (Bulan)";
                 document.getElementById('thPeriod1').textContent = periodHeader;
                 document.getElementById('thPeriod2').textContent = periodHeader;
                 document.getElementById('thPeriod3').textContent = periodHeader;
@@ -932,34 +1206,22 @@
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
                 setTotalHeaders("Grand Total", "Grand Total (CS)");
 
-                let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
-                let baseRows = globalRawData
-                    .map(row => ({ ...mapIndihomeRow(row), Source: getCol(row, sourceCol) || '(kosong)' }))
-                    .filter(r => r.IsValid);
+                let sourceCol = document.getElementById('sourceColSelect').value || 'source';
+                let selectedMonth = currentIndihomeMonth || filterMode || 'all';
 
-                if (!isRollingView) {
-                    processedData = baseRows.map(r => ({ ...r, Period: `W${r.WeekNum}` }));
-                    rowInfoText = `${processedData.length} baris data aktif`;
-                } else {
-                    let [minWeek, maxWeek] = getWeekRange(filterMode);
-                    let availableWeeks = new Set(baseRows.map(r => r.WeekNum));
-                    let usedSourceRows = 0;
-
-                    baseRows.forEach(r => {
-                        let used = false;
-                        for (let offset = 0; offset < ROLLING_WINDOW; offset++) {
-                            let reportWeek = r.WeekNum + offset;
-                            if (reportWeek < minWeek || reportWeek > maxWeek) continue;
-                            if (!availableWeeks.has(reportWeek)) continue;
-                            processedData.push({ ...r, Period: `W${reportWeek}` });
-                            used = true;
-                        }
-                        if (used) usedSourceRows++;
-                    });
-
-                    rowInfoText = `${usedSourceRows} baris sumber • rolling 4 minggu`;
+                processedData = [];
+                for (let i = 0; i < globalRawData.length; i++) {
+                    let row = globalRawData[i];
+                    let mapped = mapIndihomeRow(row);
+                    if (!mapped.IsValid) continue;
+                    if (selectedMonth !== 'all' && mapped.Period !== selectedMonth) continue;
+                    mapped.Source = getCol(row, sourceCol) || '(kosong)';
+                    processedData.push(mapped);
                 }
 
+                rowInfoText = selectedMonth === 'all'
+                    ? `${processedData.length.toLocaleString('id-ID')} baris data aktif (Semua Bulan)`
+                    : `${processedData.length.toLocaleString('id-ID')} baris data aktif (Bulan: ${selectedMonth})`;
             } else {
                 isRollingView = false;
 
@@ -1025,7 +1287,8 @@
         function buildSourceColOptions() {
             let select = document.getElementById('sourceColSelect');
             let previous = select.value;
-            let cols = Object.keys(globalRawData[0] || {}).map(c => c.trim()).filter(c => c !== '');
+            let rawCols = (detectedFileHeaders && detectedFileHeaders.length > 0) ? detectedFileHeaders : Object.keys(globalRawData[0] || {});
+            let cols = rawCols.map(c => c.trim()).filter(c => c !== '' && !c.startsWith('__'));
             select.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
             let preferred = [previous, 'source', 'sumber', 'unit_type2', 'unit_type', 'unit_name']
                 .find(c => c && cols.some(x => x.toLowerCase() === c.toLowerCase()));
@@ -1044,7 +1307,7 @@
             const SEP = '|||';
             let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
             document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
-            document.getElementById('thPeriodSrc').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode (Week)";
+            document.getElementById('thPeriodSrc').textContent = "Periode (Bulan)";
 
             let byPeriod = {};
             let overall = {};
@@ -1075,11 +1338,7 @@
                 return overall[b].total - overall[a].total || sa.localeCompare(sb);
             });
 
-            let sortedPeriods = Array.from(periods).sort((a, b) => {
-                let numA = parseInt(String(a).replace(/\D/g, '')) || 0;
-                let numB = parseInt(String(b).replace(/\D/g, '')) || 0;
-                return numA !== 0 && numB !== 0 ? numA - numB : String(a).localeCompare(String(b));
-            });
+            let sortedPeriods = sortPeriodLabels(Array.from(periods));
 
             let srcPeriod = {};
             let srcTotal = {};
@@ -1124,7 +1383,7 @@
                         <table class="w-full text-[11px] sm:text-xs text-slate-600">
                             <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                 <tr>
-                                    <th class="px-2.5 py-2.5 text-left">Week</th>
+                                    <th class="px-2.5 py-2.5 text-left">Bulan</th>
                                     <th class="px-2.5 py-2.5 text-center">D</th>
                                     <th class="px-2.5 py-2.5 text-center">P</th>
                                     <th class="px-2.5 py-2.5 text-center">Prom</th>
@@ -1241,12 +1500,12 @@
             grandTotalLabel
         }) {
             const SEP = '|||';
-            let showDim = currentMode === 'indihome' && (currentMomoFilter === 'area' || currentMomoFilter === 'regional');
+            let showDim = currentMode === 'indihome' && (currentMomoFilter === 'area' || currentMomoFilter === 'regional' || currentMomoFilter === 'mitra');
             let thDim = document.getElementById(dimHeaderId);
             if (thDim) {
                 if (showDim) {
                     thDim.classList.remove('hidden');
-                    thDim.textContent = currentMomoFilter === 'area' ? 'Area' : 'Regional';
+                    thDim.textContent = currentMomoFilter === 'area' ? 'Area' : currentMomoFilter === 'regional' ? 'Regional' : 'Mitra';
                 } else {
                     thDim.classList.add('hidden');
                 }
@@ -1256,8 +1515,13 @@
             let dimsSet = new Set();
 
             data.forEach(item => {
-                let includeMomo = currentMode === 'indihome' ? item.Is_GraPARI : true;
+                // Khusus IndiHome: GraPARI TOMO & MOMO hanya menghitung kategori People (Is_CS)
+                let includeMomo = currentMode === 'indihome' ? (item.Is_GraPARI && item.Is_CS) : true;
                 if (!includeMomo) return;
+
+                if (currentMode === 'indihome' && currentMitraFilter !== 'all') {
+                    if ((item.Mitra || '').trim() !== currentMitraFilter) return;
+                }
 
                 let mt = String(item.MomoTomo || '').trim().toUpperCase();
                 if (mt !== modelName) return;
@@ -1269,6 +1533,9 @@
                         if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
                     } else if (currentMomoFilter === 'regional') {
                         dimVal = (item.Regional || '').trim();
+                        if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
+                    } else if (currentMomoFilter === 'mitra') {
+                        dimVal = (item.Mitra || '').trim();
                         if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
                     }
                 }
@@ -1363,13 +1630,13 @@
                     card.innerHTML = `
                         <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
                             <h4 class="font-extrabold text-slate-800 text-sm">${formatPeriod(p)}</h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-indigo-700">${modelName} • ${currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : 'Nasional'}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-indigo-700">${modelName} People • ${currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : currentMomoFilter === 'mitra' ? 'Per Mitra' : 'Nasional'}</span>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-[11px] sm:text-xs text-slate-600">
                                 <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                     <tr>
-                                        <th class="px-2.5 py-2 text-left">${showDim ? (currentMomoFilter === 'area' ? 'Area' : 'Regional') : 'Kategori'}</th>
+                                        <th class="px-2.5 py-2 text-left">${showDim ? (currentMomoFilter === 'area' ? 'Area' : currentMomoFilter === 'regional' ? 'Regional' : 'Mitra') : 'Kategori'}</th>
                                         <th class="px-2.5 py-2 text-center">D</th>
                                         <th class="px-2.5 py-2 text-center">P</th>
                                         <th class="px-2.5 py-2 text-center">Prom</th>
@@ -1492,11 +1759,7 @@
                 }
             });
 
-            let sortedPeriods = Array.from(periods).sort((a,b) => {
-                let numA = parseInt(a.replace(/\D/g,'')) || 0;
-                let numB = parseInt(b.replace(/\D/g,'')) || 0;
-                return numA !== 0 && numB !== 0 ? numA - numB : a.localeCompare(b);
-            });
+            let sortedPeriods = sortPeriodLabels(Array.from(periods));
 
             let chartSets = ctpList.map((ctp, i) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
@@ -1671,23 +1934,24 @@
             });
 
             // 3. Render Terpisah TOMO Only & MOMO Only (Grafik, Kartu, & Tabel)
+            let mitraSuffix = (currentMode === 'indihome' && currentMitraFilter !== 'all') ? ` • Mitra: ${currentMitraFilter}` : '';
             let modeText = currentMode === 'indihome'
-                ? (currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : 'Nasional')
+                ? ((currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : currentMomoFilter === 'mitra' ? 'Per Mitra' : 'Nasional') + mitraSuffix)
                 : 'Bisnis Model';
 
             document.getElementById('momoChartTitle').lastChild.textContent =
                 currentMode === 'indihome'
-                    ? ` Analisis tNPS TOMO & MOMO (Khusus GraPARI • ${modeText})`
+                    ? ` Analisis tNPS People TOMO & MOMO (Khusus GraPARI • ${modeText})`
                     : ` Analisis tNPS TOMO & MOMO`;
             document.getElementById('momoTableTitle').lastChild.textContent =
                 currentMode === 'indihome'
-                    ? ` Rekapitulasi TOMO Only & MOMO Only (Khusus GraPARI • ${modeText}) & Grand Total`
+                    ? ` Rekapitulasi People TOMO Only & MOMO Only (Khusus GraPARI • ${modeText}) & Grand Total`
                     : ` Rekapitulasi TOMO Only & MOMO Only & Grand Total`;
 
-            document.getElementById('tomoChartSubTitle').textContent = `TOMO Only — ${modeText}`;
-            document.getElementById('momoOnlyChartSubTitle').textContent = `MOMO Only — ${modeText}`;
-            document.getElementById('tomoSectionHeading').textContent = `TOMO Only (${modeText})`;
-            document.getElementById('momoOnlySectionHeading').textContent = `MOMO Only (${modeText})`;
+            document.getElementById('tomoChartSubTitle').textContent = currentMode === 'indihome' ? `TOMO People Only — ${modeText}` : `TOMO Only — ${modeText}`;
+            document.getElementById('momoOnlyChartSubTitle').textContent = currentMode === 'indihome' ? `MOMO People Only — ${modeText}` : `MOMO Only — ${modeText}`;
+            document.getElementById('tomoSectionHeading').textContent = currentMode === 'indihome' ? `TOMO People Only (${modeText})` : `TOMO Only (${modeText})`;
+            document.getElementById('momoOnlySectionHeading').textContent = currentMode === 'indihome' ? `MOMO People Only (${modeText})` : `MOMO Only (${modeText})`;
 
             renderBisnisModelBlock({
                 modelName: 'TOMO',
@@ -1797,7 +2061,7 @@
                         <table class="w-full text-[11px] sm:text-xs text-slate-600">
                             <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                 <tr>
-                                    <th class="px-2.5 py-2.5 text-left">Week</th>
+                                    <th class="px-2.5 py-2.5 text-left">Bulan</th>
                                     <th class="px-2.5 py-2.5 text-center">D</th>
                                     <th class="px-2.5 py-2.5 text-center">P</th>
                                     <th class="px-2.5 py-2.5 text-center">Prom</th>
