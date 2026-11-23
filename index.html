@@ -3,75 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Telkomsel tNPS Analytics Dashboard (IndiHome & Mobile)</title>
-    
-    <!-- Tailwind CSS v4 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
-    <!-- SheetJS (Excel & CSV Reader) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Dashboard tNPS — IndiHome & Mobile</title>
 
-    <!-- Google Fonts: Plus Jakarta Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <!-- Tailwind CSS v4 (dipin versinya) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.11"></script>
+    <!-- SheetJS (Excel & CSV Reader / Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+    <!-- Google Fonts: Poppins (sesuai template CCSQM) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
+        :root {
+            --navy: #13265c;
+            --navy-deep: #0c1a45;
+            --red: #e4002b;
+            --page: #f2f3f7;
+            --line: #e4e7ee;
+            --ink: #16203a;
+            --muted: #6b7489;
+            --good: #1f9d55;
+            --mid: #d9a520;
+            --bad: #e4002b;
         }
-        ::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 9999px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+        body { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; background: var(--page); color: var(--ink); }
+        .tabular { font-variant-numeric: tabular-nums; }
+        ::-webkit-scrollbar { height: 6px; width: 6px; }
+        ::-webkit-scrollbar-track { background: #eef0f5; }
+        ::-webkit-scrollbar-thumb { background: #c3c9d6; border-radius: 9999px; }
+
+        .banner { background: linear-gradient(100deg, var(--navy-deep) 0%, var(--navy) 42%, #5a1440 72%, var(--red) 100%); }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+        .kpi-label { font-size: 12px; font-weight: 600; letter-spacing: .06em; color: var(--muted); }
+        .seg { display: inline-flex; background: #eef0f5; border-radius: 12px; padding: 4px; gap: 2px; }
+        .seg button { padding: 8px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--muted); transition: background .15s, color .15s; }
+        .seg button[aria-pressed="true"] { background: var(--navy-deep); color: #fff; }
+        .seg button:focus-visible, .ctl:focus-visible, .rowbtn:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+        .ctl { border: 1px solid #d5dae4; border-radius: 10px; background: #fff; padding: 8px 12px; font-size: 14px; font-weight: 500; color: var(--ink); }
+        .ctl-label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 4px; }
+
+        .ih-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .ih-table th { background: var(--navy); color: #fff; font-weight: 600; font-size: 12px; padding: 8px 10px; text-align: right; white-space: nowrap; }
+        .ih-table th:first-child { text-align: left; border-top-left-radius: 8px; }
+        .ih-table th:last-child { border-top-right-radius: 8px; }
+        .ih-table td { padding: 7px 10px; text-align: right; border-bottom: 1px solid #eef0f5; white-space: nowrap; }
+        .ih-table td:first-child { text-align: left; font-weight: 600; }
+        .ih-table tr.is-sel td { background: #fff6d6; }
+        .ih-table tr.total td { background: #eef1f8; font-weight: 700; border-top: 2px solid #cfd6e6; }
+        .chip { display: inline-block; min-width: 52px; text-align: center; padding: 2px 8px; border-radius: 999px; font-weight: 700; font-size: 12px; }
+        .chip-good { background: #e3f5ea; color: #14703c; }
+        .chip-mid { background: #fdf3d6; color: #8a6406; }
+        .chip-bad { background: #fde4e8; color: #b0001f; }
+        .chip-na { background: #eef0f5; color: var(--muted); }
+
+        .bar-track { height: 14px; background: #eceef4; border-radius: 999px; overflow: hidden; }
+        .bar-fill { height: 100%; background: var(--navy); border-radius: 999px; transition: width .35s ease; }
+        .dist-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: #eceef4; }
+        .crumb { background: #eceef4; border-radius: 8px; padding: 6px 12px; font-size: 14px; font-weight: 600; }
+        .crumb[role="button"] { cursor: pointer; }
+        .crumb[role="button"]:hover { background: #e0e4ee; }
+        .rowbtn { cursor: pointer; }
+        .rowbtn:hover td { background: #f6f7fb; }
+        .progress { height: 8px; background: #e6e9f1; border-radius: 999px; overflow: hidden; }
+        .progress > div { height: 100%; width: 0; background: linear-gradient(90deg, var(--navy), var(--red)); transition: width .2s; }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 via-slate-50 to-red-50/30 text-slate-800 min-h-screen p-3 sm:p-6 md:p-10">
+<body class="min-h-screen">
 
-    <div class="max-w-7xl mx-auto space-y-6">
-        
-        <!-- Header Section -->
-        <div class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-5 sm:p-8 transition-all">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                <div class="space-y-1.5">
-                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 text-red-600 text-xs font-bold tracking-wide uppercase border border-red-100">
-                        <span class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-                        Telkomsel CX Intelligence
-                    </div>
-                    <h1 id="mainTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
+    <!-- ===================== BANNER (dipakai IndiHome & Mobile) ===================== -->
+    <header class="banner text-white">
+        <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-6 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5">
+            <div>
+                <h1 id="mainTitle" class="text-2xl sm:text-3xl font-extrabold tracking-tight">Dashboard tNPS IndiHome</h1>
+                <p id="subTitle" class="text-sm sm:text-base text-white/85 mt-1">Customer Care Service Quality Management · tNPS = (Promotor − Detractor) / Total Responden</p>
+                <span id="periodPill" class="inline-block mt-3 px-3 py-1 rounded-full bg-white/15 text-sm font-semibold">Jan–Okt 2026</span>
+            </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="seg" role="group" aria-label="Pilih data">
+                    <button id="modeIndihome" aria-pressed="true" onclick="switchMode('indihome')">IndiHome</button>
+                    <button id="modeMobile" aria-pressed="false" onclick="switchMode('mobile')">Mobile</button>
                 </div>
-                
-                <!-- Pilihan Mode & Upload -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
-                    <!-- Mode Switcher -->
-                    <div class="flex items-center bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 w-full sm:w-auto shadow-inner">
-                        <button id="modeIndihome" onclick="switchMode('indihome')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-600 text-white transition-all shadow-md shadow-red-600/20">IndiHome</button>
-                        <button id="modeMobile" onclick="switchMode('mobile')" class="flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all">Mobile</button>
-                    </div>
+                <label id="uploadBtnLabel" class="cursor-pointer inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-[var(--navy-deep)] text-sm font-bold rounded-xl hover:bg-white/90 active:scale-95 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span id="uploadBtnText">Upload file IndiHome</span>
+                    <input type="file" id="fileInput" accept=".csv, .txt, .xlsx, .xls" class="hidden" />
+                </label>
+            </div>
+        </div>
+    </header>
 
-                    <!-- Upload Button (Mendukung .xlsx, .xls, .csv, .txt) -->
-                    <label id="uploadBtnLabel" class="cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all">
-                        <svg class="w-4 h-4 mr-2 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        <span id="uploadBtnText">Upload File IndiHome</span>
-                        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" class="hidden" />
-                    </label>
+    <!-- ===================== INDIHOME (baru: per bulan Jan–Okt, CSV besar, TOMO/MOMO GraPARI) ===================== -->
+    <section id="ihApp">
+        <!-- Strip kontrol -->
+        <div class="bg-white border-b border-[var(--line)]">
+            <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-4 flex flex-col md:flex-row md:items-end gap-4">
+                <div>
+                    <label class="ctl-label" for="ihPeriod">Periode</label>
+                    <select id="ihPeriod" class="ctl min-w-[190px]" disabled>
+                        <option value="all">Jan–Okt (kumulatif)</option>
+                    </select>
+                </div>
+                <div id="ihFileChip" class="hidden text-sm text-[var(--muted)] md:ml-2 md:pb-2">
+                    <span class="font-semibold text-[var(--ink)]" id="ihFileName"></span>
+                    <span id="ihFileMeta"></span>
+                </div>
+                <div class="md:ml-auto flex gap-2">
+                    <button id="ihExportBtn" onclick="ihExport()" class="hidden px-4 py-2.5 rounded-xl bg-[var(--navy-deep)] text-white text-sm font-semibold hover:opacity-90">Download rekap (.xlsx)</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-[1400px] mx-auto px-5 sm:px-8 py-6 space-y-6">
+            <!-- Kosong / loading -->
+            <div id="ihEmpty" class="card p-10 sm:p-16 text-center">
+                <p id="ihEmptyTitle" class="text-lg font-bold">Upload file tNPS IndiHome untuk mulai</p>
+                <p id="ihEmptyText" class="text-sm text-[var(--muted)] mt-1 max-w-lg mx-auto">CSV (pemisah ; atau ,) atau Excel. File besar (300 MB+) dibaca bertahap, jadi browser tidak macet. Kolom yang dipakai: unit_type2, nps, Bulan, reason_desc, unit_name, area, region, Bisnis Model, source.</p>
+                <div id="ihProgressWrap" class="hidden max-w-md mx-auto mt-6">
+                    <div class="progress"><div id="ihProgressBar"></div></div>
+                    <p id="ihProgressText" class="text-xs text-[var(--muted)] mt-2 tabular"></p>
                 </div>
             </div>
 
-            <!-- Status & Filter Kontrol -->
-            <div id="fileInfo" class="hidden mt-6 pt-5 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
+            <div id="ihContent" class="hidden space-y-6">
+
+                <!-- ============ BAGIAN A: Assisted CTP per bulan ============ -->
+                <section class="space-y-4" aria-labelledby="ihAssistedTitle">
+                    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
+                        <div>
+                            <h2 id="ihAssistedTitle" class="text-xl font-bold">tNPS Assisted CTP — E-Care, Call Center, GraPARI</h2>
+                            <p class="text-sm text-[var(--muted)]">Assisted = Call Center + GraPARI + E-Care (unit_type2 Socmed). DigiPos, MyTelkomsel, Landing Page, dan Others tidak ikut dihitung.</p>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <div class="seg" role="group" aria-label="Basis responden">
+                                <button id="ihBasisAll" aria-pressed="true" onclick="ihSet({people:false})">Semua responden</button>
+                                <button id="ihBasisPeople" aria-pressed="false" onclick="ihSet({people:true})">People (CS)</button>
+                            </div>
+                            <div class="seg" role="group" aria-label="Periode tabel">
+                                <button id="ihGranMonth" aria-pressed="true" onclick="ihSet({gran:'month'})">Bulanan</button>
+                                <button id="ihGranWeek" aria-pressed="false" onclick="ihSet({gran:'week'})">Mingguan (rolling 4W)</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ihCtpCards" class="grid grid-cols-2 xl:grid-cols-4 gap-4"></div>
+
+                    <div class="card p-5">
+                        <h3 class="font-bold">Tren tNPS per CTP</h3>
+                        <p id="ihTrendSub" class="text-sm text-[var(--muted)] mb-3">Per bulan, semua responden</p>
+                        <div class="relative h-72"><canvas id="ihTrendChart"></canvas></div>
+                    </div>
+
+                    <div id="ihCtpTables" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
+
+                    <details class="card p-5">
+                        <summary class="font-bold cursor-pointer">Rincian Call Center per lokasi & tNPS per source</summary>
+                        <div class="mt-4 space-y-5">
+                            <div>
+                                <h4 class="font-semibold mb-1">Call Center per lokasi (unit_name)</h4>
+                                <div id="ihSiteMatrix" class="overflow-x-auto"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-1">Per source survei (semua unit_type2)</h4>
+                                <p class="text-sm text-[var(--muted)] mb-2">Metode tiap source berbeda (dyandra, ivr, saltik), jadi bandingkan antar bulan di dalam source yang sama.</p>
+                                <div id="ihSrcMatrix" class="overflow-x-auto"></div>
+                            </div>
+                        </div>
+                    </details>
+                </section>
+
+                <!-- ============ BAGIAN B: GraPARI TOMO & MOMO ============ -->
+                <section class="card overflow-hidden" aria-labelledby="ihBmTitle">
+                    <div class="px-5 sm:px-6 pt-5 pb-4 border-b border-[var(--line)]">
+                        <h2 id="ihBmTitle" class="text-xl font-bold">GraPARI TOMO & MOMO</h2>
+                        <p class="text-sm text-[var(--muted)]">Khusus unit_type2 GraPARI. Bisnis Model dari kolom file (kalau kosong, dari master unit_name). Area/Region GraPARI = yang paling sering muncul di baris surveinya.</p>
+                    </div>
+                    <div class="px-5 sm:px-6 py-4 border-b border-[var(--line)] flex flex-col xl:flex-row xl:items-end gap-4">
+                        <div class="seg self-start whitespace-nowrap" role="group" aria-label="Bisnis model">
+                            <button id="ihBmTomo" aria-pressed="true" onclick="ihSet({model:1, area:0, region:0, cat:null})">GraPARI TOMO</button>
+                            <button id="ihBmMomo" aria-pressed="false" onclick="ihSet({model:2, area:0, region:0, cat:null})">GraPARI MOMO</button>
+                        </div>
+                        <div>
+                            <label class="ctl-label" for="ihArea">Area</label>
+                            <select id="ihArea" class="ctl min-w-[160px]" onchange="ihSet({area:+this.value, region:0, cat:null})"></select>
+                        </div>
+                        <div>
+                            <label class="ctl-label" for="ihRegion">Region</label>
+                            <select id="ihRegion" class="ctl min-w-[200px]" onchange="ihSet({region:+this.value, cat:null})"></select>
+                        </div>
+                        <div>
+                            <label class="ctl-label" for="ihTarget">Target tNPS (%)</label>
+                            <input id="ihTarget" type="number" step="1" class="ctl w-24 tabular" onchange="ihSet({target:+this.value || 0})">
+                        </div>
+                        <div>
+                            <label class="ctl-label" for="ihMinN">Min. responden</label>
+                            <input id="ihMinN" type="number" step="1" min="0" class="ctl w-24 tabular" onchange="ihSet({minN:Math.max(0, +this.value || 0)})">
+                        </div>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[var(--muted)] xl:pb-2.5 whitespace-nowrap">
+                            <input id="ihSummary" type="checkbox" class="w-4 h-4" onchange="ihSet({summary:this.checked})"> Ringkasan saja
+                        </label>
+                        <button id="ihUnmappedBtn" onclick="ihToggleUnmapped()" class="xl:ml-auto text-sm text-[var(--muted)] hover:text-[var(--ink)] underline-offset-2 hover:underline xl:pb-2.5 text-left"></button>
+                    </div>
+
+                    <div id="ihUnmappedPanel" class="hidden px-5 sm:px-6 py-4 bg-[#fbfbfd] border-b border-[var(--line)]"></div>
+
+                    <div class="px-5 sm:px-6 py-3 flex flex-wrap items-center gap-2" id="ihCrumbs"></div>
+
+                    <div class="bg-[var(--page)] px-5 sm:px-6 py-6 space-y-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                            <div class="card p-5">
+                                <div class="kpi-label">tNPS <span id="ihBmName">TOMO</span></div>
+                                <div id="ihBmTnps" class="text-4xl font-extrabold mt-1 tabular">–</div>
+                                <div id="ihBmTnpsSub" class="text-sm text-[var(--muted)] mt-1"></div>
+                            </div>
+                            <div class="card p-5">
+                                <div class="kpi-label">JUMLAH GRAPARI</div>
+                                <div id="ihBmUnits" class="text-4xl font-extrabold mt-1 tabular">–</div>
+                                <div id="ihBmUnitsSub" class="text-sm text-[var(--muted)] mt-1"></div>
+                            </div>
+                            <div class="card p-5">
+                                <div class="kpi-label">DISTRIBUSI KATEGORI <span class="normal-case tracking-normal font-normal">(klik untuk lihat GraPARI-nya)</span></div>
+                                <div id="ihDist" class="mt-2"></div>
+                            </div>
+                        </div>
+
+                        <div class="card p-5 sm:p-6">
+                            <h3 class="font-bold">tNPS per Bulan</h3>
+                            <p id="ihBmTrendSub" class="text-sm text-[var(--muted)] mb-4"></p>
+                            <div id="ihBmBars" class="space-y-3"></div>
+                        </div>
+
+                        <div class="card p-5 sm:p-6" id="ihBmMonthlyCard">
+                            <h3 class="font-bold mb-3">Rekap per Bulan</h3>
+                            <div id="ihBmMonthly" class="overflow-x-auto"></div>
+                        </div>
+
+                        <div class="card p-5 sm:p-6" id="ihListCard">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                                <h3 id="ihListTitle" class="font-bold">Area dalam Nasional</h3>
+                                <input id="ihSearch" type="search" placeholder="Cari nama…" class="ctl w-full sm:w-64" oninput="ihSet({search:this.value})">
+                            </div>
+                            <div id="ihCatNote"></div>
+                            <div id="ihList" class="overflow-x-auto"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== MOBILE (tidak diubah) ===================== -->
+    <section id="mobileApp" class="hidden max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+            <div id="fileInfo" class="hidden bg-white rounded-2xl border border-slate-200 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm">
                 <div class="flex items-center gap-2.5 text-emerald-700 bg-emerald-50/80 border border-emerald-200/60 px-4 py-2 rounded-xl font-medium shadow-sm">
                     <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     <span class="text-xs font-bold uppercase tracking-wider text-emerald-800">File Aktif:</span>
@@ -126,7 +311,6 @@
                     </div>
                 </div>
             </div>
-        </div>
 
         <!-- Placeholder State -->
         <div id="placeholder" class="bg-white/80 backdrop-blur-md rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200/80 p-12 sm:p-20 text-center">
@@ -384,7 +568,332 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <script id="ihWorkerSrc" type="text/plain">
+/* ===== IndiHome streaming parser (Web Worker) ===== */
+const CS_REASONS = new Set(['customer service', 'customer service cukup responsif', 'customer service kurang responsif',
+    'customer service responsif', 'customer service tidak responsif', 'pelayanan pelanggan']);
+const BULAN_TOKENS = { jan: 1, januari: 1, january: 1, feb: 2, februari: 2, february: 2, mar: 3, maret: 3, march: 3,
+    apr: 4, april: 4, mei: 5, may: 5, jun: 6, juni: 6, june: 6, jul: 7, juli: 7, july: 7, agu: 8, ags: 8, agt: 8, agust: 8,
+    agustus: 8, aug: 8, august: 8, sep: 9, sept: 9, september: 9, okt: 10, oct: 10, oktober: 10, october: 10,
+    nov: 11, nop: 11, november: 11, des: 12, dec: 12, desember: 12, december: 12 };
+const REGION_ALIAS = { papuamaluku: 'puma', jawabarat: 'jabar', jawatengah: 'jateng', jawatimur: 'jatim' };
+
+let MASTER = {};
+
+class Dict {
+    constructor(aliasFn) { this.byRaw = new Map(); this.byKey = new Map(); this.spell = [new Map()]; this.alias = aliasFn; }
+    id(raw) {
+        if (raw === undefined || raw === null) return 0;
+        let hit = this.byRaw.get(raw);
+        if (hit === undefined) {
+            const s = String(raw).trim();
+            let key = s.toLowerCase().replace(/\s+/g, ' ');
+            if (this.alias) key = this.alias(key);
+            if (!key || key === '0' || key === '#n/a' || key === '-') hit = 0;
+            else {
+                hit = this.byKey.get(key);
+                if (hit === undefined) { hit = this.spell.length; this.byKey.set(key, hit); this.spell.push(new Map()); }
+            }
+            this.byRaw.set(raw, hit);
+        }
+        if (hit) { const m = this.spell[hit]; m.set(raw, (m.get(raw) || 0) + 1); }
+        return hit;
+    }
+    labels() {
+        return this.spell.map((m, i) => {
+            if (i === 0) return '';
+            let best = '', bc = -1;
+            m.forEach((c, k) => { if (c > bc) { bc = c; best = k; } });
+            return String(best).trim().replace(/\s+/g, ' ');
+        });
+    }
+}
+
+function createStore() {
+    let cap = 1 << 19, n = 0;
+    const spec = { month: Uint8Array, week: Uint8Array, ctp: Uint8Array, nps: Uint8Array, cs: Uint8Array, bm: Uint8Array,
+        site: Uint8Array, src: Uint8Array, unit: Uint32Array, area: Uint16Array, region: Uint16Array, u2: Uint16Array };
+    const a = {};
+    for (const k in spec) a[k] = new spec[k](cap);
+    return {
+        a,
+        push(r) {
+            if (n === cap) {
+                cap *= 2;
+                for (const k in spec) { const nx = new spec[k](cap); nx.set(a[k]); a[k] = nx; }
+            }
+            for (const k in r) a[k][n] = r[k];
+            n++;
+        },
+        get n() { return n; },
+        finish() { const out = {}; for (const k in spec) out[k] = a[k].slice(0, n); return out; }
+    };
+}
+
+const dateCache = new Map();
+function parseDate(s) {
+    if (!s) return null;
+    let c = dateCache.get(s);
+    if (c !== undefined) return c;
+    let y, m, d, r;
+    if ((r = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/))) { d = +r[1]; m = +r[2]; y = +r[3]; }
+    else if ((r = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/))) { y = +r[1]; m = +r[2]; d = +r[3]; }
+    else {
+        const num = Number(s.replace(',', '.'));
+        if (!isNaN(num) && num > 20000 && num < 80000) {
+            const dt = new Date(Math.round((num - 25569) * 86400000));
+            y = dt.getUTCFullYear(); m = dt.getUTCMonth() + 1; d = dt.getUTCDate();
+        }
+    }
+    c = null;
+    if (y && m >= 1 && m <= 12 && d >= 1 && d <= 31) {
+        const t = Date.UTC(y, m - 1, d);
+        const day = (new Date(t).getUTCDay() + 6) % 7;
+        const thu = t + (3 - day) * 864e5;
+        const ty = new Date(thu).getUTCFullYear();
+        const week = 1 + Math.floor((thu - Date.UTC(ty, 0, 1)) / 864e5 / 7);
+        c = { y, m, week };
+    }
+    dateCache.set(s, c);
+    return c;
+}
+
+const bulanCache = new Map();
+function parseBulan(s) {
+    if (!s) return 0;
+    let c = bulanCache.get(s);
+    if (c !== undefined) return c;
+    c = 0;
+    const clean = s.toLowerCase().trim();
+    let r = clean.match(/^(\d{1,2})(?:[.\s\-_)]|$)/);          // "1.Jan", "10.Okt", "7.Juni" → angka di depan dipakai
+    if (r && +r[1] >= 1 && +r[1] <= 12) c = +r[1];
+    else if ((r = clean.match(/^(\d{4})[-\/](\d{1,2})/)) && +r[2] >= 1 && +r[2] <= 12) c = +r[2];
+    else {
+        for (const tok of clean.split(/[^a-z]+/)) if (BULAN_TOKENS[tok]) { c = BULAN_TOKENS[tok]; break; }
+    }
+    bulanCache.set(s, c);
+    return c;
+}
+
+function classifyNps(v, score) {
+    const t = (v || '').toLowerCase();
+    if (t.includes('promot')) return 1;
+    if (t.includes('passiv') || t.includes('pasif')) return 2;
+    if (t.includes('detract')) return 3;
+    const tryNum = x => {
+        if (x === undefined || String(x).trim() === '') return 0;
+        const n = Number(String(x).replace(',', '.'));
+        if (isNaN(n)) return 0;
+        if (n >= 9 && n <= 10) return 1;
+        if (n >= 7) return 2;
+        if (n >= 0) return 3;
+        return 0;
+    };
+    return tryNum(t) || tryNum(score);
+}
+
+function classifyCtp(u2raw) {
+    const u = (u2raw || '').toLowerCase().trim();
+    if (!u) return 1;                                                    // sama seperti kode lama: kosong → Call Center
+    if (u.includes('grapari') || u.includes('plasa')) return 2;
+    if (u.includes('socmed') || u.includes('social') || u.includes('saltik')) return 3;
+    if (u.includes('call') || u.includes('cc') || u.includes('ivr')) return 1;
+    return 0;                                                            // DigiPos, Others, Landing Page, MyTelkomsel
+}
+
+const WANT = {
+    u2: ['unit_type2'], nps: ['nps', 'tnps', 'tnps type', 'tnps category'], score: ['q1_ans', 'score', 'skor'],
+    bulan: ['bulan', 'month', 'periode'], date: ['ts_call', 'survey_date', 'event_date', 'tanggal', 'date', 'tgl', 'created_at'],
+    week: ['week', 'minggu'], reason: ['reason_desc'], unit: ['unit_name', 'unit name', 'nama_unit'],
+    area: ['area', 'nama_area'], region: ['region', 'regional', 'nama_regional', 'treg'],
+    bm: ['bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo tomo'], source: ['source', 'sumber']
+};
+const normH = s => String(s).replace(/^\uFEFF/, '').trim().toLowerCase().replace(/\s+/g, ' ');
+
+function makeIngestor() {
+    const store = createStore();
+    const dicts = { unit: new Dict(), area: new Dict(), region: new Dict(k => REGION_ALIAS[k.replace(/\s/g, '')] || k.replace(/\s/g, '')),
+        src: new Dict(), u2: new Dict() };
+    const stats = { rows: 0, noNps: 0, noMonth: 0, years: {} };
+    let idx = null;
+    return {
+        setHeader(headers) {
+            const h = headers.map(normH);
+            idx = {};
+            for (const k in WANT) {
+                idx[k] = -1;
+                for (const name of WANT[k]) { const i = h.indexOf(name); if (i >= 0) { idx[k] = i; break; } }
+            }
+            return idx;
+        },
+        get idx() { return idx; },
+        row(f) {
+            const g = k => (idx[k] >= 0 && f[idx[k]] !== undefined) ? f[idx[k]] : '';
+            stats.rows++;
+            const dt = parseDate(g('date').trim());
+            let month = parseBulan(g('bulan'));
+            if (!month && dt) month = dt.m;
+            if (!month) stats.noMonth++;
+            if (dt) stats.years[dt.y] = (stats.years[dt.y] || 0) + 1;
+            let week = 0;
+            const wRaw = g('week').match(/\d+/);
+            if (wRaw && +wRaw[0] > 0 && +wRaw[0] < 54) week = +wRaw[0];
+            else if (dt) week = dt.week;
+            const nps = classifyNps(g('nps'), g('score'));
+            if (!nps) stats.noNps++;
+            const u2raw = g('u2');
+            const unitRaw = g('unit');
+            const unitLow = unitRaw.toLowerCase();
+            let bmTxt = g('bm').toUpperCase();
+            let bm = bmTxt.includes('TOMO') ? 1 : bmTxt.includes('MOMO') ? 2 : 0;
+            if (!bm && unitRaw) {
+                const mv = MASTER[unitLow.trim().replace(/\s+/g, ' ')];
+                if (mv) bm = mv === 'TOMO' ? 1 : mv === 'MOMO' ? 2 : 0;
+            }
+            store.push({
+                month, week, nps,
+                ctp: classifyCtp(u2raw),
+                cs: CS_REASONS.has(g('reason').trim().toLowerCase()) ? 1 : 0,
+                bm,
+                site: (unitLow.includes('bandung') || unitLow.includes('bdg')) ? 1 : (unitLow.includes('semarang') || unitLow.includes('smg')) ? 2 : 0,
+                src: dicts.src.id(g('source')),
+                unit: dicts.unit.id(unitRaw),
+                area: dicts.area.id(g('area')),
+                region: dicts.region.id(g('region')),
+                u2: dicts.u2.id(u2raw)
+            });
+        },
+        finish() {
+            const labels = {};
+            for (const k in dicts) labels[k] = dicts[k].labels();
+            return { arrays: store.finish(), n: store.n, labels, stats, idx };
+        }
+    };
+}
+
+/* ---- CSV state machine (handles quotes, "" escapes, newlines inside quotes, CRLF) ---- */
+function makeCsvParser(onHeader, onRow) {
+    let carry = '', delim = -1, header = null, want = null, nCols = 0;
+    let fields = [];
+    function detectDelim(text) {
+        const firstLine = text.slice(0, text.search(/\r?\n/) >>> 0 || 2000);
+        const cnt = ch => firstLine.split(ch).length - 1;
+        const c = [[59, cnt(';')], [44, cnt(',')], [9, cnt('\t')], [124, cnt('|')]].sort((a, b) => b[1] - a[1]);
+        return c[0][0];
+    }
+    function feed(chunk, isFinal) {
+        let text = carry + chunk;
+        if (delim < 0) {
+            if (!isFinal && text.indexOf('\n') < 0) { carry = text; return; }
+            delim = detectDelim(text);
+        }
+        const n = text.length;
+        let i = 0, recStart = 0, fieldStart = 0, col = 0, inQ = false, quoted = false, needMore = false;
+        fields = [];
+        const endField = (s, e) => {
+            if (header === null || (want && want[col])) {
+                let v = text.substring(s, e);
+                if (quoted) {
+                    const q2 = v.lastIndexOf('"');
+                    v = v.substring(1, q2 > 0 ? q2 : v.length).replace(/""/g, '"');
+                }
+                fields[col] = v;
+            }
+        };
+        const endRecord = () => {
+            if (col === 0 && (fields[0] === undefined || fields[0] === '')) { fields = []; return; }
+            if (header === null) {
+                header = fields.slice();
+                nCols = header.length;
+                want = onHeader(header);
+            } else onRow(fields);
+            fields = [];
+        };
+        while (i < n) {
+            const c = text.charCodeAt(i);
+            if (inQ) {
+                if (c === 34) {
+                    if (i + 1 >= n) { if (!isFinal) { needMore = true; break; } inQ = false; i++; continue; }
+                    if (text.charCodeAt(i + 1) === 34) { i += 2; continue; }
+                    inQ = false;
+                }
+                i++; continue;
+            }
+            if (c === 34 && i === fieldStart) { inQ = true; quoted = true; i++; continue; }
+            if (c === delim) { endField(fieldStart, i); col++; i++; fieldStart = i; quoted = false; continue; }
+            if (c === 10 || c === 13) {
+                if (c === 13 && i + 1 >= n && !isFinal) { needMore = true; break; }
+                endField(fieldStart, i); endRecord();
+                if (c === 13 && text.charCodeAt(i + 1) === 10) i++;
+                i++; recStart = i; fieldStart = i; col = 0; quoted = false; continue;
+            }
+            i++;
+        }
+        if (isFinal && !needMore) {
+            if (recStart < n) { endField(fieldStart, n); endRecord(); }
+            carry = '';
+        } else {
+            carry = text.slice(recStart);
+        }
+    }
+    return { feed };
+}
+
+async function parseCsvFile(file, ing, progress) {
+    const CHUNK = 16 * 1024 * 1024;
+    const decoder = new TextDecoder('utf-8');
+    const parser = makeCsvParser(h => {
+        const idx = ing.setHeader(h);
+        const want = new Array(h.length).fill(false);
+        Object.values(idx).forEach(i => { if (i >= 0) want[i] = true; });
+        return want;
+    }, f => ing.row(f));
+    for (let off = 0; off < file.size; off += CHUNK) {
+        const buf = await file.slice(off, Math.min(off + CHUNK, file.size)).arrayBuffer();
+        const last = off + CHUNK >= file.size;
+        let text = decoder.decode(new Uint8Array(buf), { stream: !last });
+        if (off === 0) text = text.replace(/^\uFEFF/, '');
+        parser.feed(text, last);
+        progress(Math.min(off + CHUNK, file.size) / file.size);
+    }
+    if (file.size === 0) parser.feed('', true);
+}
+
+async function parseXlsxFile(file, ing, progress) {
+    importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    progress(0.1);
+    const wb = XLSX.read(new Uint8Array(await file.arrayBuffer()), { type: 'array', raw: true, cellStyles: false, dense: true });
+    progress(0.6);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+    if (!rows.length) return;
+    ing.setHeader(rows[0].map(String));
+    for (let r = 1; r < rows.length; r++) ing.row(rows[r].map(v => v === undefined ? '' : String(v)));
+    progress(1);
+}
+
+self.onmessage = async (e) => {
+    try {
+        MASTER = {};
+        Object.entries(e.data.master || {}).forEach(([k, v]) => { MASTER[k.trim().toLowerCase().replace(/\s+/g, ' ')] = String(v).toUpperCase(); });
+        const file = e.data.file;
+        const ing = makeIngestor();
+        const progress = p => self.postMessage({ type: 'progress', p, rows: ing.idx ? undefined : 0 });
+        const t0 = Date.now();
+        if (/\.(xlsx|xls|xlsm)$/i.test(file.name)) await parseXlsxFile(file, ing, progress);
+        else await parseCsvFile(file, ing, progress);
+        const out = ing.finish();
+        out.ms = Date.now() - t0;
+        const transfer = Object.values(out.arrays).map(a => a.buffer);
+        self.postMessage({ type: 'done', data: out }, transfer);
+    } catch (err) {
+        self.postMessage({ type: 'error', message: err && err.message ? err.message : String(err) });
+    }
+};
+
+    </script>
 
     <script>
         let currentMode = 'indihome'; // Default IndiHome
@@ -598,48 +1107,28 @@
 
         function switchMode(mode) {
             currentMode = mode;
-            let btnIndi = document.getElementById('modeIndihome');
-            let btnMobile = document.getElementById('modeMobile');
-            let uploadLabel = document.getElementById('uploadBtnLabel');
-            let uploadText = document.getElementById('uploadBtnText');
-            let mainTitle = document.getElementById('mainTitle');
-            let subTitle = document.getElementById('subTitle');
-            let placeholderTitle = document.getElementById('placeholderTitle');
-            let weekFilterContainer = document.getElementById('weekFilterContainer');
+            const isIh = mode === 'indihome';
+            document.getElementById('modeIndihome').setAttribute('aria-pressed', String(isIh));
+            document.getElementById('modeMobile').setAttribute('aria-pressed', String(!isIh));
+            document.getElementById('ihApp').classList.toggle('hidden', !isIh);
+            document.getElementById('mobileApp').classList.toggle('hidden', isIh);
+            document.getElementById('periodPill').style.display = (isIh && IH) ? '' : 'none';
+            document.getElementById('uploadBtnText').textContent = isIh ? 'Upload file IndiHome' : 'Upload file Mobile';
+            document.getElementById('mainTitle').textContent = isIh ? 'Dashboard tNPS IndiHome' : 'Dashboard tNPS Mobile';
+            document.getElementById('subTitle').textContent = isIh
+                ? 'Customer Care Service Quality Management · tNPS = (Promotor − Detractor) / Total Responden'
+                : 'Customer Care Service Quality Management · tNPS = (Promotor − Detractor) / Count id_trx';
+            document.getElementById('placeholderTitle').textContent = 'Belum ada file data Mobile yang diunggah';
 
-            if (mode === 'indihome') {
-                btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-red-600 text-white transition-all shadow-md shadow-red-600/20";
-                btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
-                uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all";
-                uploadText.textContent = "Upload File IndiHome";
-                mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
-                placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
-                weekFilterContainer.style.display = "flex";
-                document.getElementById('momoChartFilterWrap').style.display = "flex";
-                document.getElementById('momoTableFilterWrap').style.display = "flex";
-                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "flex");
-                document.getElementById('ccBreakdownSection').style.display = "block";
-            } else {
-                btnMobile.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg bg-blue-600 text-white transition-all shadow-md shadow-blue-600/20";
-                btnIndi.className = "flex-1 sm:flex-none px-4 py-2.5 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 transition-all";
-                uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/25 active:scale-95 transition-all";
-                uploadText.textContent = "Upload File Mobile";
-                mainTitle.textContent = "📱 Telkomsel Mobile tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Count id_trx • CC, GraPARI, Web service / Ecare & People";
-                placeholderTitle.textContent = "Belum ada file data Mobile yang diunggah";
-                weekFilterContainer.style.display = "none";
-                document.getElementById('momoChartFilterWrap').style.display = "none";
-                document.getElementById('momoTableFilterWrap').style.display = "none";
-                document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = "none");
-                document.getElementById('ccBreakdownSection').style.display = "none";
-            }
+            // Pengaturan tampilan Mobile (sama seperti sebelumnya)
+            document.getElementById('weekFilterContainer').style.display = 'none';
+            document.getElementById('momoChartFilterWrap').style.display = 'none';
+            document.getElementById('momoTableFilterWrap').style.display = 'none';
+            document.querySelectorAll('.ccFilterWrap').forEach(el => el.style.display = 'none');
+            document.getElementById('ccBreakdownSection').style.display = 'none';
 
             updateMasterInfo();
-
-            if (globalRawData.length > 0) {
-                processAndRender();
-            }
+            if (!isIh && globalRawData.length > 0) processAndRender();
         }
 
         const WORKER_CODE = `
@@ -726,6 +1215,11 @@
         document.getElementById('fileInput').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            if (currentMode === 'indihome') {
+                ihStartLoad(file);
+                e.target.value = '';
+                return;
+            }
             currentFile = file;
 
             document.getElementById('fileName').textContent = file.name;
@@ -1039,6 +1533,7 @@
         }
 
         function processAndRender() {
+            if (currentMode !== 'mobile') return;
             let monthFilterVal = document.getElementById('monthFilter').value;
             let monthFilteredRaw = globalRawData.filter(row => matchesMonthFilter(row, monthFilterVal));
 
@@ -1950,6 +2445,583 @@
                 cardsWrap.appendChild(card);
             });
         }
+
+        // =====================================================================
+        // [INDIHOME] Versi baru: streaming CSV besar, per bulan Jan–Okt,
+        // tabel Assisted (CC + GraPARI + E-Care), People CS, TOMO/MOMO GraPARI
+        // =====================================================================
+        const IH_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const IH_MONTHS_LONG = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        const IH_CTP = [
+            { id: 0, key: 'assisted', name: 'Total Assisted', short: 'Assisted (CC + GraPARI + E-Care)', color: '#13265c' },
+            { id: 1, key: 'cc', name: 'Call Center', short: 'Call Center', color: '#e4002b' },
+            { id: 2, key: 'grapari', name: 'GraPARI', short: 'GraPARI', color: '#2f6fde' },
+            { id: 3, key: 'ecare', name: 'E-Care', short: 'E-Care (Socmed)', color: '#12a594' }
+        ];
+        const IH_PREF_KEY = 'tnps_ih_prefs_v1';
+
+        let IH = null;            // { a: typed arrays, n, labels, stats, year, months[], weeks[] }
+        let ihWorker = null;
+        let ihTrendChart = null;
+        let ihShowUnmapped = false;
+        const ihState = { period: 'all', gran: 'month', people: false, model: 1, area: 0, region: 0, summary: false,
+                          target: 45, minN: 30, search: '', cat: null, sort: { key: 'tnps', dir: -1 }, expanded: new Set() };
+        try {
+            const p = JSON.parse(localStorage.getItem(IH_PREF_KEY) || '{}');
+            if (typeof p.target === 'number') ihState.target = p.target;
+            if (typeof p.minN === 'number') ihState.minN = p.minN;
+        } catch (e) {}
+
+        const ihEsc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const ihFmt = n => Number(n || 0).toLocaleString('id-ID');
+        const ihNew = () => [0, 0, 0, 0];   // index = kode nps: 1 promotor, 2 passive, 3 detractor
+        const ihTot = o => o[1] + o[2] + o[3];
+        const ihNps = o => { const t = ihTot(o); return t > 0 ? (o[1] - o[3]) / t * 100 : null; };
+        const ihPct = (v, d = 2) => v === null || v === undefined ? '–' : v.toFixed(d).replace('.', ',') + '%';
+        const ihAdd = (a, b) => { a[1] += b[1]; a[2] += b[2]; a[3] += b[3]; return a; };
+        const ihMonthLbl = m => `${IH_MONTHS[m - 1] || m}'${String(IH ? IH.year : 2026).slice(2)}`;
+
+        function ihSavePrefs() {
+            try { localStorage.setItem(IH_PREF_KEY, JSON.stringify({ target: ihState.target, minN: ihState.minN })); } catch (e) {}
+        }
+
+        function ihSet(patch) {
+            Object.assign(ihState, patch);
+            if ('target' in patch || 'minN' in patch) ihSavePrefs();
+            if ('model' in patch || 'area' in patch || 'region' in patch) ihState.expanded.clear();
+            if (IH) ihRender();
+        }
+
+        // ---------- Upload & parsing ----------
+        function ihStartLoad(file) {
+            IH = null;
+            document.getElementById('ihContent').classList.add('hidden');
+            document.getElementById('ihEmpty').classList.remove('hidden');
+            document.getElementById('ihExportBtn').classList.add('hidden');
+            document.getElementById('ihEmptyTitle').textContent = `Membaca ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`;
+            document.getElementById('ihEmptyText').textContent = 'File dibaca bertahap per 16 MB. Biarkan tab ini tetap terbuka.';
+            document.getElementById('ihProgressWrap').classList.remove('hidden');
+            ihProgress(0);
+            const t0 = performance.now();
+            const onMsg = (msg) => {
+                if (msg.type === 'progress') ihProgress(msg.p, t0);
+                else if (msg.type === 'done') ihLoaded(file, msg.data);
+                else if (msg.type === 'error') ihFail(msg.message);
+            };
+            if (ihWorker) { ihWorker.terminate(); ihWorker = null; }
+            const src = document.getElementById('ihWorkerSrc').textContent;
+            const payload = { file, master: bisnisModelMaster };
+            try {
+                if (!window.Worker) throw new Error('no worker');
+                ihWorker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+                ihWorker.onmessage = e => onMsg(e.data);
+                ihWorker.onerror = e => { e.preventDefault && e.preventDefault(); ihWorker.terminate(); ihWorker = null; runOnMainThread(); };
+                ihWorker.postMessage(payload);
+            } catch (err) {
+                runOnMainThread();
+            }
+            function runOnMainThread() {
+                console.warn('Web Worker tidak tersedia, parsing di main thread (lebih lambat).');
+                const fakeSelf = { postMessage: m => onMsg(m) };
+                const run = new Function('self', 'importScripts', src + '\nreturn self.onmessage;');
+                const handler = run(fakeSelf, () => {});
+                setTimeout(() => handler({ data: payload }), 30);
+            }
+        }
+
+        function ihProgress(p, t0) {
+            document.getElementById('ihProgressBar').style.width = (p * 100).toFixed(1) + '%';
+            let txt = `${(p * 100).toFixed(0)}% terbaca`;
+            if (t0 && p > 0.03 && p < 1) {
+                const el = (performance.now() - t0) / 1000;
+                txt += ` · sisa ±${Math.max(1, Math.round(el / p - el))} detik`;
+            }
+            document.getElementById('ihProgressText').textContent = txt;
+        }
+
+        function ihFail(message) {
+            document.getElementById('ihEmptyTitle').textContent = 'File tidak bisa dibaca';
+            document.getElementById('ihEmptyText').textContent = message + ' — pastikan file CSV/Excel tNPS IndiHome dengan baris judul kolom di baris pertama.';
+            document.getElementById('ihProgressWrap').classList.add('hidden');
+        }
+
+        function ihLoaded(file, d) {
+            const miss = ['u2', 'nps'].filter(k => d.idx[k] < 0 && !(k === 'nps' && d.idx.score >= 0));
+            if (!d.n || miss.length) {
+                ihFail(!d.n ? 'Tidak ada baris data.' : `Kolom ${miss.map(k => k === 'u2' ? 'unit_type2' : 'nps').join(', ')} tidak ditemukan.`);
+                return;
+            }
+            const a = d.arrays;
+            const years = Object.entries(d.stats.years).sort((x, y) => y[1] - x[1]);
+            const monthSet = new Set(), weekSet = new Set();
+            for (let i = 0; i < d.n; i++) { if (a.month[i]) monthSet.add(a.month[i]); if (a.week[i]) weekSet.add(a.week[i]); }
+            IH = { a, n: d.n, labels: d.labels, stats: d.stats, year: years.length ? +years[0][0] : 2026,
+                   months: [...monthSet].sort((x, y) => x - y), weeks: [...weekSet].sort((x, y) => x - y), ms: d.ms, idx: d.idx };
+
+            // Area/Region "rumah" tiap GraPARI = area/region yang paling sering muncul di barisnya
+            // (kolom area/region mengikuti lokasi pelanggan, jadi 1 GraPARI bisa muncul di beberapa region)
+            const nU = d.labels.unit.length, cntA = new Map(), cntR = new Map();
+            for (let i = 0; i < d.n; i++) {
+                if (a.ctp[i] !== 2) continue;
+                const u = a.unit[i];
+                if (a.area[i]) { const ka = u * 65536 + a.area[i]; cntA.set(ka, (cntA.get(ka) || 0) + 1); }
+                if (a.region[i]) { const kr = u * 65536 + a.region[i]; cntR.set(kr, (cntR.get(kr) || 0) + 1); }
+            }
+            const pickMode = (cnt) => {
+                const best = new Uint16Array(nU), bestN = new Uint32Array(nU);
+                cnt.forEach((c, k) => { const u = Math.floor(k / 65536), v = k % 65536; if (c > bestN[u]) { bestN[u] = c; best[u] = v; } });
+                return best;
+            };
+            IH.uArea = pickMode(cntA);
+            IH.uRegion = pickMode(cntR);
+
+            const sel = document.getElementById('ihPeriod');
+            sel.innerHTML = `<option value="all">${IH.months.length ? IH_MONTHS[IH.months[0] - 1] + '–' + IH_MONTHS[IH.months[IH.months.length - 1] - 1] : 'Semua'} (kumulatif)</option>` +
+                IH.months.map(m => `<option value="${m}">${IH_MONTHS_LONG[m - 1]} ${IH.year}</option>`).join('');
+            sel.disabled = false;
+            if (ihState.period !== 'all' && !IH.months.includes(+ihState.period)) ihState.period = 'all';
+            sel.value = String(ihState.period);
+
+            document.getElementById('ihFileName').textContent = file.name;
+            let meta = ` · ${ihFmt(d.n)} baris · dibaca ${(d.ms / 1000).toFixed(1)} dtk`;
+            if (d.stats.noNps) meta += ` · ${ihFmt(d.stats.noNps)} baris tanpa kategori nps`;
+            if (d.stats.noMonth) meta += ` · ${ihFmt(d.stats.noMonth)} baris tanpa bulan`;
+            document.getElementById('ihFileMeta').textContent = meta;
+            document.getElementById('ihFileChip').classList.remove('hidden');
+            document.getElementById('ihExportBtn').classList.remove('hidden');
+            document.getElementById('ihEmpty').classList.add('hidden');
+            document.getElementById('ihProgressWrap').classList.add('hidden');
+            document.getElementById('ihContent').classList.remove('hidden');
+            document.getElementById('periodPill').style.display = '';
+            if (!IH.weeks.length && ihState.gran === 'week') ihState.gran = 'month';
+            document.getElementById('ihGranWeek').disabled = !IH.weeks.length;
+            ihRender();
+        }
+
+        // ---------- Agregasi ----------
+        const ihMonthOk = m => ihState.period === 'all' || m === +ihState.period;
+
+        // Tabel Assisted: per periode (bulan / minggu rolling 4W) per CTP
+        function ihAggCtp(people) {
+            const a = IH.a, n = IH.n, byP = {}, total = [ihNew(), ihNew(), ihNew(), ihNew()];
+            const weekly = ihState.gran === 'week';
+            const weekSet = new Set(IH.weeks);
+            for (let i = 0; i < n; i++) {
+                const c = a.ctp[i], s = a.nps[i];
+                if (!c || !s) continue;
+                if (people && !a.cs[i]) continue;
+                total[c][s]++; total[0][s]++;
+                if (weekly) {
+                    const w = a.week[i];
+                    if (!w) continue;
+                    for (let k = 0; k < 4; k++) {
+                        const rw = w + k;
+                        if (!weekSet.has(rw)) continue;
+                        const o = byP[rw] || (byP[rw] = [ihNew(), ihNew(), ihNew(), ihNew()]);
+                        o[c][s]++; o[0][s]++;
+                    }
+                } else {
+                    const m = a.month[i];
+                    if (!m) continue;
+                    const o = byP[m] || (byP[m] = [ihNew(), ihNew(), ihNew(), ihNew()]);
+                    o[c][s]++; o[0][s]++;
+                }
+            }
+            const periods = Object.keys(byP).map(Number).sort((x, y) => x - y);
+            return { byP, periods, total, weekly };
+        }
+
+        function ihPeriodLabel(p, weekly) {
+            if (!weekly) return ihMonthLbl(p);
+            return `W${p} <span class="text-[var(--muted)] font-normal">(W${Math.max(1, p - 3)}–W${p})</span>`;
+        }
+
+        function ihChip(v) {
+            if (v === null) return '<span class="chip chip-na">–</span>';
+            const cls = v >= 50 ? 'chip-good' : v >= 30 ? 'chip-mid' : 'chip-bad';
+            return `<span class="chip ${cls}" title="${v.toFixed(2)}%">${Math.round(v)}%</span>`;
+        }
+
+        function ihCountTable(rows, opts = {}) {
+            // rows: [{label, o, sel, cls}]
+            const head = `<tr><th>${opts.first || 'Bulan'}</th><th>Detractor</th><th>Passive</th><th>Promotor</th><th>Total Responden</th><th>tNPS</th>${opts.extraHead || ''}</tr>`;
+            const body = rows.map(r => `<tr class="${r.cls || ''}${r.sel ? ' is-sel' : ''}">
+                <td>${r.label}</td><td class="tabular">${ihFmt(r.o[3])}</td><td class="tabular">${ihFmt(r.o[2])}</td>
+                <td class="tabular">${ihFmt(r.o[1])}</td><td class="tabular font-semibold">${ihFmt(ihTot(r.o))}</td>
+                <td>${ihChip(ihNps(r.o))}</td>${r.extra || ''}</tr>`).join('');
+            return `<table class="ih-table">${head}${body}</table>`;
+        }
+
+        // ---------- Render ----------
+        function ihRender() {
+            const pill = document.getElementById('periodPill');
+            pill.textContent = ihState.period === 'all'
+                ? `${IH_MONTHS[IH.months[0] - 1]}–${IH_MONTHS[IH.months[IH.months.length - 1] - 1]} ${IH.year}`
+                : `${IH_MONTHS_LONG[+ihState.period - 1]} ${IH.year}`;
+            ['ihBasisAll', 'ihBasisPeople'].forEach((id, i) => document.getElementById(id).setAttribute('aria-pressed', String(ihState.people === (i === 1))));
+            ['ihGranMonth', 'ihGranWeek'].forEach((id, i) => document.getElementById(id).setAttribute('aria-pressed', String((ihState.gran === 'week') === (i === 1))));
+            ihRenderAssisted();
+            ihRenderMatrices();
+            ihRenderBm();
+        }
+
+        function ihRenderAssisted() {
+            const people = ihState.people;
+            const agg = ihAggCtp(people);
+            const { byP, periods, total, weekly } = agg;
+            const basis = people ? 'People (CS)' : 'semua responden';
+
+            // Kartu KPI per CTP untuk periode terpilih (selalu basis bulan)
+            const sel = [ihNew(), ihNew(), ihNew(), ihNew()];
+            const a = IH.a;
+            for (let i = 0; i < IH.n; i++) {
+                const c = a.ctp[i], s = a.nps[i];
+                if (!c || !s || (people && !a.cs[i]) || !ihMonthOk(a.month[i])) continue;
+                sel[c][s]++; sel[0][s]++;
+            }
+            const periodTxt = document.getElementById('periodPill').textContent;
+            document.getElementById('ihCtpCards').innerHTML = IH_CTP.map(c => {
+                const v = ihNps(sel[c.id]);
+                return `<div class="card p-5" style="border-top:4px solid ${c.color}">
+                    <div class="kpi-label">${c.short.toUpperCase()}</div>
+                    <div class="text-3xl font-extrabold mt-1 tabular">${ihPct(v)}</div>
+                    <div class="text-sm text-[var(--muted)] mt-1">${ihFmt(ihTot(sel[c.id]))} responden · ${periodTxt}${people ? ' · People' : ''}</div>
+                </div>`;
+            }).join('');
+
+            // Tren
+            document.getElementById('ihTrendSub').textContent = `${weekly ? 'Per minggu, rolling 4 minggu (W-3 s/d W)' : 'Per bulan'} · ${basis}`;
+            const labels = periods.map(p => weekly ? `W${p}` : ihMonthLbl(p));
+            const datasets = IH_CTP.map(c => ({
+                label: c.name,
+                data: periods.map(p => { const v = ihNps(byP[p][c.id]); return v === null ? null : +v.toFixed(2); }),
+                borderColor: c.color, backgroundColor: c.color, tension: 0.3,
+                borderWidth: c.id === 0 ? 3.5 : 2.5, pointRadius: weekly ? 2 : 4, spanGaps: true
+            }));
+            if (ihTrendChart) ihTrendChart.destroy();
+            ihTrendChart = new Chart(document.getElementById('ihTrendChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Poppins', weight: '600' }, usePointStyle: true } },
+                        tooltip: { callbacks: { label: ctx => {
+                            const o = byP[periods[ctx.dataIndex]][IH_CTP[ctx.datasetIndex].id];
+                            return ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)}% (${ihFmt(ihTot(o))} responden)`;
+                        } } }
+                    },
+                    scales: { y: { ticks: { callback: v => v + '%' }, grid: { color: '#eef0f5' } }, x: { grid: { display: false } } }
+                }
+            });
+
+            // 4 tabel seperti rekap Excel
+            const selMonth = ihState.period === 'all' ? null : +ihState.period;
+            document.getElementById('ihCtpTables').innerHTML = IH_CTP.map(c => {
+                const rows = periods.map(p => ({ label: ihPeriodLabel(p, weekly), o: byP[p][c.id], sel: !weekly && p === selMonth }));
+                rows.push({ label: weekly ? 'Total (tanpa dobel)' : 'Total', o: total[c.id], cls: 'total' });
+                return `<div class="card p-4">
+                    <div class="flex items-center gap-2 mb-3"><span class="w-3 h-3 rounded-full" style="background:${c.color}"></span>
+                    <h4 class="font-bold">${c.id === 0 ? 'Hanya Assisted (CTP) E-Care, CC, GraPARI' : c.name}${people ? ' — People (CS)' : ''}</h4></div>
+                    <div class="overflow-x-auto">${ihCountTable(rows, { first: weekly ? 'Minggu' : 'Bulan' })}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function ihMatrix(groups, title) {
+            // groups: [{name, byM:{m:o}, total:o}]
+            const months = IH.months;
+            const head = `<tr><th>${title}</th>${months.map(m => `<th>${ihMonthLbl(m)}</th>`).join('')}<th>Total</th></tr>`;
+            const body = groups.map(g => `<tr><td>${ihEsc(g.name)}</td>${months.map(m => {
+                const o = g.byM[m]; return `<td title="${o ? ihFmt(ihTot(o)) + ' responden' : ''}">${o ? ihChip(ihNps(o)) : '–'}</td>`;
+            }).join('')}<td title="${ihFmt(ihTot(g.total))} responden">${ihChip(ihNps(g.total))} <span class="text-xs text-[var(--muted)]">${ihFmt(ihTot(g.total))}</span></td></tr>`).join('');
+            return `<table class="ih-table">${head}${body}</table>`;
+        }
+
+        function ihRenderMatrices() {
+            const a = IH.a, people = ihState.people;
+            const site = {}, src = {};
+            const put = (map, key, m, s) => {
+                const g = map[key] || (map[key] = { byM: {}, total: ihNew() });
+                if (m) (g.byM[m] || (g.byM[m] = ihNew()))[s]++;
+                g.total[s]++;
+            };
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i];
+                if (!s || (people && !a.cs[i])) continue;
+                put(src, a.src[i], a.month[i], s);
+                if (a.ctp[i] === 1) put(site, a.site[i], a.month[i], s);
+            }
+            const siteName = { 1: 'CC Bandung', 2: 'CC Semarang', 0: 'Call Center lainnya (Contact Center, CX Agent, dll.)' };
+            document.getElementById('ihSiteMatrix').innerHTML = ihMatrix([1, 2, 0].filter(k => site[k]).map(k => ({ name: siteName[k], ...site[k] })), 'Lokasi');
+            document.getElementById('ihSrcMatrix').innerHTML = ihMatrix(Object.keys(src).map(Number)
+                .sort((x, y) => ihTot(src[y].total) - ihTot(src[x].total))
+                .map(k => ({ name: IH.labels.src[k] || '(kosong)', ...src[k] })), 'Source');
+        }
+
+        // ---------- Bagian B: TOMO / MOMO ----------
+        function ihCategory(o) {
+            const t = ihTot(o), v = ihNps(o);
+            if (v === null || t < ihState.minN) return 'na';
+            if (ihState.target <= 0) return v >= ihState.target ? 'good' : 'bad';
+            const ach = v / ihState.target * 100;
+            return ach > 105 ? 'good' : ach >= 90 ? 'mid' : 'bad';
+        }
+        const IH_CAT = { good: { name: 'Baik', color: 'var(--good)', chip: 'chip-good' }, mid: { name: 'On-Target', color: 'var(--mid)', chip: 'chip-mid' },
+                         bad: { name: 'Kurang', color: 'var(--bad)', chip: 'chip-bad' }, na: { name: 'Sampel kecil', color: '#c3c9d6', chip: 'chip-na' } };
+
+        function ihRenderBm() {
+            const a = IH.a, L = IH.labels, model = ihState.model;
+            const modelName = model === 1 ? 'TOMO' : 'MOMO';
+            document.getElementById('ihBmTomo').setAttribute('aria-pressed', String(model === 1));
+            document.getElementById('ihBmMomo').setAttribute('aria-pressed', String(model === 2));
+            document.getElementById('ihBmName').textContent = modelName;
+            document.getElementById('ihTarget').value = ihState.target;
+            document.getElementById('ihMinN').value = ihState.minN;
+            document.getElementById('ihSummary').checked = ihState.summary;
+            if (document.getElementById('ihSearch').value !== ihState.search) document.getElementById('ihSearch').value = ihState.search;
+
+            // Opsi area & region (dari baris GraPARI model ini)
+            const areaCnt = {}, regCnt = {};
+            for (let i = 0; i < IH.n; i++) {
+                if (a.ctp[i] !== 2 || a.bm[i] !== model) continue;
+                const ua = IH.uArea[a.unit[i]];
+                areaCnt[ua] = 1;
+                if (!ihState.area || ua === ihState.area) regCnt[IH.uRegion[a.unit[i]]] = 1;
+            }
+            const byLabel = (x, y) => (L.area[x] || '').localeCompare(L.area[y] || '', 'id', { numeric: true });
+            const areas = Object.keys(areaCnt).map(Number).filter(x => x).sort(byLabel);
+            const regs = Object.keys(regCnt).map(Number).filter(x => x).sort((x, y) => L.region[x].localeCompare(L.region[y], 'id'));
+            if (ihState.area && !areas.includes(ihState.area)) ihState.area = 0;
+            if (ihState.region && !regs.includes(ihState.region)) ihState.region = 0;
+            document.getElementById('ihArea').innerHTML = `<option value="0">Semua Area</option>` + areas.map(x => `<option value="${x}">${ihEsc(L.area[x])}</option>`).join('');
+            document.getElementById('ihArea').value = ihState.area;
+            document.getElementById('ihRegion').innerHTML = `<option value="0">Semua Region</option>` + regs.map(x => `<option value="${x}">${ihEsc(L.region[x])}</option>`).join('');
+            document.getElementById('ihRegion').value = ihState.region;
+
+            // Agregasi scope
+            const inScope = i => a.ctp[i] === 2 && a.bm[i] === model && a.nps[i]
+                && (!ihState.area || IH.uArea[a.unit[i]] === ihState.area) && (!ihState.region || IH.uRegion[a.unit[i]] === ihState.region);
+            const tot = ihNew(), totCs = ihNew(), byM = {}, byMcs = {};
+            const units = {};   // unit -> {o, cs, byM, area:{}, region:{}}
+            const groups = {};  // area/region -> {o, cs, units:Set}
+            const level = ihState.region ? 'unit' : ihState.area ? 'region' : 'area';
+            const unmapped = {};
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i];
+                if (a.ctp[i] === 2 && !a.bm[i] && s && ihMonthOk(a.month[i])) {
+                    const u = unmapped[a.unit[i]] || (unmapped[a.unit[i]] = { n: 0 });
+                    u.n++;
+                }
+                if (!inScope(i)) continue;
+                const m = a.month[i], cs = a.cs[i];
+                (byM[m] || (byM[m] = ihNew()))[s]++;
+                if (cs) (byMcs[m] || (byMcs[m] = ihNew()))[s]++;
+                const uid = a.unit[i];
+                const u = units[uid] || (units[uid] = { o: ihNew(), cs: ihNew(), byM: {} });
+                (u.byM[m] || (u.byM[m] = ihNew()))[s]++;
+                if (!ihMonthOk(m)) continue;
+                tot[s]++; if (cs) totCs[s]++;
+                u.o[s]++; if (cs) u.cs[s]++;
+                if (level !== 'unit') {
+                    const gid = level === 'area' ? IH.uArea[uid] : IH.uRegion[uid];
+                    const g = groups[gid] || (groups[gid] = { o: ihNew(), cs: ihNew(), units: new Set() });
+                    g.o[s]++; if (cs) g.cs[s]++; g.units.add(uid);
+                }
+            }
+            const activeUnits = Object.keys(units).map(Number).filter(uid => ihTot(units[uid].o) > 0);
+            const periodTxt = document.getElementById('periodPill').textContent;
+
+            // Unmapped
+            const unmappedIds = Object.keys(unmapped).map(Number);
+            const um = document.getElementById('ihUnmappedBtn');
+            um.textContent = unmappedIds.length ? `${unmappedIds.length} GraPARI unmapped (tanpa TOMO/MOMO)` : 'Semua GraPARI sudah ter-mapping';
+            um.disabled = !unmappedIds.length;
+            const up = document.getElementById('ihUnmappedPanel');
+            up.classList.toggle('hidden', !(ihShowUnmapped && unmappedIds.length));
+            if (ihShowUnmapped && unmappedIds.length) {
+                const list = unmappedIds.sort((x, y) => unmapped[y].n - unmapped[x].n);
+                const sumN = list.reduce((s, k) => s + unmapped[k].n, 0);
+                up.innerHTML = `<p class="text-sm text-[var(--muted)] mb-2">${ihFmt(sumN)} responden GraPARI tidak masuk TOMO/MOMO karena kolom Bisnis Model kosong dan unit_name tidak ada di master. Sebagian besar biasanya Head Office / Regional Office.</p>
+                    <div class="flex flex-wrap gap-2">${list.map(k => `<span class="text-xs bg-white border border-[var(--line)] rounded-lg px-2 py-1">${ihEsc(L.unit[k] || '(tanpa nama)')} <b class="tabular">${ihFmt(unmapped[k].n)}</b></span>`).join('')}</div>`;
+            }
+
+            // Breadcrumb
+            const crumbs = [`<span class="crumb" ${ihState.area ? 'role="button" tabindex="0" onclick="ihSet({area:0,region:0,cat:null})"' : ''}>Nasional</span>`];
+            if (ihState.area) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb" ${ihState.region ? 'role="button" tabindex="0" onclick="ihSet({region:0,cat:null})"' : ''}>${ihEsc(L.area[ihState.area])}</span>`);
+            if (ihState.region) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb">${ihEsc(L.region[ihState.region])}</span>`);
+            document.getElementById('ihCrumbs').innerHTML = crumbs.join('');
+            const scopeName = ihState.region ? L.region[ihState.region] : ihState.area ? L.area[ihState.area] : 'Nasional';
+
+            // KPI
+            const v = ihNps(tot), vcs = ihNps(totCs);
+            document.getElementById('ihBmTnps').textContent = ihPct(v);
+            document.getElementById('ihBmTnpsSub').innerHTML = `${modelName} · ${ihEsc(periodTxt)} · ${ihFmt(ihTot(tot))} responden<br>People (CS): <b class="text-[var(--ink)]">${ihPct(vcs)}</b> dari ${ihFmt(ihTot(totCs))} responden`;
+            document.getElementById('ihBmUnits').textContent = ihFmt(activeUnits.length);
+            document.getElementById('ihBmUnitsSub').textContent = `GraPARI ${modelName} di ${scopeName} yang punya responden`;
+
+            // Distribusi kategori
+            const dist = { good: [], mid: [], bad: [], na: [] };
+            activeUnits.forEach(uid => dist[ihCategory(units[uid].o)].push(uid));
+            const sized = activeUnits.length || 1;
+            document.getElementById('ihDist').innerHTML = `
+                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-lg font-bold">
+                    ${['good', 'mid', 'bad'].map(k => `<button class="hover:underline ${ihState.cat === k ? 'underline' : ''}" onclick="ihSet({cat: ihState.cat === '${k}' ? null : '${k}'})">${dist[k].length} ${IH_CAT[k].name}</button>`).join('<span class="text-[var(--muted)]">·</span>')}
+                </div>
+                <div class="dist-bar mt-3">${['good', 'mid', 'bad', 'na'].map(k => `<div style="width:${dist[k].length / sized * 100}%;background:${IH_CAT[k].color}"></div>`).join('')}</div>
+                <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs font-semibold text-[var(--muted)]">
+                    <span><span style="color:var(--good)">●</span> &gt;105% target</span><span><span style="color:var(--mid)">●</span> 90–105%</span><span><span style="color:var(--bad)">●</span> &lt;90%</span>
+                    ${dist.na.length ? `<button class="hover:underline" onclick="ihSet({cat: ihState.cat === 'na' ? null : 'na'})"><span style="color:#c3c9d6">●</span> ${dist.na.length} sampel &lt;${ihState.minN}</button>` : ''}
+                </div>`;
+
+            // Bar tNPS per bulan (abaikan filter periode, ikut filter area/region)
+            document.getElementById('ihBmTrendSub').textContent = `GraPARI ${modelName} · ${scopeName} · garis tipis = People (CS)`;
+            const ms = IH.months.filter(m => byM[m]);
+            document.getElementById('ihBmBars').innerHTML = ms.map(m => {
+                const val = ihNps(byM[m]), vc = byMcs[m] ? ihNps(byMcs[m]) : null;
+                const w = Math.max(0, Math.min(100, val || 0));
+                const wc = Math.max(0, Math.min(100, vc || 0));
+                const selCls = ihState.period !== 'all' && +ihState.period === m ? 'font-extrabold' : 'font-semibold';
+                return `<div class="grid grid-cols-[72px_1fr_auto] sm:grid-cols-[90px_1fr_150px] items-center gap-3">
+                    <button class="text-left ${selCls} text-sm hover:underline" onclick="ihPickMonth(${m})">${IH_MONTHS_LONG[m - 1].slice(0, 3)} ${IH.year}</button>
+                    <div>
+                        <div class="bar-track"><div class="bar-fill" style="width:${w}%;${val < 0 ? 'background:var(--bad)' : ''}"></div></div>
+                        <div class="h-1.5 mt-1 rounded-full bg-[#eceef4] overflow-hidden"><div class="h-full rounded-full" style="width:${wc}%;background:#e4002b99"></div></div>
+                    </div>
+                    <div class="text-right tabular text-sm"><b class="text-base">${ihPct(val)}</b><span class="text-[var(--muted)]"> · P ${ihPct(vc, 1)}</span></div>
+                </div>`;
+            }).join('') || '<p class="text-sm text-[var(--muted)]">Tidak ada data untuk pilihan ini.</p>';
+
+            // Tabel rekap per bulan
+            const totAll = ihNew(), totAllCs = ihNew();
+            const rows = ms.map(m => { ihAdd(totAll, byM[m]); if (byMcs[m]) ihAdd(totAllCs, byMcs[m]);
+                return { label: ihMonthLbl(m), o: byM[m], sel: +ihState.period === m,
+                         extra: `<td>${ihChip(byMcs[m] ? ihNps(byMcs[m]) : null)}</td><td class="tabular">${ihFmt(byMcs[m] ? ihTot(byMcs[m]) : 0)}</td>` }; });
+            rows.push({ label: 'Total', o: totAll, cls: 'total', extra: `<td>${ihChip(ihNps(totAllCs))}</td><td class="tabular">${ihFmt(ihTot(totAllCs))}</td>` });
+            document.getElementById('ihBmMonthly').innerHTML = ihCountTable(rows, { extraHead: '<th>tNPS People</th><th>Resp. People</th>' });
+
+            // Daftar drill-down
+            document.getElementById('ihListCard').classList.toggle('hidden', ihState.summary);
+            document.getElementById('ihBmMonthlyCard').classList.toggle('hidden', ihState.summary);
+            if (ihState.summary) return;
+
+            const q = ihState.search.trim().toLowerCase();
+            let items, showUnits = level === 'unit' || ihState.cat;
+            if (showUnits) {
+                items = activeUnits.filter(uid => !ihState.cat || ihCategory(units[uid].o) === ihState.cat).map(uid => {
+                    const u = units[uid];
+                    return { id: uid, name: L.unit[uid] || '(tanpa nama)', sub: [L.area[IH.uArea[uid]], L.region[IH.uRegion[uid]]].filter(Boolean).join(' · '), o: u.o, cs: u.cs, cat: ihCategory(u.o), byM: u.byM };
+                });
+            } else {
+                items = Object.keys(groups).map(Number).map(gid => ({
+                    id: gid, name: (level === 'area' ? L.area[gid] : L.region[gid]) || '(tanpa ' + level + ')',
+                    o: groups[gid].o, cs: groups[gid].cs, nUnits: groups[gid].units.size, cat: ihCategory(groups[gid].o)
+                }));
+            }
+            if (q) items = items.filter(x => x.name.toLowerCase().includes(q) || (x.sub || '').toLowerCase().includes(q));
+            const sk = ihState.sort.key, dir = ihState.sort.dir;
+            const val = x => sk === 'name' ? x.name : sk === 'n' ? ihTot(x.o) : sk === 'people' ? (ihNps(x.cs) ?? -999) : (ihNps(x.o) ?? -999);
+            items.sort((x, y) => { const p = val(x), r = val(y); return (typeof p === 'string' ? p.localeCompare(r, 'id') : p - r) * dir; });
+
+            const title = ihState.cat ? `GraPARI ${modelName} kategori ${IH_CAT[ihState.cat].name} — ${scopeName}`
+                : level === 'area' ? 'Area dalam Nasional' : level === 'region' ? `Region dalam ${scopeName}` : `GraPARI dalam ${scopeName}`;
+            document.getElementById('ihListTitle').textContent = title;
+            document.getElementById('ihCatNote').innerHTML = ihState.cat
+                ? `<button class="mb-3 text-sm crumb" onclick="ihSet({cat:null})">Hapus filter kategori ✕</button>` : '';
+
+            const th = (key, label, cls = '') => {
+                const on = sk === key;
+                return `<th class="${cls}"><button class="font-semibold" onclick="ihSort('${key}')">${label}${on ? (dir < 0 ? ' ↓' : ' ↑') : ''}</button></th>`;
+            };
+            const head = `<tr>${th('name', showUnits ? 'GraPARI' : level === 'area' ? 'Area' : 'Region')}${showUnits ? '' : '<th>GraPARI</th>'}
+                ${th('n', 'Responden')}<th>% Promotor</th><th>% Detractor</th>${th('tnps', 'tNPS')}<th class="min-w-[140px]"></th>${th('people', 'People')}<th>Kategori</th></tr>`;
+            const body = items.map(x => {
+                const t = ihTot(x.o), v = ihNps(x.o);
+                const click = showUnits ? `ihToggleUnit(${x.id})` : level === 'area' ? `ihSet({area:${x.id},region:0,cat:null})` : `ihSet({region:${x.id},cat:null})`;
+                const open = showUnits && ihState.expanded.has(x.id);
+                let html = `<tr class="rowbtn" tabindex="0" onclick="${click}" onkeydown="if(event.key==='Enter'){${click}}">
+                    <td>${ihEsc(x.name)}${x.sub && (ihState.cat || q) ? `<div class="text-xs font-normal text-[var(--muted)]">${ihEsc(x.sub)}</div>` : ''}</td>
+                    ${showUnits ? '' : `<td class="tabular">${ihFmt(x.nUnits)}</td>`}
+                    <td class="tabular">${ihFmt(t)}</td>
+                    <td class="tabular">${t ? ihPct(x.o[1] / t * 100, 1) : '–'}</td>
+                    <td class="tabular">${t ? ihPct(x.o[3] / t * 100, 1) : '–'}</td>
+                    <td class="tabular font-bold">${ihPct(v)}</td>
+                    <td><div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${Math.max(0, Math.min(100, v || 0))}%;background:${IH_CAT[x.cat].color}"></div></div></td>
+                    <td class="tabular">${ihPct(ihNps(x.cs), 1)} <span class="text-xs text-[var(--muted)]">(${ihFmt(ihTot(x.cs))})</span></td>
+                    <td><span class="chip ${IH_CAT[x.cat].chip}">${IH_CAT[x.cat].name}</span></td></tr>`;
+                if (open) {
+                    html += `<tr><td colspan="9" class="!text-left bg-[#fafbfd]"><div class="flex flex-wrap gap-2 py-1">${IH.months.map(m => {
+                        const o = x.byM[m]; return `<span class="text-xs border border-[var(--line)] rounded-lg px-2 py-1 bg-white">${IH_MONTHS[m - 1]}: <b>${o ? ihPct(ihNps(o), 1) : '–'}</b> <span class="text-[var(--muted)]">${o ? ihFmt(ihTot(o)) : 0}</span></span>`;
+                    }).join('')}</div></td></tr>`;
+                }
+                return html;
+            }).join('');
+            document.getElementById('ihList').innerHTML = items.length
+                ? `<table class="ih-table ih-list">${head}${body}</table>
+                   <p class="text-xs text-[var(--muted)] mt-2">Kategori = tNPS dibanding target ${ihState.target}% (&gt;105% Baik, 90–105% On-Target, &lt;90% Kurang). Unit dengan responden &lt;${ihState.minN} ditandai sampel kecil. ${showUnits ? 'Klik baris untuk lihat tNPS per bulan.' : 'Klik baris untuk masuk ke level berikutnya.'}</p>`
+                : '<p class="text-sm text-[var(--muted)]">Tidak ada yang cocok. Coba hapus kata pencarian atau filter kategori.</p>';
+        }
+
+        function ihSort(key) {
+            const s = ihState.sort;
+            ihSet({ sort: { key, dir: s.key === key ? -s.dir : (key === 'name' ? 1 : -1) } });
+        }
+        function ihToggleUnit(id) {
+            ihState.expanded.has(id) ? ihState.expanded.delete(id) : ihState.expanded.add(id);
+            ihRender();
+        }
+        function ihToggleUnmapped() { ihShowUnmapped = !ihShowUnmapped; if (IH) ihRender(); }
+        function ihPickMonth(m) {
+            ihState.period = ihState.period !== 'all' && +ihState.period === m ? 'all' : String(m);
+            document.getElementById('ihPeriod').value = ihState.period;
+            ihRender();
+        }
+        document.getElementById('ihPeriod').addEventListener('change', e => ihSet({ period: e.target.value }));
+
+        // ---------- Export rekap ----------
+        function ihExport() {
+            if (!IH) return;
+            const wb = XLSX.utils.book_new();
+            const r2 = v => v === null ? '' : Math.round(v * 100) / 100;
+            const saveGran = ihState.gran; ihState.gran = 'month';
+            [false, true].forEach(people => {
+                const { byP, periods, total } = ihAggCtp(people);
+                const aoa = [['CTP', 'Bulan', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)']];
+                IH_CTP.forEach(c => {
+                    periods.forEach(p => { const o = byP[p][c.id]; aoa.push([c.name, ihMonthLbl(p), o[3], o[2], o[1], ihTot(o), r2(ihNps(o))]); });
+                    const o = total[c.id]; aoa.push([c.name, 'Total', o[3], o[2], o[1], ihTot(o), r2(ihNps(o))]);
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), people ? 'People_CS_Bulanan' : 'Assisted_Bulanan');
+            });
+            ihState.gran = saveGran;
+            const a = IH.a, L = IH.labels;
+            [1, 2].forEach(model => {
+                const name = model === 1 ? 'TOMO' : 'MOMO';
+                const byM = {}, units = {};
+                for (let i = 0; i < IH.n; i++) {
+                    const s = a.nps[i];
+                    if (a.ctp[i] !== 2 || a.bm[i] !== model || !s) continue;
+                    const m = a.month[i];
+                    const bm = byM[m] || (byM[m] = { o: ihNew(), cs: ihNew() }); bm.o[s]++; if (a.cs[i]) bm.cs[s]++;
+                    if (!ihMonthOk(m)) continue;
+                    const u = units[a.unit[i]] || (units[a.unit[i]] = { o: ihNew(), cs: ihNew(), area: IH.uArea[a.unit[i]], region: IH.uRegion[a.unit[i]] });
+                    u.o[s]++; if (a.cs[i]) u.cs[s]++;
+                }
+                const aoaM = [['Bulan', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People']];
+                IH.months.filter(m => byM[m]).forEach(m => { const x = byM[m]; aoaM.push([ihMonthLbl(m), x.o[3], x.o[2], x.o[1], ihTot(x.o), r2(ihNps(x.o)), r2(ihNps(x.cs)), ihTot(x.cs)]); });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaM), `${name}_Bulanan`);
+                const aoaU = [['GraPARI', 'Area', 'Region', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People', 'Kategori']];
+                Object.keys(units).map(Number).sort((x, y) => ((ihCategory(units[x].o) === 'na') - (ihCategory(units[y].o) === 'na')) || ((ihNps(units[y].o) ?? -999) - (ihNps(units[x].o) ?? -999))).forEach(uid => {
+                    const u = units[uid];
+                    aoaU.push([L.unit[uid] || '(tanpa nama)', L.area[u.area], L.region[u.region], u.o[3], u.o[2], u.o[1], ihTot(u.o), r2(ihNps(u.o)), r2(ihNps(u.cs)), ihTot(u.cs), IH_CAT[ihCategory(u.o)].name]);
+                });
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoaU), `${name}_per_GraPARI`);
+            });
+            XLSX.writeFile(wb, `rekap_tnps_indihome_${ihState.period === 'all' ? 'jan-okt' : IH_MONTHS[+ihState.period - 1].toLowerCase()}_${IH.year}.xlsx`);
+        }
+
+        switchMode('indihome');
+        document.getElementById('periodPill').style.display = 'none';
     </script>
 </body>
 </html>
