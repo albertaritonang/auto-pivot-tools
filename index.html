@@ -50,7 +50,7 @@
                         Telkomsel CX Intelligence
                     </div>
                     <h1 id="mainTitle" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">📊 IndiHome tNPS Analytics Dashboard</h1>
-                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Filter Bulanan (Jan–Okt) • Mendukung CSV > 300 MB (Streaming)</p>
+                    <p id="subTitle" class="text-xs sm:text-sm text-slate-500 font-medium">Formula: (Promotor - Detractor) / Grand Total • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber</p>
                 </div>
                 
                 <!-- Pilihan Mode & Upload -->
@@ -80,15 +80,39 @@
                 </div>
 
                 <div class="flex flex-col sm:flex-row sm:items-center gap-3 flex-wrap">
-                    <div id="weekFilterContainer" class="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl shadow-sm">
-                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Filter Bulan:</label>
-                        <div id="monthButtonGroup" class="flex flex-wrap items-center gap-1.5">
-                            <button type="button" onclick="setIndihomeMonthFilter('all')" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-red-600 text-white shadow-sm">Semua Bulan</button>
-                        </div>
-                        <select id="weekFilter" class="hidden">
-                            <option value="all">Semua Bulan</option>
+                    <!-- Filter Bulan Jan - Okt -->
+                    <div id="monthFilterContainer" class="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label for="monthFilter" class="text-xs font-bold text-amber-800 uppercase tracking-wide">Periode Bulan:</label>
+                        <select id="monthFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none cursor-pointer">
+                            <option value="jan_okt">Jan – Okt (Semua Tersedia)</option>
+                            <option value="all">Semua Bulan di File</option>
+                            <option value="1">Januari (01)</option>
+                            <option value="2">Februari (02)</option>
+                            <option value="3">Maret (03)</option>
+                            <option value="4">April (04)</option>
+                            <option value="5">Mei (05)</option>
+                            <option value="6">Juni (06)</option>
+                            <option value="7">Juli (07)</option>
+                            <option value="8">Agustus (08)</option>
+                            <option value="9">September (09)</option>
+                            <option value="10">Oktober (10)</option>
                         </select>
                     </div>
+
+                    <div id="weekFilterContainer" class="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl shadow-sm">
+                        <label class="text-xs font-bold text-slate-600 uppercase tracking-wide">Filter Minggu:</label>
+                        <select id="weekFilter" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer">
+                            <option value="all">Semua Minggu di File (Full Month)</option>
+                            <option value="w40_43">Week 40 - Week 43 (Rolling 4W)</option>
+                            <option value="w44_48">Week 44 - Week 48 (Rolling 4W)</option>
+                            <option value="w49_52">Week 49 - Week 52 (Rolling 4W)</option>
+                        </select>
+                    </div>
+
+                    <!-- Tombol Export Hasil Terfilter (Jan-Okt) -->
+                    <button onclick="exportFilteredData()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer">
+                        Download Data Terfilter (.xlsx)
+                    </button>
 
                     <!-- [MOBILE] Info master Bisnis Model (unit_name → MOMO/TOMO) -->
                     <div id="masterInfoContainer" class="hidden items-center gap-2 bg-blue-50 border border-blue-200 px-3 py-1.5 rounded-xl shadow-sm">
@@ -110,7 +134,7 @@
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
             </div>
             <p id="placeholderTitle" class="text-lg font-bold text-slate-700">Belum ada file data IndiHome yang diunggah</p>
-            <p class="text-sm text-slate-400 mt-1 max-w-md mx-auto">Silakan klik tombol upload di kanan atas untuk mulai menganalisis data tNPS secara interaktif.</p>
+            <p class="text-sm text-slate-400 mt-1 max-w-md mx-auto">Silakan klik tombol upload di kanan atas untuk mulai menganalisis data tNPS (termasuk data Jan–Okt) secara interaktif.</p>
         </div>
 
         <!-- Dashboard Content Container -->
@@ -146,20 +170,14 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <h2 id="momoChartTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-indigo-50 text-indigo-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg></span>
-                        Analisis tNPS People TOMO & MOMO (Khusus GraPARI • Nasional)
+                        Analisis tNPS TOMO & MOMO (Khusus GraPARI • Nasional)
                     </h2>
-                    <div id="momoChartFilterWrap" class="flex flex-wrap items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
+                    <div id="momoChartFilterWrap" class="flex items-center gap-2 bg-indigo-50/90 border border-indigo-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterChart" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="national">Nasional (TOMO & MOMO)</option>
                             <option value="area">Per Area (TOMO & MOMO)</option>
                             <option value="regional">Per Regional (TOMO & MOMO)</option>
-                            <option value="mitra">Per Mitra (TOMO & MOMO)</option>
-                        </select>
-                        <span class="text-slate-300">|</span>
-                        <label for="mitraSelectChart" class="text-[11px] font-bold text-indigo-700 uppercase tracking-wide">Mitra:</label>
-                        <select id="mitraSelectChart" onchange="setMitraFilter(this.value)" class="mitraFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="all">Semua Mitra</option>
                         </select>
                     </div>
                 </div>
@@ -225,7 +243,7 @@
                         </select>
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 mb-3">Ringkasan performa Call Center berdasarkan kolom <code class="font-bold text-slate-700">unit_name</code> (CC Bandung & CC Semarang) per periode bulan beserta Grand Total.</p>
+                <p class="text-xs text-slate-500 mb-3">Ringkasan performa Call Center berdasarkan kolom <code class="font-bold text-slate-700">unit_name</code> (CC Bandung & CC Semarang) per periode minggu beserta Grand Total.</p>
                 <div id="ccBreakdownCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
             </div>
 
@@ -241,11 +259,11 @@
                         <select id="sourceColSelect" class="border-0 bg-transparent text-xs sm:text-sm font-semibold text-slate-700 focus:outline-none cursor-pointer"></select>
                     </div>
                 </div>
-                <p class="text-xs text-slate-500 mb-3">Semua baris di file dihitung (sesuai filter bulan), termasuk unit_type2 di luar Call Center / GraPARI / Socmed seperti DigiPos dan Others.</p>
+                <p class="text-xs text-slate-500 mb-3">Semua baris di file dihitung (sesuai filter minggu), termasuk unit_type2 di luar Call Center / GraPARI / Socmed seperti DigiPos dan Others.</p>
                 <div class="relative w-full mb-5" id="sourceChartWrap" style="height: 320px;"><canvas id="sourceChart"></canvas></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan per Source</h3>
-                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kolom terpisah agar perbandingan Bulan dan tNPS lebih mudah dibaca.</p>
+                <p class="text-xs text-slate-500 mb-3">Setiap source ditampilkan dalam kolom terpisah agar perbandingan Week dan tNPS lebih mudah dibaca.</p>
                 <div id="sourceSummaryCards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 mb-6"></div>
 
                 <h3 class="text-sm font-bold text-slate-800 mb-2">Rincian Source per CTP (unit_type2)</h3>
@@ -307,20 +325,14 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
                     <h2 id="momoTableTitle" class="text-base font-bold text-slate-900 flex items-center gap-2">
                         <span class="p-2 rounded-xl bg-purple-50 text-purple-600"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></span>
-                        Rekapitulasi People TOMO Only & MOMO Only (Khusus GraPARI • Nasional) & Grand Total
+                        Rekapitulasi TOMO Only & MOMO Only (Khusus GraPARI • Nasional) & Grand Total
                     </h2>
-                    <div id="momoTableFilterWrap" class="flex flex-wrap items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
+                    <div id="momoTableFilterWrap" class="flex items-center gap-2 bg-purple-50/90 border border-purple-200 px-3 py-1.5 rounded-xl shadow-sm">
                         <label for="momoFilterTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Filter:</label>
                         <select id="momoFilterTable" onchange="setMomoFilter(this.value)" class="border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
                             <option value="national">Nasional (TOMO & MOMO)</option>
                             <option value="area">Per Area (TOMO & MOMO)</option>
                             <option value="regional">Per Regional (TOMO & MOMO)</option>
-                            <option value="mitra">Per Mitra (TOMO & MOMO)</option>
-                        </select>
-                        <span class="text-slate-300">|</span>
-                        <label for="mitraSelectTable" class="text-[11px] font-bold text-purple-700 uppercase tracking-wide">Mitra:</label>
-                        <select id="mitraSelectTable" onchange="setMitraFilter(this.value)" class="mitraFilterSelect border-0 bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer">
-                            <option value="all">Semua Mitra</option>
                         </select>
                     </div>
                 </div>
@@ -378,6 +390,7 @@
         let currentMode = 'indihome'; // Default IndiHome
         let currentWorkbook = null;
         let globalRawData = [];
+        let lastRenderedData = [];
         let npsChartInstance = null;
         let csChartInstance = null;
         let tomoChartInstance = null;
@@ -394,7 +407,7 @@
         // =====================================================================
         // [MOBILE] Master Bisnis Model: unit_name → MOMO / TOMO
         // =====================================================================
-        const SEED_BISNIS_MODEL = {"GraPARI Abepura":"TOMO","GraPARI Airmadidi":"TOMO","GraPARI Ambon":"TOMO","GraPARI Amlapura":"TOMO","GraPARI Ampana":"TOMO","GraPARI Amuntai":"MOMO","GraPARI Amurang":"MOMO","GraPARI Atambua":"TOMO","GraPARI BSD":"TOMO","GraPARI Baa Rote":"MOMO","GraPARI Bagan Batu":"MOMO","GraPARI Bagan Siapiapi":"MOMO","GraPARI Bajawa":"TOMO","GraPARI Balaikarangan":"TOMO","GraPARI Balaraja":"MOMO","GraPARI Balige":"MOMO","GraPARI Balikpapan A Yani":"TOMO","GraPARI Banda Aceh":"TOMO","GraPARI Bandar Jaya":"MOMO","GraPARI Bandar Sribawono":"MOMO","GraPARI Bandung Elektronik Center":"MOMO","GraPARI Banggai":"TOMO","GraPARI Bangka":"TOMO","GraPARI Bangkalan":"MOMO","GraPARI Bangkinang":"MOMO","GraPARI Banjar":"TOMO","GraPARI Banjarbaru HM Noor":"TOMO","GraPARI Banjarmasin":"TOMO","GraPARI Banjarnegara":"MOMO","GraPARI Bantaeng":"TOMO","GraPARI Bantarkalong":"MOMO","GraPARI Bantul":"TOMO","GraPARI Banyumanik":"MOMO","GraPARI Banyuwangi":"TOMO","GraPARI Barabai":"MOMO","GraPARI Barito Selatan":"TOMO","GraPARI Barong Tongkok":"TOMO","GraPARI Barru":"TOMO","GraPARI Bassura City Mall Jakarta":"MOMO","GraPARI Batam Center":"TOMO","GraPARI Batang":"MOMO","GraPARI Batu":"TOMO","GraPARI Batu Sangkar":"MOMO","GraPARI Batulicin":"MOMO","GraPARI Baturaja":"MOMO","GraPARI Bau Bau":"TOMO","GraPARI Bekasi Cyber Park":"TOMO","GraPARI Belitang":"MOMO","GraPARI Belitung":"TOMO","GraPARI Bengkalis":"MOMO","GraPARI Bengkayang":"TOMO","GraPARI Bengkulu":"TOMO","GraPARI Betung":"MOMO","GraPARI Biak":"TOMO","GraPARI Bima":"TOMO","GraPARI Binjai Supermall":"TOMO","GraPARI Bintan":"MOMO","GraPARI Bintaro Jaya Xchange":"MOMO","GraPARI Bireun":"MOMO","GraPARI Bitung":"TOMO","GraPARI Blitar":"MOMO","GraPARI Blora":"MOMO","GraPARI Bogor":"TOMO","GraPARI Bojonegoro":"MOMO","GraPARI Bojongsoang":"MOMO","GraPARI Bondowoso":"MOMO","GraPARI Bone":"TOMO","GraPARI Bontang":"TOMO","GraPARI Boyolali":"TOMO","GraPARI Brebes":"MOMO","GraPARI Bukit Tinggi":"TOMO","GraPARI Bula":"MOMO","GraPARI Bulukumba":"TOMO","GraPARI Bumiayu":"MOMO","GraPARI Cengkareng":"MOMO","GraPARI Central Park Jakarta":"TOMO","GraPARI Ciamis":"MOMO","GraPARI Cianjur":"MOMO","GraPARI Cibinong":"TOMO","GraPARI Cicurug":"MOMO","GraPARI Cikampek":"MOMO","GraPARI Cikarang":"TOMO","GraPARI Cikupa":"MOMO","GraPARI Cilacap":"TOMO","GraPARI Ciledug Cirebon":"MOMO","GraPARI Cilegon":"TOMO","GraPARI Cimahi":"TOMO","GraPARI Ciputat":"TOMO","GraPARI Cirebon":"TOMO","GraPARI Cirebon Super Blok":"MOMO","GraPARI Curup":"MOMO","GraPARI Dabo Singkep":"MOMO","GraPARI Dago":"TOMO","GraPARI Demak":"MOMO","GraPARI Dobo":"MOMO","GraPARI Dompu":"TOMO","GraPARI Dramaga":"MOMO","GraPARI Dumai":"TOMO","GraPARI Duri":"MOMO","GraPARI Emporium Pluit Jakarta":"MOMO","GraPARI Ende":"TOMO","GraPARI Enrekang":"TOMO","GraPARI Flamboyan":"MOMO","GraPARI Garut":"MOMO","GraPARI Gatsu Tengah Denpasar":"MOMO","GraPARI Genteng":"MOMO","GraPARI Gorontalo":"TOMO","GraPARI Gowa":"MOMO","GraPARI Graha Merah Putih":"TOMO","GraPARI Grand Batam Mall":"TOMO","GraPARI Gresik":"TOMO","GraPARI Gunung Kidul":"MOMO","GraPARI Gunung Sitoli":"MOMO","GraPARI ITC Depok":"MOMO","GraPARI Indralaya":"MOMO","GraPARI Indramayu":"MOMO","GraPARI Jambi":"TOMO","GraPARI Jatibarang":"MOMO","GraPARI Jayapura":"TOMO","GraPARI Jember":"TOMO","GraPARI Jeneponto":"TOMO","GraPARI Jepara":"TOMO","GraPARI Jimbaran":"TOMO","GraPARI Jombang":"TOMO","GraPARI Kabanjahe":"MOMO","GraPARI Kaimana":"TOMO","GraPARI Kalabahi":"TOMO","GraPARI Kalianda":"MOMO","GraPARI Kalibata":"TOMO","GraPARI Kandangan":"MOMO","GraPARI Kapten Muslim":"MOMO","GraPARI Karanganyar":"TOMO","GraPARI Kasongan":"MOMO","GraPARI Kayu Agung":"MOMO","GraPARI Kebumen":"MOMO","GraPARI Kediri":"TOMO","GraPARI Kefamenanu":"TOMO","GraPARI Kembangan":"MOMO","GraPARI Kendal":"TOMO","GraPARI Kendari":"TOMO","GraPARI Kepanjen":"MOMO","GraPARI Ketapang":"TOMO","GraPARI Kisaran":"TOMO","GraPARI Klaten":"TOMO","GraPARI Kolaka":"MOMO","GraPARI Kosambi":"MOMO","GraPARI Kota Bangun":"MOMO","GraPARI Kota Pinang":"MOMO","GraPARI Kotabaru":"MOMO","GraPARI Kotabumi":"MOMO","GraPARI Kotamobagu":"TOMO","GraPARI Kraksaan":"MOMO","GraPARI Kroya":"MOMO","GraPARI Kuala Kapuas":"TOMO","GraPARI Kubu Raya":"MOMO","GraPARI Kudus":"TOMO","GraPARI Kulonprogo":"MOMO","GraPARI Kuningan":"MOMO","GraPARI Kupang":"TOMO","GraPARI Kuranji":"MOMO","GraPARI Kuta":"TOMO","GraPARI Kutacane":"MOMO","GraPARI Kwandang":"TOMO","GraPARI Labuan Bajo":"MOMO","GraPARI Labuan Pandeglang":"MOMO","GraPARI Labuan pandeglang":"MOMO","GraPARI Labuha":"MOMO","GraPARI Lahat":"MOMO","GraPARI Lambaro":"MOMO","GraPARI Lamongan":"MOMO","GraPARI Lampung Majapahit":"TOMO","GraPARI Langowan":"TOMO","GraPARI Langsa":"MOMO","GraPARI Larantuka":"TOMO","GraPARI Lembang":"MOMO","GraPARI Lembong":"TOMO","GraPARI Lhokseumawe":"TOMO","GraPARI Living World Pekanbaru":"TOMO","GraPARI Loajanan":"MOMO","GraPARI Lombok Timur":"MOMO","GraPARI Lombok Utara":"MOMO","GraPARI Lubuk Alung":"MOMO","GraPARI Lubuk Basung":"MOMO","GraPARI Lubuk Linggau":"TOMO","GraPARI Lubuk Pakam":"MOMO","GraPARI Lubuk Sikaping":"MOMO","GraPARI Lumajang":"MOMO","GraPARI MDP Palembang":"MOMO","GraPARI Madiun Pahlawan":"TOMO","GraPARI Magelang":"TOMO","GraPARI Magetan":"TOMO","GraPARI Majalaya":"MOMO","GraPARI Majalengka":"MOMO","GraPARI Majenang":"MOMO","GraPARI Majene":"TOMO","GraPARI Makale":"MOMO","GraPARI Makassar":"TOMO","GraPARI Makassar Balaikota":"TOMO","GraPARI Malaka":"MOMO","GraPARI Malang":"TOMO","GraPARI Malang Blimbing":"MOMO","GraPARI Malili":"MOMO","GraPARI Malinau":"MOMO","GraPARI Mall Ambassador Jakarta":"MOMO","GraPARI Mall Balikpapan Baru":"TOMO","GraPARI Mall Cijantung Jakarta":"MOMO","GraPARI Mall Cinere":"MOMO","GraPARI Mall Grand Cibubur":"TOMO","GraPARI Mall Kelapa Gading Jakarta":"TOMO","GraPARI Mall Kota Kasablanka Jakarta":"TOMO","GraPARI Mall Nagoya Hill Batam":"MOMO","GraPARI Mall Panakukang Makassar":"MOMO","GraPARI Mall Panbill Batam":"TOMO","GraPARI Mall Sarinah":"TOMO","GraPARI Mall Technomart Karawang":"TOMO","GraPARI Maluk":"MOMO","GraPARI Mamasa":"MOMO","GraPARI Mamuju":"MOMO","GraPARI Manado":"TOMO","GraPARI Manna":"MOMO","GraPARI Manokwari":"TOMO","GraPARI Margorejo":"TOMO","GraPARI Marisa":"TOMO","GraPARI Maros":"TOMO","GraPARI Masamba":"TOMO","GraPARI Masohi":"MOMO","GraPARI Mataram":"TOMO","GraPARI Maumere":"TOMO","GraPARI Medan":"TOMO","GraPARI Medan Karyajasa":"MOMO","GraPARI Medan Marelan":"MOMO","GraPARI Merangin":"MOMO","GraPARI Merauke":"TOMO","GraPARI Meteorologi":"MOMO","GraPARI Metro Lampung":"MOMO","GraPARI Metro Trade Center Bandung":"MOMO","GraPARI Meulaboh":"TOMO","GraPARI Miko Mall Bandung":"MOMO","GraPARI Mojokerto":"TOMO","GraPARI Morowali":"MOMO","GraPARI Muara Bungo":"MOMO","GraPARI Muara Enim":"MOMO","GraPARI Muara Jawa":"MOMO","GraPARI Muara Teweh":"TOMO","GraPARI Muko Muko":"MOMO","GraPARI Mungkid":"TOMO","GraPARI Nabire":"MOMO","GraPARI Namlea":"TOMO","GraPARI Nanga Pinoh":"TOMO","GraPARI Natar":"MOMO","GraPARI Natuna":"MOMO","GraPARI Negara":"MOMO","GraPARI Ngabang":"TOMO","GraPARI Nganjuk":"MOMO","GraPARI Ngawi":"TOMO","GraPARI Nunukan":"MOMO","GraPARI Obi":"MOMO","GraPARI PGC Jakarta":"MOMO","GraPARI Pacitan":"MOMO","GraPARI Padalarang":"MOMO","GraPARI Padang":"TOMO","GraPARI Padang Panjang":"MOMO","GraPARI Padang Sidempuan":"TOMO","GraPARI Pahlawan Semarang":"TOMO","GraPARI Painan":"TOMO","GraPARI Pakning":"MOMO","GraPARI Palangka Raya":"TOMO","GraPARI Palembang":"TOMO","GraPARI Palmerah":"TOMO","GraPARI Palopo":"MOMO","GraPARI Palu":"TOMO","GraPARI Pamanukan":"MOMO","GraPARI Pamekasan":"TOMO","GraPARI Pandaan":"MOMO","GraPARI Pandeglang":"MOMO","GraPARI Pangandaran":"MOMO","GraPARI Pangkajene":"TOMO","GraPARI Pangkal Pinang":"TOMO","GraPARI Pangkalan":"MOMO","GraPARI Pangkalan Bun":"MOMO","GraPARI Pangkalan Kerinci":"MOMO","GraPARI Pantai Indah Kapuk":"MOMO","GraPARI Panyabungan":"MOMO","GraPARI ParePare":"TOMO","GraPARI Parigi Moutong":"MOMO","GraPARI Parung":"TOMO","GraPARI Pasaman":"MOMO","GraPARI Passo":"TOMO","GraPARI Pasuruan":"TOMO","GraPARI Pati":"TOMO","GraPARI Payakumbuh":"TOMO","GraPARI Pekalongan":"TOMO","GraPARI Pekanbaru":"TOMO","GraPARI Pekanbaru Panam":"MOMO","GraPARI Pelabuhan Ratu":"TOMO","GraPARI Pelaihari":"MOMO","GraPARI Pemalang":"MOMO","GraPARI Pematang Siantar":"TOMO","GraPARI Penajam Propinsi":"TOMO","GraPARI Perawang Siak":"MOMO","GraPARI Perdagangan":"MOMO","GraPARI Pinrang":"MOMO","GraPARI Piru":"MOMO","GraPARI Plaza Medan Fair":"TOMO","GraPARI Polewali":"MOMO","GraPARI Pondok Indah":"TOMO","GraPARI Pondok Jati Sidoarjo":"TOMO","GraPARI Ponorogo":"MOMO","GraPARI Pontianak":"TOMO","GraPARI Poso":"MOMO","GraPARI Prabumulih":"MOMO","GraPARI Pringsewu":"MOMO","GraPARI Probolinggo":"TOMO","GraPARI Purbalingga":"TOMO","GraPARI Purwakarta":"TOMO","GraPARI Purwodadi":"MOMO","GraPARI Purwokerto":"TOMO","GraPARI Purworejo":"MOMO","GraPARI Putusibau":"MOMO","GraPARI Raha":"TOMO","GraPARI Raja Ampat":"TOMO","GraPARI Rancaekek":"TOMO","GraPARI Rangkasbitung":"MOMO","GraPARI Rantau Prapat":"TOMO","GraPARI Rantau Tapin":"MOMO","GraPARI Rawamangun":"TOMO","GraPARI Rembang":"MOMO","GraPARI Rengat":"MOMO","GraPARI Renon Denpasar":"TOMO","GraPARI Rimbo Bujang":"MOMO","GraPARI Ruteng":"MOMO","GraPARI Sabang":"TOMO","GraPARI Salatiga":"MOMO","GraPARI Samarinda":"TOMO","GraPARI Samarinda Awang Long":"TOMO","GraPARI Sambas":"MOMO","GraPARI Sampang":"MOMO","GraPARI Sampit":"MOMO","GraPARI Sangatta":"MOMO","GraPARI Sanggau":"TOMO","GraPARI Sarmi":"TOMO","GraPARI Sarolangun":"MOMO","GraPARI Saumlaki":"MOMO","GraPARI Sebrang Ulu":"MOMO","GraPARI Sei Danau":"MOMO","GraPARI Sei Rampah":"MOMO","GraPARI Sekayu":"MOMO","GraPARI Selat Panjang":"MOMO","GraPARI Selayar":"TOMO","GraPARI Sentani":"MOMO","GraPARI Serang":"TOMO","GraPARI Serui":"TOMO","GraPARI Sibolga":"TOMO","GraPARI Sidrap Pangkajene":"TOMO","GraPARI Sigli":"MOMO","GraPARI Singaparna":"MOMO","GraPARI Singaraja":"MOMO","GraPARI Singkawang":"MOMO","GraPARI Sinjai":"TOMO","GraPARI Sintang":"MOMO","GraPARI Situbondo":"MOMO","GraPARI Siwa":"TOMO","GraPARI Slawi":"TOMO","GraPARI Sleman":"TOMO","GraPARI Soe":"TOMO","GraPARI Solo":"TOMO","GraPARI Solok":"MOMO","GraPARI Solok Selatan":"MOMO","GraPARI Soppeng":"TOMO","GraPARI Soreang":"MOMO","GraPARI Soroako":"MOMO","GraPARI Sorong":"TOMO","GraPARI Sragen":"TOMO","GraPARI Stabat":"MOMO","GraPARI Subang":"TOMO","GraPARI Subulussalam":"MOMO","GraPARI Sudiang Makassar":"MOMO","GraPARI Sukabumi":"TOMO","GraPARI Sukanagara":"MOMO","GraPARI Sumarrecon Mall Serpong":"MOMO","GraPARI Sumbawa":"MOMO","GraPARI Sumber":"MOMO","GraPARI Sumedang":"MOMO","GraPARI Sumenep":"MOMO","GraPARI Sungai Penuh":"TOMO","GraPARI Sungai Rumbai":"MOMO","GraPARI Supermall Karawaci":"MOMO","GraPARI Supratman":"TOMO","GraPARI Surabaya Barat":"TOMO","GraPARI Surabaya Garuda":"TOMO","GraPARI Surabaya Manyar":"TOMO","GraPARI Surabaya Sudirman":"TOMO","GraPARI Tabanan":"MOMO","GraPARI Tahuna":"TOMO","GraPARI Takalar":"TOMO","GraPARI Takengon":"MOMO","GraPARI Taliwang":"MOMO","GraPARI Tambun":"MOMO","GraPARI Tanah Grogot":"MOMO","GraPARI Tangerang City":"MOMO","GraPARI Tanjung Balai Asahan":"MOMO","GraPARI Tanjung Balai Karimun":"MOMO","GraPARI Tanjung Batu Karimun":"MOMO","GraPARI Tanjung Morawa":"MOMO","GraPARI Tanjung Pinang":"TOMO","GraPARI Tanjung Redep":"MOMO","GraPARI Tanjung Selor":"MOMO","GraPARI Tanjung Tabalong":"MOMO","GraPARI Tarakan":"TOMO","GraPARI Tarutung":"MOMO","GraPARI Tasikmalaya":"TOMO","GraPARI Tawaeli":"TOMO","GraPARI Tebing Tinggi":"MOMO","GraPARI Tegal":"TOMO","GraPARI Teluk Kuantan":"MOMO","GraPARI Temanggung":"TOMO","GraPARI Tembagapura":"MOMO","GraPARI Tembilahan":"MOMO","GraPARI Tenggarong":"MOMO","GraPARI Terminal 3 Bandara Soetta":"TOMO","GraPARI Ternate":"MOMO","GraPARI Timika":"TOMO","GraPARI Tobelo":"TOMO","GraPARI Toboali":"MOMO","GraPARI Toli-Toli":"MOMO","GraPARI Tomohon":"MOMO","GraPARI Topoyo":"MOMO","GraPARI Toraja":"TOMO","GraPARI Trans Studio Mall Bandung":"MOMO","GraPARI Trenggalek":"MOMO","GraPARI Tropodo Sidoarjo":"MOMO","GraPARI Tual":"TOMO","GraPARI Tuban":"MOMO","GraPARI Tulang Bawang":"MOMO","GraPARI Tulungagung":"TOMO","GraPARI Tungkal Ilir":"MOMO","GraPARI Turen":"MOMO","GraPARI Ubud":"TOMO","GraPARI Ujung Batu":"MOMO","GraPARI Ujung Berung":"MOMO","GraPARI Unahaa":"TOMO","GraPARI Ungaran":"MOMO","GraPARI Waikabubak":"MOMO","GraPARI Waingapu":"MOMO","GraPARI Wajo":"TOMO","GraPARI Wamena":"MOMO","GraPARI Wanci":"MOMO","GraPARI Weda":"MOMO","GraPARI Wisma Alia Jakarta":"TOMO","GraPARI Wolter Monginsidi":"MOMO","GraPARI Wonogiri":"TOMO","GraPARI Wonosobo":"MOMO","GraPARI Yogyakarta":"TOMO","GraPARI Yos Sudarso":"TOMO","GraPARi Samarinda":"TOMO","GraPari Lembang":"MOMO","Grapari Malang":"TOMO","Grapari Nabire":"MOMO","Grapari Pasangkayu":"MOMO","Grapari Probolinggo":"TOMO","Grapari Raja Ampat":"TOMO","Grapari Sukoharjo":"MOMO","Grapari Tual":"TOMO","Grapari Unahaa":"TOMO"};
+        const SEED_BISNIS_MODEL = {"GraPARI Abepura":"TOMO","GraPARI Airmadidi":"TOMO","GraPARI Ambon":"TOMO","GraPARI Amlapura":"TOMO","GraPARI Ampana":"TOMO","GraPARI Amuntai":"MOMO","GraPARI Amurang":"MOMO","GraPARI Atambua":"TOMO","GraPARI BSD":"TOMO","GraPARI Baa Rote":"MOMO","GraPARI Bagan Batu":"MOMO","GraPARI Bagan Siapiapi":"MOMO","GraPARI Bajawa":"TOMO","GraPARI Balaikarangan":"TOMO","GraPARI Balaraja":"MOMO","GraPARI Balige":"MOMO","GraPARI Balikpapan A Yani":"TOMO","GraPARI Banda Aceh":"TOMO","GraPARI Bandar Jaya":"MOMO","GraPARI Bandar Sribawono":"MOMO","GraPARI Bandung Elektronik Center":"MOMO","GraPARI Banggai":"TOMO","GraPARI Bangka":"TOMO","GraPARI Bangkalan":"MOMO","GraPARI Bangkinang":"MOMO","GraPARI Banjar":"TOMO","GraPARI Banjarbaru HM Noor":"TOMO","GraPARI Banjarmasin":"TOMO","GraPARI Banjarnegara":"MOMO","GraPARI Bantaeng":"TOMO","GraPARI Bantarkalong":"MOMO","GraPARI Bantul":"TOMO","GraPARI Banyumanik":"MOMO","GraPARI Banyuwangi":"TOMO","GraPARI Barabai":"MOMO","GraPARI Barito Selatan":"TOMO","GraPARI Barong Tongkok":"TOMO","GraPARI Barru":"TOMO","GraPARI Bassura City Mall Jakarta":"MOMO","GraPARI Batam Center":"TOMO","GraPARI Batang":"MOMO","GraPARI Batu":"TOMO","GraPARI Batu Sangkar":"MOMO","GraPARI Batulicin":"MOMO","GraPARI Baturaja":"MOMO","GraPARI Bau Bau":"TOMO","GraPARI Bekasi Cyber Park":"TOMO","GraPARI Belitang":"MOMO","GraPARI Belitung":"TOMO","GraPARI Bengkalis":"MOMO","GraPARI Bengkayang":"TOMO","GraPARI Bengkulu":"TOMO","GraPARI Betung":"MOMO","GraPARI Biak":"TOMO","GraPARI Bima":"TOMO","GraPARI Binjai Supermall":"TOMO","GraPARI Bintan":"MOMO","GraPARI Bintaro Jaya Xchange":"MOMO","GraPARI Bireun":"MOMO","GraPARI Bitung":"TOMO","GraPARI Blitar":"MOMO","GraPARI Blora":"MOMO","GraPARI Bogor":"TOMO","GraPARI Bojonegoro":"MOMO","GraPARI Bojongsoang":"MOMO","GraPARI Bondowoso":"TOMO","GraPARI Bone":"TOMO","GraPARI Bontang":"TOMO","GraPARI Boyolali":"TOMO","GraPARI Brebes":"MOMO","GraPARI Bukit Tinggi":"TOMO","GraPARI Bula":"MOMO","GraPARI Bulukumba":"TOMO","GraPARI Bumiayu":"MOMO","GraPARI Cengkareng":"MOMO","GraPARI Central Park Jakarta":"TOMO","GraPARI Ciamis":"MOMO","GraPARI Cianjur":"MOMO","GraPARI Cibinong":"TOMO","GraPARI Cicurug":"MOMO","GraPARI Cikampek":"MOMO","GraPARI Cikarang":"TOMO","GraPARI Cikupa":"MOMO","GraPARI Cilacap":"TOMO","GraPARI Ciledug Cirebon":"MOMO","GraPARI Cilegon":"TOMO","GraPARI Cimahi":"TOMO","GraPARI Ciputat":"MOMO","GraPARI Cirebon":"TOMO","GraPARI Cirebon Super Blok":"MOMO","GraPARI Curup":"MOMO","GraPARI Dabo Singkep":"MOMO","GraPARI Dago":"TOMO","GraPARI Demak":"MOMO","GraPARI Dobo":"MOMO","GraPARI Dompu":"TOMO","GraPARI Dramaga":"MOMO","GraPARI Dumai":"TOMO","GraPARI Duri":"MOMO","GraPARI Emporium Pluit Jakarta":"MOMO","GraPARI Ende":"TOMO","GraPARI Enrekang":"TOMO","GraPARI Flamboyan":"MOMO","GraPARI Garut":"MOMO","GraPARI Gatsu Tengah Denpasar":"MOMO","GraPARI Genteng":"MOMO","GraPARI Gorontalo":"TOMO","GraPARI Gowa":"MOMO","GraPARI Graha Merah Putih":"TOMO","GraPARI Grand Batam Mall":"TOMO","GraPARI Gresik":"TOMO","GraPARI Gunung Kidul":"MOMO","GraPARI Gunung Sitoli":"MOMO","GraPARI ITC Depok":"MOMO","GraPARI Indralaya":"MOMO","GraPARI Indramayu":"MOMO","GraPARI Jambi":"TOMO","GraPARI Jatibarang":"MOMO","GraPARI Jayapura":"TOMO","GraPARI Jember":"TOMO","GraPARI Jeneponto":"TOMO","GraPARI Jepara":"TOMO","GraPARI Jimbaran":"TOMO","GraPARI Jombang":"TOMO","GraPARI Kabanjahe":"MOMO","GraPARI Kaimana":"TOMO","GraPARI Kalabahi":"TOMO","GraPARI Kalianda":"MOMO","GraPARI Kalibata":"TOMO","GraPARI Kandangan":"MOMO","GraPARI Kapten Muslim":"MOMO","GraPARI Karanganyar":"TOMO","GraPARI Kasongan":"MOMO","GraPARI Kayu Agung":"MOMO","GraPARI Kebumen":"MOMO","GraPARI Kediri":"TOMO","GraPARI Kefamenanu":"TOMO","GraPARI Kembangan":"MOMO","GraPARI Kendal":"TOMO","GraPARI Kendari":"TOMO","GraPARI Kepanjen":"MOMO","GraPARI Ketapang":"TOMO","GraPARI Kisaran":"TOMO","GraPARI Klaten":"TOMO","GraPARI Kolaka":"MOMO","GraPARI Kosambi":"MOMO","GraPARI Kota Bangun":"MOMO","GraPARI Kota Pinang":"MOMO","GraPARI Kotabaru":"MOMO","GraPARI Kotabumi":"MOMO","GraPARI Kotamobagu":"TOMO","GraPARI Kraksaan":"MOMO","GraPARI Kroya":"MOMO","GraPARI Kuala Kapuas":"TOMO","GraPARI Kubu Raya":"MOMO","GraPARI Kudus":"TOMO","GraPARI Kulonprogo":"MOMO","GraPARI Kuningan":"MOMO","GraPARI Kupang":"TOMO","GraPARI Kuranji":"MOMO","GraPARI Kuta":"TOMO","GraPARI Kutacane":"MOMO","GraPARI Kwandang":"TOMO","GraPARI Labuan Bajo":"MOMO","GraPARI Labuan Pandeglang":"MOMO","GraPARI Labuan pandeglang":"MOMO","GraPARI Labuha":"MOMO","GraPARI Lahat":"MOMO","GraPARI Lambaro":"MOMO","GraPARI Lamongan":"MOMO","GraPARI Lampung Majapahit":"TOMO","GraPARI Langowan":"TOMO","GraPARI Langsa":"MOMO","GraPARI Larantuka":"TOMO","GraPARI Lembang":"MOMO","GraPARI Lembong":"TOMO","GraPARI Lhokseumawe":"TOMO","GraPARI Living World Pekanbaru":"TOMO","GraPARI Loajanan":"MOMO","GraPARI Lombok Timur":"MOMO","GraPARI Lombok Utara":"MOMO","GraPARI Lubuk Alung":"MOMO","GraPARI Lubuk Basung":"MOMO","GraPARI Lubuk Linggau":"TOMO","GraPARI Lubuk Pakam":"MOMO","GraPARI Lubuk Sikaping":"MOMO","GraPARI Lumajang":"MOMO","GraPARI MDP Palembang":"MOMO","GraPARI Madiun Pahlawan":"TOMO","GraPARI Magelang":"TOMO","GraPARI Magetan":"MOMO","GraPARI Majalaya":"MOMO","GraPARI Majalengka":"MOMO","GraPARI Majenang":"MOMO","GraPARI Majene":"TOMO","GraPARI Makale":"MOMO","GraPARI Makassar":"TOMO","GraPARI Makassar Balaikota":"TOMO","GraPARI Malaka":"MOMO","GraPARI Malang":"TOMO","GraPARI Malang Blimbing":"MOMO","GraPARI Malili":"MOMO","GraPARI Malinau":"MOMO","GraPARI Mall Ambassador Jakarta":"MOMO","GraPARI Mall Balikpapan Baru":"TOMO","GraPARI Mall Cijantung Jakarta":"MOMO","GraPARI Mall Cinere":"MOMO","GraPARI Mall Grand Cibubur":"TOMO","GraPARI Mall Kelapa Gading Jakarta":"TOMO","GraPARI Mall Kota Kasablanka Jakarta":"TOMO","GraPARI Mall Nagoya Hill Batam":"MOMO","GraPARI Mall Panakukang Makassar":"MOMO","GraPARI Mall Panbill Batam":"TOMO","GraPARI Mall Sarinah":"TOMO","GraPARI Mall Technomart Karawang":"TOMO","GraPARI Maluk":"MOMO","GraPARI Mamasa":"MOMO","GraPARI Mamuju":"MOMO","GraPARI Manado":"TOMO","GraPARI Manna":"MOMO","GraPARI Manokwari":"TOMO","GraPARI Margorejo":"TOMO","GraPARI Marisa":"MOMO","GraPARI Maros":"TOMO","GraPARI Masamba":"TOMO","GraPARI Masohi":"MOMO","GraPARI Mataram":"TOMO","GraPARI Maumere":"TOMO","GraPARI Medan":"TOMO","GraPARI Medan Karyajasa":"MOMO","GraPARI Medan Marelan":"MOMO","GraPARI Merangin":"MOMO","GraPARI Merauke":"TOMO","GraPARI Meteorologi":"MOMO","GraPARI Metro Lampung":"MOMO","GraPARI Metro Trade Center Bandung":"MOMO","GraPARI Meulaboh":"TOMO","GraPARI Miko Mall Bandung":"MOMO","GraPARI Mojokerto":"TOMO","GraPARI Morowali":"MOMO","GraPARI Muara Bungo":"MOMO","GraPARI Muara Enim":"MOMO","GraPARI Muara Jawa":"MOMO","GraPARI Muara Teweh":"TOMO","GraPARI Muko Muko":"MOMO","GraPARI Mungkid":"TOMO","GraPARI Nabire":"MOMO","GraPARI Namlea":"TOMO","GraPARI Nanga Pinoh":"TOMO","GraPARI Natar":"MOMO","GraPARI Natuna":"MOMO","GraPARI Negara":"MOMO","GraPARI Ngabang":"TOMO","GraPARI Nganjuk":"MOMO","GraPARI Ngawi":"TOMO","GraPARI Nunukan":"MOMO","GraPARI Obi":"MOMO","GraPARI PGC Jakarta":"MOMO","GraPARI Pacitan":"MOMO","GraPARI Padalarang":"MOMO","GraPARI Padang":"TOMO","GraPARI Padang Panjang":"MOMO","GraPARI Padang Sidempuan":"TOMO","GraPARI Pahlawan Semarang":"TOMO","GraPARI Painan":"TOMO","GraPARI Pakning":"MOMO","GraPARI Palangka Raya":"TOMO","GraPARI Palembang":"TOMO","GraPARI Palmerah":"TOMO","GraPARI Palopo":"MOMO","GraPARI Palu":"TOMO","GraPARI Pamanukan":"MOMO","GraPARI Pamekasan":"MOMO","GraPARI Pandaan":"MOMO","GraPARI Pandeglang":"MOMO","GraPARI Pangandaran":"MOMO","GraPARI Pangkajene":"TOMO","GraPARI Pangkal Pinang":"TOMO","GraPARI Pangkalan":"MOMO","GraPARI Pangkalan Bun":"MOMO","GraPARI Pangkalan Kerinci":"MOMO","GraPARI Pantai Indah Kapuk":"MOMO","GraPARI Panyabungan":"MOMO","GraPARI ParePare":"TOMO","GraPARI Parigi Moutong":"MOMO","GraPARI Parung":"TOMO","GraPARI Pasaman":"MOMO","GraPARI Passo":"TOMO","GraPARI Pasuruan":"MOMO","GraPARI Pati":"TOMO","GraPARI Payakumbuh":"TOMO","GraPARI Pekalongan":"TOMO","GraPARI Pekanbaru":"TOMO","GraPARI Pekanbaru Panam":"MOMO","GraPARI Pelabuhan Ratu":"TOMO","GraPARI Pelaihari":"MOMO","GraPARI Pemalang":"MOMO","GraPARI Pematang Siantar":"TOMO","GraPARI Penajam Propinsi":"TOMO","GraPARI Perawang Siak":"MOMO","GraPARI Perdagangan":"MOMO","GraPARI Pinrang":"MOMO","GraPARI Piru":"MOMO","GraPARI Plaza Medan Fair":"TOMO","GraPARI Polewali":"MOMO","GraPARI Pondok Indah":"TOMO","GraPARI Pondok Jati Sidoarjo":"MOMO","GraPARI Ponorogo":"MOMO","GraPARI Pontianak":"TOMO","GraPARI Poso":"MOMO","GraPARI Prabumulih":"MOMO","GraPARI Pringsewu":"MOMO","GraPARI Probolinggo":"TOMO","GraPARI Purbalingga":"TOMO","GraPARI Purwakarta":"TOMO","GraPARI Purwodadi":"MOMO","GraPARI Purwokerto":"TOMO","GraPARI Purworejo":"MOMO","GraPARI Putusibau":"MOMO","GraPARI Raha":"TOMO","GraPARI Raja Ampat":"TOMO","GraPARI Rancaekek":"TOMO","GraPARI Rangkasbitung":"MOMO","GraPARI Rantau Prapat":"TOMO","GraPARI Rantau Tapin":"MOMO","GraPARI Rawamangun":"TOMO","GraPARI Rembang":"MOMO","GraPARI Rengat":"MOMO","GraPARI Renon Denpasar":"TOMO","GraPARI Rimbo Bujang":"MOMO","GraPARI Ruteng":"MOMO","GraPARI Sabang":"TOMO","GraPARI Salatiga":"MOMO","GraPARI Samarinda":"TOMO","GraPARI Samarinda Awang Long":"TOMO","GraPARI Sambas":"MOMO","GraPARI Sampang":"MOMO","GraPARI Sampit":"MOMO","GraPARI Sangatta":"MOMO","GraPARI Sanggau":"TOMO","GraPARI Sarmi":"TOMO","GraPARI Sarolangun":"MOMO","GraPARI Saumlaki":"MOMO","GraPARI Sebrang Ulu":"MOMO","GraPARI Sei Danau":"MOMO","GraPARI Sei Rampah":"MOMO","GraPARI Sekayu":"MOMO","GraPARI Selat Panjang":"MOMO","GraPARI Selayar":"TOMO","GraPARI Sentani":"MOMO","GraPARI Serang":"TOMO","GraPARI Serui":"MOMO","GraPARI Sibolga":"TOMO","GraPARI Sidrap Pangkajene":"TOMO","GraPARI Sigli":"MOMO","GraPARI Singaparna":"MOMO","GraPARI Singaraja":"MOMO","GraPARI Singkawang":"MOMO","GraPARI Sinjai":"TOMO","GraPARI Sintang":"MOMO","GraPARI Situbondo":"MOMO","GraPARI Siwa":"TOMO","GraPARI Slawi":"TOMO","GraPARI Sleman":"TOMO","GraPARI Soe":"TOMO","GraPARI Solo":"TOMO","GraPARI Solok":"MOMO","GraPARI Solok Selatan":"MOMO","GraPARI Soppeng":"TOMO","GraPARI Soreang":"MOMO","GraPARI Soroako":"MOMO","GraPARI Sorong":"TOMO","GraPARI Sragen":"TOMO","GraPARI Stabat":"MOMO","GraPARI Subang":"TOMO","GraPARI Subulussalam":"MOMO","GraPARI Sudiang Makassar":"MOMO","GraPARI Sukabumi":"TOMO","GraPARI Sukanagara":"MOMO","GraPARI Sumarrecon Mall Serpong":"MOMO","GraPARI Sumbawa":"MOMO","GraPARI Sumber":"MOMO","GraPARI Sumedang":"MOMO","GraPARI Sumenep":"MOMO","GraPARI Sungai Penuh":"TOMO","GraPARI Sungai Rumbai":"MOMO","GraPARI Supermall Karawaci":"MOMO","GraPARI Supratman":"TOMO","GraPARI Surabaya Barat":"TOMO","GraPARI Surabaya Garuda":"TOMO","GraPARI Surabaya Manyar":"TOMO","GraPARI Surabaya Sudirman":"TOMO","GraPARI Tabanan":"MOMO","GraPARI Tahuna":"TOMO","GraPARI Takalar":"TOMO","GraPARI Takengon":"MOMO","GraPARI Taliwang":"MOMO","GraPARI Tambun":"MOMO","GraPARI Tanah Grogot":"MOMO","GraPARI Tangerang City":"MOMO","GraPARI Tanjung Balai Asahan":"MOMO","GraPARI Tanjung Balai Karimun":"MOMO","GraPARI Tanjung Batu Karimun":"MOMO","GraPARI Tanjung Morawa":"MOMO","GraPARI Tanjung Pinang":"TOMO","GraPARI Tanjung Redep":"MOMO","GraPARI Tanjung Selor":"MOMO","GraPARI Tanjung Tabalong":"MOMO","GraPARI Tarakan":"TOMO","GraPARI Tarutung":"MOMO","GraPARI Tasikmalaya":"TOMO","GraPARI Tawaeli":"TOMO","GraPARI Tebing Tinggi":"MOMO","GraPARI Tegal":"TOMO","GraPARI Teluk Kuantan":"MOMO","GraPARI Temanggung":"TOMO","GraPARI Tembagapura":"MOMO","GraPARI Tembilahan":"MOMO","GraPARI Tenggarong":"MOMO","GraPARI Terminal 3 Bandara Soetta":"TOMO","GraPARI Ternate":"MOMO","GraPARI Timika":"TOMO","GraPARI Tobelo":"TOMO","GraPARI Toboali":"MOMO","GraPARI Toli-Toli":"MOMO","GraPARI Tomohon":"MOMO","GraPARI Topoyo":"MOMO","GraPARI Toraja":"TOMO","GraPARI Trans Studio Mall Bandung":"MOMO","GraPARI Trenggalek":"MOMO","GraPARI Tropodo Sidoarjo":"MOMO","GraPARI Tual":"TOMO","GraPARI Tuban":"MOMO","GraPARI Tulang Bawang":"MOMO","GraPARI Tulungagung":"TOMO","GraPARI Tungkal Ilir":"MOMO","GraPARI Turen":"MOMO","GraPARI Ubud":"TOMO","GraPARI Ujung Batu":"MOMO","GraPARI Ujung Berung":"MOMO","GraPARI Unahaa":"TOMO","GraPARI Ungaran":"MOMO","GraPARI Waikabubak":"MOMO","GraPARI Waingapu":"MOMO","GraPARI Wajo":"TOMO","GraPARI Wamena":"MOMO","GraPARI Wanci":"MOMO","GraPARI Weda":"MOMO","GraPARI Wisma Alia Jakarta":"TOMO","GraPARI Wolter Monginsidi":"MOMO","GraPARI Wonogiri":"TOMO","GraPARI Wonosobo":"MOMO","GraPARI Yogyakarta":"TOMO","GraPARI Yos Sudarso":"TOMO","GraPARi Samarinda":"TOMO","GraPari Lembang":"MOMO","Grapari Malang":"TOMO","Grapari Nabire":"MOMO","Grapari Pasangkayu":"MOMO","Grapari Probolinggo":"TOMO","Grapari Raja Ampat":"TOMO","Grapari Sukoharjo":"MOMO","Grapari Tual":"TOMO","Grapari Unahaa":"TOMO"};
         const MASTER_STORAGE_KEY = 'tnps_mobile_bisnis_model_master';
         let bisnisModelMaster = loadBisnisModelMaster();
 
@@ -450,101 +463,84 @@
         }
 
         const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const BULAN_ALIASES = {
+            jan: 1, januari: 1, january: 1, '01': 1, '1': 1,
+            feb: 2, februari: 2, february: 2, '02': 2, '2': 2,
+            mar: 3, maret: 3, mar: 3, march: 3, '03': 3, '3': 3,
+            apr: 4, april: 4, '04': 4, '4': 4,
+            mei: 5, may: 5, '05': 5, '5': 5,
+            jun: 6, juni: 6, june: 6, '06': 6, '6': 6,
+            jul: 7, juli: 7, july: 7, '07': 7, '7': 7,
+            agu: 8, ags: 8, agustus: 8, august: 8, '08': 8, '8': 8,
+            sep: 9, sept: 9, september: 9, '09': 9, '9': 9,
+            okt: 10, oct: 10, oktober: 10, october: 10, '10': 10,
+            nov: 11, nop: 11, november: 11, '11': 11,
+            des: 12, dec: 12, desember: 12, december: 12, '12': 12
+        };
+
+        function extractYearMonth(row) {
+            let bulanRaw = getColAny(row, 'bulan', 'month', 'periode');
+            let dateRaw = getColAny(row, 'survey_date', 'event_date', 'tanggal', 'date', 'created_at', 'tgl');
+            let year = '2026';
+            let monthNum = null;
+
+            if (dateRaw) {
+                let mIso = dateRaw.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+                if (mIso && +mIso[2] >= 1 && +mIso[2] <= 12) {
+                    year = mIso[1];
+                    monthNum = +mIso[2];
+                } else {
+                    let mId = dateRaw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
+                    if (mId && +mId[2] >= 1 && +mId[2] <= 12) {
+                        year = mId[3];
+                        monthNum = +mId[2];
+                    } else {
+                        let n = Number(String(dateRaw).replace(',', '.'));
+                        if (!isNaN(n) && n > 20000 && n < 80000) {
+                            let d = new Date(Math.round((n - 25569) * 86400000));
+                            year = String(d.getUTCFullYear());
+                            monthNum = d.getUTCMonth() + 1;
+                        }
+                    }
+                }
+            }
+
+            if (bulanRaw) {
+                let yMatch = bulanRaw.match(/\b(20\d{2})\b/);
+                if (yMatch) year = yMatch[1];
+
+                let clean = bulanRaw.toLowerCase().trim();
+                let ymMatch = clean.match(/^(\d{4})[-\/]?(\d{1,2})$/);
+                if (ymMatch && +ymMatch[2] >= 1 && +ymMatch[2] <= 12) {
+                    year = ymMatch[1];
+                    monthNum = +ymMatch[2];
+                } else if (BULAN_ALIASES[clean]) {
+                    monthNum = BULAN_ALIASES[clean];
+                } else {
+                    for (let token of clean.split(/[^a-z0-9]+/)) {
+                        if (BULAN_ALIASES[token]) {
+                            monthNum = BULAN_ALIASES[token];
+                            break;
+                        }
+                    }
+                }
+            }
+
+            return { year, monthNum };
+        }
+
         function monthLabel(y, m) {
             let mm = String(m).padStart(2, '0');
             return `${y}-${mm} (${BULAN_ID[Number(m) - 1] || mm})`;
         }
+
         function deriveMobilePeriod(row) {
+            let { year, monthNum } = extractYearMonth(row);
+            if (monthNum && monthNum >= 1 && monthNum <= 12) {
+                return monthLabel(year, monthNum);
+            }
             let bulan = getColAny(row, 'bulan');
-            if (bulan) return bulan;
-
-            let raw = getColAny(row, 'survey_date', 'event_date');
-            if (!raw) return 'General Period';
-
-            let m = raw.match(/^(\d{4})[-\/]?(\d{2})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[1], +m[2]);
-
-            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return monthLabel(m[3], +m[2]);
-
-            let n = Number(raw.replace(',', '.'));
-            if (!isNaN(n) && n > 20000 && n < 80000) {
-                let d = new Date(Math.round((n - 25569) * 86400000));
-                return monthLabel(d.getUTCFullYear(), d.getUTCMonth() + 1);
-            }
-            return 'General Period';
-        }
-
-        const MONTH_ORDER_MAP = {
-            jan: 1, januari: 1, january: 1,
-            feb: 2, februari: 2, february: 2,
-            mar: 3, maret: 3, march: 3,
-            apr: 4, april: 4,
-            mei: 5, may: 5,
-            jun: 6, juni: 6, june: 6,
-            jul: 7, juli: 7, july: 7,
-            agu: 8, ags: 8, agustus: 8, aug: 8, august: 8,
-            sep: 9, sept: 9, september: 9,
-            okt: 10, oct: 10, oktober: 10, october: 10,
-            nov: 11, november: 11,
-            des: 12, dec: 12, desember: 12, december: 12
-        };
-
-        function getMonthSortKey(label) {
-            let s = String(label || '').trim().toLowerCase();
-            if (!s) return 999999;
-            let ym = s.match(/(\d{4})[-\/](\d{1,2})/);
-            if (ym) return parseInt(ym[1], 10) * 100 + parseInt(ym[2], 10);
-            let my = s.match(/^([a-z]+)[\s\-\/]*(\d{2,4})$/);
-            if (my && MONTH_ORDER_MAP[my[1]]) {
-                let yr = parseInt(my[2], 10);
-                if (yr < 100) yr += 2000;
-                return yr * 100 + MONTH_ORDER_MAP[my[1]];
-            }
-            for (let [k, idx] of Object.entries(MONTH_ORDER_MAP)) {
-                if (s === k || s.startsWith(k + ' ') || s.startsWith(k + '-') || s.includes('(' + k)) {
-                    let yrMatch = s.match(/20\d{2}/);
-                    let yr = yrMatch ? parseInt(yrMatch[0], 10) : 2026;
-                    return yr * 100 + idx;
-                }
-            }
-            let pureNum = parseInt(s.replace(/\D/g, ''), 10);
-            if (!isNaN(pureNum) && pureNum >= 1 && pureNum <= 12) return 202600 + pureNum;
-            return 999999;
-        }
-
-        function sortPeriodLabels(arr) {
-            return arr.sort((a, b) => {
-                let ka = getMonthSortKey(a);
-                let kb = getMonthSortKey(b);
-                if (ka !== kb) return ka - kb;
-                let numA = parseInt(String(a).replace(/\D/g, ''), 10) || 0;
-                let numB = parseInt(String(b).replace(/\D/g, ''), 10) || 0;
-                return numA !== 0 && numB !== 0 ? numA - numB : String(a).localeCompare(String(b));
-            });
-        }
-
-        function deriveIndihomeBulan(row) {
-            let b = getColAny(row, 'bulan', 'month');
-            if (b) {
-                let n = Number(b);
-                if (!isNaN(n) && n >= 1 && n <= 12 && b.length <= 2) {
-                    return BULAN_ID[n - 1];
-                }
-                return b;
-            }
-            let raw = getColAny(row, 'ts_call', 'ts_call.1');
-            if (!raw) return '';
-            let m = raw.match(/^(\d{4})[-\/](\d{2})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return BULAN_ID[+m[2] - 1];
-            m = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);
-            if (m && +m[2] >= 1 && +m[2] <= 12) return BULAN_ID[+m[2] - 1];
-            let num = Number(raw.replace(',', '.'));
-            if (!isNaN(num) && num > 20000 && num < 80000) {
-                let d = new Date(Math.round((num - 25569) * 86400000));
-                return BULAN_ID[d.getUTCMonth()];
-            }
-            return '';
+            return bulan || 'General Period';
         }
 
         function formatPeriod(p) {
@@ -563,70 +559,41 @@
             return WEEK_RANGES[filterMode];
         }
 
-        let currentIndihomeMonth = 'all';
-
-        function setIndihomeMonthFilter(val) {
-            currentIndihomeMonth = val;
-            let select = document.getElementById('weekFilter');
-            if (select) select.value = val;
-            renderMonthButtons();
-            if (globalRawData.length > 0) processAndRender();
-        }
-
-        let availableIndihomeMonths = [];
-
-        function renderMonthButtons() {
-            let wrap = document.getElementById('monthButtonGroup');
-            if (!wrap) return;
-            let allActive = currentIndihomeMonth === 'all';
-            let html = `<button type="button" onclick="setIndihomeMonthFilter('all')" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${allActive ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600'}">Semua Bulan</button>`;
-            availableIndihomeMonths.forEach(m => {
-                let active = currentIndihomeMonth === m;
-                let safeVal = m.replace(/'/g, "\\'");
-                html += `<button type="button" onclick="setIndihomeMonthFilter('${safeVal}')" class="px-2.5 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${active ? 'bg-red-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600'}">${m}</button>`;
-            });
-            wrap.innerHTML = html;
-        }
-
         function buildWeekOptions() {
             let select = document.getElementById('weekFilter');
-            let previous = currentIndihomeMonth || select.value;
+            let previous = select.value;
 
-            let months = new Set();
+            let weeks = new Set();
             globalRawData.forEach(row => {
-                let b = row.__bulan !== undefined ? row.__bulan : deriveIndihomeBulan(row);
-                if (b) months.add(b);
+                let m = getCol(row, 'week').match(/\d+/);
+                if (m) {
+                    let n = parseInt(m[0]);
+                    if (n > 0) weeks.add(n);
+                }
             });
-            availableIndihomeMonths = sortPeriodLabels(Array.from(months));
+            let sortedWeeks = Array.from(weeks).sort((a, b) => a - b);
 
-            let html = `<option value="all">Semua Bulan</option>`;
-            availableIndihomeMonths.forEach(m => {
-                html += `<option value="${m}">${m}</option>`;
-            });
+            let html = `<option value="all">Semua Minggu di File (Full Month)</option>`;
+
+            if (sortedWeeks.length > 0) {
+                html += `<optgroup label="Per Minggu (Rolling 4W)">`;
+                sortedWeeks.forEach(n => {
+                    let start = Math.max(1, n - (ROLLING_WINDOW - 1));
+                    html += `<option value="wk_${n}">Week ${n} (W${start}–W${n})</option>`;
+                });
+                html += `</optgroup>`;
+            }
+
+            html += `<optgroup label="Rentang Minggu (Rolling 4W)">
+                <option value="w40_43">Week 40 - Week 43</option>
+                <option value="w44_48">Week 44 - Week 48</option>
+                <option value="w49_52">Week 49 - Week 52</option>
+            </optgroup>`;
+
             select.innerHTML = html;
 
-            let stillExists = previous === 'all' || availableIndihomeMonths.includes(previous);
-            currentIndihomeMonth = stillExists ? previous : 'all';
-            select.value = currentIndihomeMonth;
-            renderMonthButtons();
-        }
-
-        function buildMitraOptions() {
-            let mitras = new Set();
-            globalRawData.forEach(row => {
-                let m = row.__mitra !== undefined ? row.__mitra : getColAny(row, 'mitra');
-                if (m && m.toLowerCase() !== 'unspecified' && m !== '-') mitras.add(m);
-            });
-            let sortedMitras = Array.from(mitras).sort((a, b) => a.localeCompare(b));
-            let html = `<option value="all">Semua Mitra</option>` + sortedMitras.map(m => `<option value="${m}">${m}</option>`).join('');
-            document.querySelectorAll('.mitraFilterSelect').forEach(sel => {
-                let prev = currentMitraFilter || sel.value;
-                sel.innerHTML = html;
-                sel.value = (prev === 'all' || sortedMitras.includes(prev)) ? prev : 'all';
-            });
-            if (currentMitraFilter !== 'all' && !sortedMitras.includes(currentMitraFilter)) {
-                currentMitraFilter = 'all';
-            }
+            let stillExists = Array.from(select.options).some(o => o.value === previous);
+            select.value = stillExists ? previous : 'all';
         }
 
         function switchMode(mode) {
@@ -646,7 +613,7 @@
                 uploadLabel.className = "cursor-pointer group relative inline-flex items-center justify-center w-full sm:w-auto px-5 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-red-600/25 active:scale-95 transition-all";
                 uploadText.textContent = "Upload File IndiHome";
                 mainTitle.textContent = "📊 IndiHome tNPS Analytics Dashboard";
-                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total • Filter Bulanan (Jan–Okt) • Mendukung CSV > 300 MB (Streaming)";
+                subTitle.textContent = "Formula: (Promotor - Detractor) / Grand Total (ts_call) • Weekly = rolling 4 minggu (W-3 s/d W) • Full Month = per minggu sumber";
                 placeholderTitle.textContent = "Belum ada file data IndiHome yang diunggah";
                 weekFilterContainer.style.display = "flex";
                 document.getElementById('momoChartFilterWrap').style.display = "flex";
@@ -678,154 +645,14 @@
         const WORKER_CODE = `
             importScripts('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
             let wb = null;
-
-            function detectDelimiter(headerLine) {
-                let candidates = [',', ';', '\t', '|'];
-                let best = ',';
-                let maxCount = -1;
-                let inQuotes = false;
-                let counts = { ',': 0, ';': 0, '\t': 0, '|': 0 };
-                for (let i = 0; i < headerLine.length; i++) {
-                    let ch = headerLine[i];
-                    if (ch === '"') inQuotes = !inQuotes;
-                    else if (!inQuotes && counts[ch] !== undefined) counts[ch]++;
-                }
-                for (let c of candidates) {
-                    if (counts[c] > maxCount) { maxCount = counts[c]; best = c; }
-                }
-                return best;
-            }
-
-            function parseCsvLine(line, delim) {
-                let res = [];
-                let cur = '';
-                let inQuotes = false;
-                for (let i = 0; i < line.length; i++) {
-                    let ch = line[i];
-                    if (ch === '"') {
-                        if (inQuotes && line[i + 1] === '"') {
-                            cur += '"';
-                            i++;
-                        } else {
-                            inQuotes = !inQuotes;
-                        }
-                    } else if (ch === delim && !inQuotes) {
-                        res.push(cur);
-                        cur = '';
-                    } else {
-                        cur += ch;
-                    }
-                }
-                res.push(cur);
-                return res;
-            }
-
-            async function streamCsvFile(file, mode) {
-                const stream = typeof file.stream === 'function' ? file.stream() : new Response(file).body;
-                const reader = stream.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let leftover = '';
-                let headers = null;
-                let delim = ',';
-                let rows = [];
-                let totalBytesRead = 0;
-                const totalBytes = file.size || 1;
-                let lastProgressReport = 0;
-
-                // Untuk mode IndiHome, simpan hanya kolom yang relevan agar file > 300MB (1-2 juta baris) tetap ringan di RAM
-                let colMap = null;
-                const targetCols = [
-                    'id_trx', 'ts_call', 'ts_call.1', 'category', 'nps',
-                    'unit_name', 'unit_type', 'unit_type2', 'channel',
-                    'reason_desc', 'area', 'region', 'regional', 'area_lacci',
-                    'journey', 'source', 'sumber', 'bulan', 'month',
-                    'bisnis model', 'bisnis_model', 'momo/tomo', 'momo/  tomo', 'momo', 'tomo', 'mitra', 'week'
-                ];
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (value) {
-                        totalBytesRead += value.byteLength;
-                        leftover += decoder.decode(value, { stream: !done });
-                    } else if (done) {
-                        leftover += decoder.decode();
-                    }
-
-                    let lines = leftover.split(/\r?\n/);
-                    leftover = done ? '' : lines.pop();
-
-                    for (let i = 0; i < lines.length; i++) {
-                        let line = lines[i];
-                        if (!line || !line.trim()) continue;
-                        if (!headers) {
-                            line = line.replace(/^\uFEFF/, '');
-                            delim = detectDelimiter(line);
-                            headers = parseCsvLine(line, delim).map(h => h.trim());
-                            if (mode === 'indihome') {
-                                colMap = [];
-                                headers.forEach((h, idx) => {
-                                    let low = h.toLowerCase().trim();
-                                    if (targetCols.includes(low) || low.includes('momo') || low.includes('tomo') || low.includes('bisnis') || low.includes('mitra') || low.includes('bulan')) {
-                                        colMap.push({ idx, name: h });
-                                    }
-                                });
-                                if (colMap.length === 0) {
-                                    colMap = headers.map((h, idx) => ({ idx, name: h }));
-                                }
-                            }
-                            continue;
-                        }
-
-                        let vals = parseCsvLine(line, delim);
-                        if (mode === 'indihome' && colMap) {
-                            let obj = {};
-                            for (let c = 0; c < colMap.length; c++) {
-                                let m = colMap[c];
-                                obj[m.name] = vals[m.idx] !== undefined ? vals[m.idx] : '';
-                            }
-                            rows.push(obj);
-                        } else {
-                            let obj = {};
-                            for (let c = 0; c < headers.length; c++) {
-                                obj[headers[c]] = vals[c] !== undefined ? vals[c] : '';
-                            }
-                            rows.push(obj);
-                        }
-                    }
-
-                    if (totalBytesRead - lastProgressReport > 15 * 1024 * 1024 || done) {
-                        lastProgressReport = totalBytesRead;
-                        let pct = Math.min(99, Math.round((totalBytesRead / totalBytes) * 100));
-                        self.postMessage({
-                            type: 'progress',
-                            pct,
-                            mb: (totalBytesRead / 1048576).toFixed(1),
-                            totalMb: (totalBytes / 1048576).toFixed(1),
-                            count: rows.length
-                        });
-                    }
-
-                    if (done) break;
-                }
-
-                self.postMessage({ type: 'sheets', sheetNames: ['CSV Data'], isCsv: true });
-                self.postMessage({ type: 'rows', rows, headers: headers || [] });
-            }
-
             self.onmessage = async (e) => {
                 try {
                     if (e.data.file) {
-                        const file = e.data.file;
-                        const nameLower = (file.name || '').toLowerCase();
-                        if (nameLower.endsWith('.csv') || nameLower.endsWith('.txt')) {
-                            await streamCsvFile(file, e.data.mode || 'indihome');
-                        } else {
-                            const buf = await file.arrayBuffer();
-                            wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true, cellStyles: false });
-                            self.postMessage({ type: 'sheets', sheetNames: wb.SheetNames });
-                        }
+                        const buf = await e.data.file.arrayBuffer();
+                        wb = XLSX.read(new Uint8Array(buf), { type: 'array', raw: true, cellStyles: false });
+                        self.postMessage({ type: 'sheets', sheetNames: wb.SheetNames });
                     }
-                    if (e.data.sheet && wb) {
+                    if (e.data.sheet) {
                         const rows = XLSX.utils.sheet_to_json(wb.Sheets[e.data.sheet], { defval: '' });
                         self.postMessage({ type: 'rows', rows });
                     }
@@ -837,7 +664,6 @@
         let dataWorker = null;
         let useMainThread = false;
         let currentFile = null;
-        let detectedFileHeaders = [];
 
         function setLoading(msg) {
             document.getElementById('placeholder').classList.remove('hidden');
@@ -864,26 +690,18 @@
             else sheetContainer.classList.add('hidden');
         }
 
-        function onRowsLoaded(rows, headers) {
+        function onRowsLoaded(rows) {
             globalRawData = rows;
-            detectedFileHeaders = headers || Object.keys(globalRawData[0] || {});
             if (globalRawData.length === 0) {
-                alert("File / Sheet ini kosong!");
-                document.getElementById('placeholderTitle').textContent = "File / Sheet kosong.";
+                alert("Sheet ini kosong!");
+                document.getElementById('placeholderTitle').textContent = "Sheet kosong.";
                 return;
-            }
-            if (currentMode === 'indihome') {
-                for (let i = 0; i < globalRawData.length; i++) {
-                    globalRawData[i].__bulan = deriveIndihomeBulan(globalRawData[i]);
-                    globalRawData[i].__mitra = getColAny(globalRawData[i], 'mitra');
-                }
             }
             document.getElementById('fileInfo').classList.remove('hidden');
             document.getElementById('placeholder').classList.add('hidden');
             document.getElementById('dashboardContent').classList.remove('hidden');
 
             buildWeekOptions();
-            buildMitraOptions();
             buildSourceColOptions();
             processAndRender();
         }
@@ -929,15 +747,11 @@
 
             dataWorker.onmessage = function(event) {
                 let msg = event.data;
-                if (msg.type === 'progress') {
-                    setLoading(`Membaca CSV (${msg.mb} / ${msg.totalMb} MB • ${msg.pct}%) — ${msg.count.toLocaleString('id-ID')} baris dimuat...`);
-                } else if (msg.type === 'sheets') {
+                if (msg.type === 'sheets') {
                     populateSheetSelector(msg.sheetNames);
-                    if (!msg.isCsv) {
-                        dataWorker.postMessage({ sheet: msg.sheetNames[0] });
-                    }
+                    dataWorker.postMessage({ sheet: msg.sheetNames[0] });
                 } else if (msg.type === 'rows') {
-                    onRowsLoaded(msg.rows, msg.headers);
+                    onRowsLoaded(msg.rows);
                 } else {
                     showLoadError(msg.message);
                 }
@@ -950,7 +764,7 @@
                 parseOnMainThread(currentFile);
             };
 
-            dataWorker.postMessage({ file, mode: currentMode });
+            dataWorker.postMessage({ file });
             e.target.value = '';
         });
 
@@ -961,6 +775,30 @@
         document.getElementById('weekFilter').addEventListener('change', function() {
             if (globalRawData.length > 0) processAndRender();
         });
+
+        document.getElementById('monthFilter').addEventListener('change', function() {
+            if (globalRawData.length > 0) processAndRender();
+        });
+
+        function matchesMonthFilter(row, filterVal) {
+            if (!filterVal || filterVal === 'all') return true;
+            let { monthNum } = extractYearMonth(row);
+            if (!monthNum) return true; // Jika tidak ada info bulan/tanggal, jangan dibuang otomatis
+            if (filterVal === 'jan_okt') return monthNum >= 1 && monthNum <= 10;
+            return monthNum === parseInt(filterVal, 10);
+        }
+
+        function exportFilteredData() {
+            if (!lastRenderedData || lastRenderedData.length === 0) {
+                alert("Belum ada data terfilter untuk diunduh.");
+                return;
+            }
+            const ws = XLSX.utils.json_to_sheet(lastRenderedData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Filtered_Jan_Okt");
+            const monthSel = document.getElementById('monthFilter').value;
+            XLSX.writeFile(wb, `tnps_${currentMode}_${monthSel}.xlsx`);
+        }
 
         function getCol(row, name) {
             let keys = Object.keys(row);
@@ -982,19 +820,22 @@
 
         function mapIndihomeRow(row) {
             let unitType2 = getCol(row, 'unit_type2').toLowerCase();
-            let unitType = getCol(row, 'unit_type').toLowerCase();
             let npsVal = getCol(row, 'nps').toLowerCase();
             let categoryVal = getCol(row, 'category').toLowerCase();
             let reasonDesc = getCol(row, 'reason_desc');
-            let bulanVal = row.__bulan !== undefined ? row.__bulan : deriveIndihomeBulan(row);
+            let rawWeek = getCol(row, 'week');
             let unitName = getColAny(row, 'unit_name', 'unit name', 'nama_unit', 'unit');
             let areaVal = getColAny(row, 'area', 'nama_area', 'wilayah_area', 'area_name') || '';
             let regionalVal = getColAny(row, 'regional', 'region', 'nama_regional', 'treg') || '';
-            let momoVal = getColAny(row, 'bisnis model', 'bisnis_model', 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'momo', 'tomo');
-            let mitraVal = row.__mitra !== undefined ? row.__mitra : getColAny(row, 'mitra');
+            let momoVal = getColAny(row, 'momo/  tomo', 'momo/tomo', 'momo _ tomo', 'momotomo', 'bisnis model', 'bisnis_model', 'momo', 'tomo');
             if (!momoVal && unitName && typeof bisnisModelMaster !== 'undefined' && bisnisModelMaster[unitName]) {
                 momoVal = bisnisModelMaster[unitName];
             }
+
+            let weekMatch = rawWeek.match(/\d+/);
+            let weekNum = weekMatch ? parseInt(weekMatch[0]) : 0;
+            let { year, monthNum } = extractYearMonth(row);
+            let fallbackPeriod = monthNum ? monthLabel(year, monthNum) : 'General Period';
 
             let isPromotor = 0, isDetractor = 0, isPassive = 0;
             let targetNps = npsVal || categoryVal;
@@ -1012,16 +853,15 @@
                 }
             }
 
-            let combinedUnit = unitType2 || unitType;
             let ctpGroup = "Call Center";
-            if (combinedUnit.includes('grapari') || combinedUnit.includes('plasa')) {
+            if (unitType2.includes('grapari') || unitType2.includes('plasa')) {
                 ctpGroup = "GraPARI";
-            } else if (combinedUnit.includes('socmed') || combinedUnit.includes('social') || combinedUnit.includes('saltik')) {
+            } else if (unitType2.includes('socmed') || unitType2.includes('social') || unitType2.includes('saltik')) {
                 ctpGroup = "Socmed";
-            } else if (combinedUnit.includes('call') || combinedUnit.includes('cc') || combinedUnit.includes('ivr')) {
+            } else if (unitType2.includes('call') || unitType2.includes('cc') || unitType2.includes('ivr')) {
                 ctpGroup = "Call Center";
             } else {
-                ctpGroup = combinedUnit ? combinedUnit : "Call Center";
+                ctpGroup = unitType2 ? unitType2 : "Call Center";
             }
 
             let targetReasons = [
@@ -1040,15 +880,16 @@
             else if (unitNameLower.includes('semarang') || unitNameLower.includes('smg')) ccSite = 'semarang';
 
             return {
-                IsValid: bulanVal !== '',
-                Period: bulanVal,
+                IsValid: true,
+                HasWeek: weekNum > 0,
+                WeekNum: weekNum,
+                FallbackPeriod: fallbackPeriod,
                 Mapped_CTP: ctpGroup,
-                Is_GraPARI: combinedUnit.includes('grapari') || combinedUnit.includes('plasa'),
+                Is_GraPARI: unitType2.includes('grapari') || unitType2.includes('plasa'),
                 CC_Site: ccSite,
                 UnitName: unitName,
                 Area: areaVal,
                 Regional: regionalVal,
-                Mitra: mitraVal !== '' ? mitraVal : 'Unspecified',
                 MomoTomo: momoVal !== '' ? momoVal.toUpperCase() : 'Unspecified',
                 Is_CS: isCS,
                 Promoter: isPromotor,
@@ -1157,8 +998,7 @@
             return { rows, stats, hasBisnisModelCol, learned, hasIdTrxCol };
         }
 
-        let currentMomoFilter = 'national'; // 'national' | 'area' | 'regional' | 'mitra'
-        let currentMitraFilter = 'all';
+        let currentMomoFilter = 'national'; // 'national' | 'area' | 'regional'
         let currentCcFilter = 'all';     // 'all' | 'bandung' | 'semarang'
 
         function setMomoFilter(val) {
@@ -1167,12 +1007,6 @@
             let fTable = document.getElementById('momoFilterTable');
             if (fChart) fChart.value = val;
             if (fTable) fTable.value = val;
-            if (globalRawData.length > 0) processAndRender();
-        }
-
-        function setMitraFilter(val) {
-            currentMitraFilter = val;
-            document.querySelectorAll('.mitraFilterSelect').forEach(el => { el.value = val; });
             if (globalRawData.length > 0) processAndRender();
         }
 
@@ -1189,15 +1023,44 @@
             document.querySelector('#momoTable thead th:nth-child(7)').textContent = mainLabel;
         }
 
+        function sortPeriodsChronologically(periodsSet) {
+            return Array.from(periodsSet).sort((a, b) => {
+                let sa = String(a), sb = String(b);
+                let ymA = sa.match(/^(\d{4})-(\d{2})/);
+                let ymB = sb.match(/^(\d{4})-(\d{2})/);
+                if (ymA && ymB) {
+                    return (parseInt(ymA[1]) * 100 + parseInt(ymA[2])) - (parseInt(ymB[1]) * 100 + parseInt(ymB[2]));
+                }
+                let wA = sa.match(/^W(\d+)$/i);
+                let wB = sb.match(/^W(\d+)$/i);
+                if (wA && wB) return parseInt(wA[1]) - parseInt(wB[1]);
+                return sa.localeCompare(sb);
+            });
+        }
+
         function processAndRender() {
+            let monthFilterVal = document.getElementById('monthFilter').value;
+            let monthFilteredRaw = globalRawData.filter(row => matchesMonthFilter(row, monthFilterVal));
+
             let filterMode = document.getElementById('weekFilter').value;
             let processedData = [];
             let rowInfoText = '';
 
             if (currentMode === 'indihome') {
-                isRollingView = false;
+                isRollingView = filterMode !== 'all';
 
-                let periodHeader = "Periode (Bulan)";
+                let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
+                let mappedRows = monthFilteredRaw.map(row => ({
+                    ...mapIndihomeRow(row),
+                    Source: getCol(row, sourceCol) || '(kosong)'
+                }));
+
+                let hasAnyWeek = mappedRows.some(r => r.HasWeek);
+                if (!hasAnyWeek) isRollingView = false;
+
+                let periodHeader = isRollingView
+                    ? "Periode (Week, Rolling 4W)"
+                    : (hasAnyWeek ? "Periode (Week)" : "Periode (Bulan)");
                 document.getElementById('thPeriod1').textContent = periodHeader;
                 document.getElementById('thPeriod2').textContent = periodHeader;
                 document.getElementById('thPeriod3').textContent = periodHeader;
@@ -1206,28 +1069,35 @@
                 document.getElementById('thCtp2').textContent = "unit_type2 (CTP) - People CS";
                 setTotalHeaders("Grand Total", "Grand Total (CS)");
 
-                let sourceCol = document.getElementById('sourceColSelect').value || 'source';
-                let selectedMonth = currentIndihomeMonth || filterMode || 'all';
+                if (!hasAnyWeek) {
+                    processedData = mappedRows.map(r => ({ ...r, Period: r.FallbackPeriod }));
+                    rowInfoText = `${processedData.length} baris (filter: ${monthFilterVal.toUpperCase()})`;
+                } else if (!isRollingView) {
+                    processedData = mappedRows
+                        .filter(r => r.HasWeek)
+                        .map(r => ({ ...r, Period: `W${r.WeekNum}` }));
+                    rowInfoText = `${processedData.length} baris data aktif`;
+                } else {
+                    let weekRows = mappedRows.filter(r => r.HasWeek);
+                    let [minWeek, maxWeek] = getWeekRange(filterMode);
+                    let availableWeeks = new Set(weekRows.map(r => r.WeekNum));
+                    let usedSourceRows = 0;
 
-                processedData = [];
-                let baseIndihomeCount = 0;
-                for (let i = 0; i < globalRawData.length; i++) {
-                    let row = globalRawData[i];
-                    let mapped = mapIndihomeRow(row);
-                    if (!mapped.IsValid) continue;
-                    baseIndihomeCount++;
-                    if (selectedMonth !== 'all' && mapped.Period !== selectedMonth) continue;
-                    mapped.Source = getCol(row, sourceCol) || '(kosong)';
-                    processedData.push(mapped);
-                }
-                if (globalRawData.length > 0 && baseIndihomeCount === 0) {
-                    alert("Mode IndiHome: 0 baris memiliki Bulan valid.\nPastikan kolom 'Bulan' (misal: Jan, Feb, ..., Okt) atau 'ts_call' berisi tanggal/bulan.\n\nKolom terdeteksi:\n" + detectedFileHeaders.join(', '));
+                    weekRows.forEach(r => {
+                        let used = false;
+                        for (let offset = 0; offset < ROLLING_WINDOW; offset++) {
+                            let reportWeek = r.WeekNum + offset;
+                            if (reportWeek < minWeek || reportWeek > maxWeek) continue;
+                            if (!availableWeeks.has(reportWeek)) continue;
+                            processedData.push({ ...r, Period: `W${reportWeek}` });
+                            used = true;
+                        }
+                        if (used) usedSourceRows++;
+                    });
+
+                    rowInfoText = `${usedSourceRows} baris sumber • rolling 4 minggu`;
                 }
 
-                let skippedMonthCount = globalRawData.length - baseIndihomeCount;
-                rowInfoText = selectedMonth === 'all'
-                    ? `${processedData.length.toLocaleString('id-ID')} baris data aktif (Semua Bulan)` + (skippedMonthCount > 0 ? ` • ${skippedMonthCount.toLocaleString('id-ID')} baris tanpa Bulan` : '')
-                    : `${processedData.length.toLocaleString('id-ID')} baris data aktif (Bulan: ${selectedMonth})`;
             } else {
                 isRollingView = false;
 
@@ -1239,16 +1109,14 @@
                 document.getElementById('thCtp2').textContent = "Unit Type (CTP) - People CS";
                 setTotalHeaders("Count id_trx", "Count id_trx (CS)");
 
-                let result = mapMobileRows(globalRawData);
+                let result = mapMobileRows(monthFilteredRaw);
                 processedData = result.rows;
 
                 if (processedData.length === 0) {
-                    alert("Mode Mobile: 0 baris valid (kolom id_trx / msisdn tidak ditemukan atau kosong).\n\nKolom terdeteksi:\n" +
-                          Object.keys(globalRawData[0] || {}).join(', ') +
-                          "\n\nKolom wajib: id_trx (atau msisdn), tNPS / tnps type, unit_type");
+                    alert("Mode Mobile: 0 baris valid pada filter saat ini (cek kolom id_trx / msisdn, tNPS, unit_type, atau filter bulan).");
                 } else if (result.stats.noCategory === processedData.length) {
                     alert("Mode Mobile: kolom tNPS tidak ditemukan atau isinya tidak dikenali.\n" +
-                          "Pastikan ada kolom 'tNPS' atau 'tnps type' berisi Promotor / Passiver / Detractor.");
+                          "Pastikan ada kolom 'tNPS' atau 'tnps type' berisi Promotor / Passive / Detractor.");
                 }
 
                 rowInfoText = result.hasIdTrxCol
@@ -1276,6 +1144,7 @@
             }
 
             if (currentMode === 'indihome') updateMasterInfo();
+            lastRenderedData = processedData;
             document.getElementById('rowCount').textContent = rowInfoText;
             renderDashboard(processedData);
 
@@ -1293,8 +1162,7 @@
         function buildSourceColOptions() {
             let select = document.getElementById('sourceColSelect');
             let previous = select.value;
-            let rawCols = (detectedFileHeaders && detectedFileHeaders.length > 0) ? detectedFileHeaders : Object.keys(globalRawData[0] || {});
-            let cols = rawCols.map(c => c.trim()).filter(c => c !== '' && !c.startsWith('__'));
+            let cols = Object.keys(globalRawData[0] || {}).map(c => c.trim()).filter(c => c !== '');
             select.innerHTML = cols.map(c => `<option value="${c}">${c}</option>`).join('');
             let preferred = [previous, 'source', 'sumber', 'unit_type2', 'unit_type', 'unit_name']
                 .find(c => c && cols.some(x => x.toLowerCase() === c.toLowerCase()));
@@ -1313,7 +1181,7 @@
             const SEP = '|||';
             let sourceCol = document.getElementById('sourceColSelect').value || 'unit_type2';
             document.getElementById('thSourceName').textContent = `Source (${sourceCol})`;
-            document.getElementById('thPeriodSrc').textContent = "Periode (Bulan)";
+            document.getElementById('thPeriodSrc').textContent = isRollingView ? "Periode (Week, Rolling 4W)" : "Periode";
 
             let byPeriod = {};
             let overall = {};
@@ -1344,7 +1212,7 @@
                 return overall[b].total - overall[a].total || sa.localeCompare(sb);
             });
 
-            let sortedPeriods = sortPeriodLabels(Array.from(periods));
+            let sortedPeriods = sortPeriodsChronologically(periods);
 
             let srcPeriod = {};
             let srcTotal = {};
@@ -1389,7 +1257,7 @@
                         <table class="w-full text-[11px] sm:text-xs text-slate-600">
                             <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                 <tr>
-                                    <th class="px-2.5 py-2.5 text-left">Bulan</th>
+                                    <th class="px-2.5 py-2.5 text-left">Periode</th>
                                     <th class="px-2.5 py-2.5 text-center">D</th>
                                     <th class="px-2.5 py-2.5 text-center">P</th>
                                     <th class="px-2.5 py-2.5 text-center">Prom</th>
@@ -1506,12 +1374,12 @@
             grandTotalLabel
         }) {
             const SEP = '|||';
-            let showDim = currentMode === 'indihome' && (currentMomoFilter === 'area' || currentMomoFilter === 'regional' || currentMomoFilter === 'mitra');
+            let showDim = currentMode === 'indihome' && (currentMomoFilter === 'area' || currentMomoFilter === 'regional');
             let thDim = document.getElementById(dimHeaderId);
             if (thDim) {
                 if (showDim) {
                     thDim.classList.remove('hidden');
-                    thDim.textContent = currentMomoFilter === 'area' ? 'Area' : currentMomoFilter === 'regional' ? 'Regional' : 'Mitra';
+                    thDim.textContent = currentMomoFilter === 'area' ? 'Area' : 'Regional';
                 } else {
                     thDim.classList.add('hidden');
                 }
@@ -1521,13 +1389,8 @@
             let dimsSet = new Set();
 
             data.forEach(item => {
-                // Khusus IndiHome: GraPARI TOMO & MOMO hanya menghitung kategori People (Is_CS)
-                let includeMomo = currentMode === 'indihome' ? (item.Is_GraPARI && item.Is_CS) : true;
+                let includeMomo = currentMode === 'indihome' ? item.Is_GraPARI : true;
                 if (!includeMomo) return;
-
-                if (currentMode === 'indihome' && currentMitraFilter !== 'all') {
-                    if ((item.Mitra || '').trim() !== currentMitraFilter) return;
-                }
 
                 let mt = String(item.MomoTomo || '').trim().toUpperCase();
                 if (mt !== modelName) return;
@@ -1539,9 +1402,6 @@
                         if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
                     } else if (currentMomoFilter === 'regional') {
                         dimVal = (item.Regional || '').trim();
-                        if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
-                    } else if (currentMomoFilter === 'mitra') {
-                        dimVal = (item.Mitra || '').trim();
                         if (!dimVal || dimVal.toLowerCase().includes('unspecified')) return;
                     }
                 }
@@ -1636,13 +1496,13 @@
                     card.innerHTML = `
                         <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between gap-2">
                             <h4 class="font-extrabold text-slate-800 text-sm">${formatPeriod(p)}</h4>
-                            <span class="text-[10px] font-bold uppercase tracking-wide text-indigo-700">${modelName} People • ${currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : currentMomoFilter === 'mitra' ? 'Per Mitra' : 'Nasional'}</span>
+                            <span class="text-[10px] font-bold uppercase tracking-wide text-indigo-700">${modelName} • ${currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : 'Nasional'}</span>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="w-full text-[11px] sm:text-xs text-slate-600">
                                 <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                     <tr>
-                                        <th class="px-2.5 py-2 text-left">${showDim ? (currentMomoFilter === 'area' ? 'Area' : currentMomoFilter === 'regional' ? 'Regional' : 'Mitra') : 'Kategori'}</th>
+                                        <th class="px-2.5 py-2 text-left">${showDim ? (currentMomoFilter === 'area' ? 'Area' : 'Regional') : 'Kategori'}</th>
                                         <th class="px-2.5 py-2 text-center">D</th>
                                         <th class="px-2.5 py-2 text-center">P</th>
                                         <th class="px-2.5 py-2 text-center">Prom</th>
@@ -1765,7 +1625,7 @@
                 }
             });
 
-            let sortedPeriods = sortPeriodLabels(Array.from(periods));
+            let sortedPeriods = sortPeriodsChronologically(periods);
 
             let chartSets = ctpList.map((ctp, i) => {
                 let colors = ['#dc2626', '#2563eb', '#16a34a'];
@@ -1940,24 +1800,23 @@
             });
 
             // 3. Render Terpisah TOMO Only & MOMO Only (Grafik, Kartu, & Tabel)
-            let mitraSuffix = (currentMode === 'indihome' && currentMitraFilter !== 'all') ? ` • Mitra: ${currentMitraFilter}` : '';
             let modeText = currentMode === 'indihome'
-                ? ((currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : currentMomoFilter === 'mitra' ? 'Per Mitra' : 'Nasional') + mitraSuffix)
+                ? (currentMomoFilter === 'area' ? 'Per Area' : currentMomoFilter === 'regional' ? 'Per Regional' : 'Nasional')
                 : 'Bisnis Model';
 
             document.getElementById('momoChartTitle').lastChild.textContent =
                 currentMode === 'indihome'
-                    ? ` Analisis tNPS People TOMO & MOMO (Khusus GraPARI • ${modeText})`
+                    ? ` Analisis tNPS TOMO & MOMO (Khusus GraPARI • ${modeText})`
                     : ` Analisis tNPS TOMO & MOMO`;
             document.getElementById('momoTableTitle').lastChild.textContent =
                 currentMode === 'indihome'
-                    ? ` Rekapitulasi People TOMO Only & MOMO Only (Khusus GraPARI • ${modeText}) & Grand Total`
+                    ? ` Rekapitulasi TOMO Only & MOMO Only (Khusus GraPARI • ${modeText}) & Grand Total`
                     : ` Rekapitulasi TOMO Only & MOMO Only & Grand Total`;
 
-            document.getElementById('tomoChartSubTitle').textContent = currentMode === 'indihome' ? `TOMO People Only — ${modeText}` : `TOMO Only — ${modeText}`;
-            document.getElementById('momoOnlyChartSubTitle').textContent = currentMode === 'indihome' ? `MOMO People Only — ${modeText}` : `MOMO Only — ${modeText}`;
-            document.getElementById('tomoSectionHeading').textContent = currentMode === 'indihome' ? `TOMO People Only (${modeText})` : `TOMO Only (${modeText})`;
-            document.getElementById('momoOnlySectionHeading').textContent = currentMode === 'indihome' ? `MOMO People Only (${modeText})` : `MOMO Only (${modeText})`;
+            document.getElementById('tomoChartSubTitle').textContent = `TOMO Only — ${modeText}`;
+            document.getElementById('momoOnlyChartSubTitle').textContent = `MOMO Only — ${modeText}`;
+            document.getElementById('tomoSectionHeading').textContent = `TOMO Only (${modeText})`;
+            document.getElementById('momoOnlySectionHeading').textContent = `MOMO Only (${modeText})`;
 
             renderBisnisModelBlock({
                 modelName: 'TOMO',
@@ -2067,7 +1926,7 @@
                         <table class="w-full text-[11px] sm:text-xs text-slate-600">
                             <thead class="bg-white text-slate-500 uppercase tracking-wide">
                                 <tr>
-                                    <th class="px-2.5 py-2.5 text-left">Bulan</th>
+                                    <th class="px-2.5 py-2.5 text-left">Periode</th>
                                     <th class="px-2.5 py-2.5 text-center">D</th>
                                     <th class="px-2.5 py-2.5 text-center">P</th>
                                     <th class="px-2.5 py-2.5 text-center">Prom</th>
