@@ -196,9 +196,19 @@
                 <section id="sec-source" class="topic space-y-4" style="--accent:#7c3aed">
                     <div class="topic-head"><span class="tag"></span>
                         <div><h2>Per source survei × CTP</h2>
-                        <p>Tiap source dipisah per CTP. Metode survei dyandra, ivr, dan saltik berbeda, jadi bandingkan CTP di dalam source yang sama.</p></div>
+                        <p>Pilih source, bulan, dan CTP. Metode survei dyandra, ivr, dan saltik berbeda, jadi bandingkan CTP di dalam source yang sama.</p></div>
                     </div>
-                    <div id="ihSrcBoxes" class="space-y-4"></div>
+                    <div class="card p-5 sm:p-6 space-y-4">
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div><label class="ctl-label" for="ihSrcSel">Source</label>
+                                <select id="ihSrcSel" class="ctl min-w-[170px]" onchange="ihSet({srcSel:+this.value})"></select></div>
+                            <div><label class="ctl-label" for="ihSrcPeriod">Periode</label>
+                                <select id="ihSrcPeriod" class="ctl min-w-[190px]" onchange="ihSet({srcPeriod:this.value})"></select></div>
+                            <div><label class="ctl-label" for="ihSrcCtp">CTP</label>
+                                <select id="ihSrcCtp" class="ctl min-w-[180px]" onchange="ihSet({srcCtp:this.value === 'all' ? 'all' : +this.value})"></select></div>
+                        </div>
+                        <div id="ihSrcBoxes" class="space-y-4"></div>
+                    </div>
                 </section>
 
                 <!-- ============ 4. Journey per CTP ============ -->
@@ -219,7 +229,18 @@
                         <div class="flex-1 flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3">
                             <div><h2>Nilai CTP per Area, Region & Branch</h2>
                             <p>Area/region/branch mengikuti kolom di tiap baris survei (lokasi pelanggan). Klik judul kolom untuk mengurutkan.</p></div>
+                        </div>
+                    </div>
+                    <div class="card p-5 space-y-4">
                             <div class="flex flex-wrap items-end gap-3">
+                                <div><label class="ctl-label" for="ihGeoCtp">CTP</label>
+                                    <select id="ihGeoCtp" class="ctl" onchange="ihSet({geoCtp:+this.value, geoSort:{key:+this.value >= 0 ? 'n' + this.value : 'n0', dir:-1}})">
+                                        <option value="-1">Semua CTP (berdampingan)</option>
+                                        <option value="0">Assisted</option>
+                                        <option value="1">Call Center</option>
+                                        <option value="2">GraPARI</option>
+                                        <option value="3">E-Care</option>
+                                    </select></div>
                                 <div class="seg" role="group" aria-label="Level wilayah">
                                     <button id="ihGeoArea" aria-pressed="true" onclick="ihSet({geo:'area'})">Area</button>
                                     <button id="ihGeoRegion" aria-pressed="false" onclick="ihSet({geo:'region'})">Region</button>
@@ -231,9 +252,8 @@
                                     <select id="ihGeoRegion2" class="ctl" onchange="ihSet({geoRegion:+this.value})"></select></div>
                                 <input id="ihGeoSearch" type="search" placeholder="Cari nama…" class="ctl w-44" oninput="ihSet({geoSearch:this.value})">
                             </div>
-                        </div>
+                            <div id="ihGeoTable" class="overflow-x-auto"></div>
                     </div>
-                    <div class="card p-5"><div id="ihGeoTable" class="overflow-x-auto"></div></div>
                 </section>
 
                 <!-- ============ 6. GraPARI TOMO & MOMO ============ -->
@@ -2525,7 +2545,7 @@ self.onmessage = async (e) => {
         const ihState = { period: 'all', gran: 'month', people: false, model: 1, area: 0, region: 0, summary: false,
                           target: 45, minN: 30, search: '', cat: null, sort: { key: 'tnps', dir: -1 }, expanded: new Set(),
                           mitra: 0, locCtp: 1, journeyCtp: 0, geo: 'area', geoArea: 0, geoRegion: 0, geoSearch: '',
-                          geoSort: { key: 'n0', dir: -1 } };
+                          geoSort: { key: 'n0', dir: -1 }, geoCtp: -1, srcSel: 0, srcCtp: 'all', srcPeriod: 'all' };
         try {
             const p = JSON.parse(localStorage.getItem(IH_PREF_KEY) || '{}');
             if (typeof p.target === 'number') ihState.target = p.target;
@@ -2843,11 +2863,11 @@ self.onmessage = async (e) => {
         }
 
         // ---------- 3. Source × CTP ----------
-        function ihCalcSources() {
+        function ihCalcSources(monthOk = ihMonthOk) {
             const a = IH.a, src = {};
             for (let i = 0; i < IH.n; i++) {
                 const s = a.nps[i];
-                if (!s || !ihBasisOk(i) || !ihMonthOk(a.month[i])) continue;
+                if (!s || !ihBasisOk(i) || !monthOk(a.month[i])) continue;
                 const g = src[a.src[i]] || (src[a.src[i]] = [ihNew(), ihNew(), ihNew(), ihNew(), ihNew()]); // 0 luar assisted, 1 CC, 2 GraPARI, 3 E-Care, 4 total assisted
                 g[a.ctp[i]][s]++;
                 if (a.ctp[i]) g[4][s]++;
@@ -2858,7 +2878,7 @@ self.onmessage = async (e) => {
             const t = ihTot(o);
             return `<div class="stat-box ${opts.muted ? 'opacity-70' : ''}" style="${opts.accent ? `border-top:3px solid ${opts.accent}` : ''}">
                 <div class="flex items-center justify-between gap-2"><span class="font-semibold text-sm">${title}</span>${ihChip(ihNps(o))}</div>
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 mt-3">
+                <div class="grid ${opts.compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-4'} gap-x-3 gap-y-2 mt-3">
                     <div><div class="num" style="color:var(--bad)">${ihFmt(o[3])}</div><div class="lbl">Detractor</div></div>
                     <div><div class="num" style="color:#8a6406">${ihFmt(o[2])}</div><div class="lbl">Passive</div></div>
                     <div><div class="num" style="color:#14703c">${ihFmt(o[1])}</div><div class="lbl">Promotor</div></div>
@@ -2867,22 +2887,84 @@ self.onmessage = async (e) => {
                 ${opts.note ? `<div class="text-xs text-[var(--muted)] mt-2">${opts.note}</div>` : ''}
             </div>`;
         }
+
+        // Pilihan CTP untuk section source: kode slot di ihCalcSources
+        const IH_SRC_CTP = [
+            { v: 'all', name: 'Semua CTP' }, { v: 4, name: 'Total Assisted', color: '#13265c' },
+            { v: 1, name: 'Call Center', color: '#e4002b' }, { v: 2, name: 'GraPARI', color: '#2f6fde' },
+            { v: 3, name: 'E-Care', color: '#12a594' }, { v: 0, name: 'Di luar Assisted', color: '#94a3b8', note: 'DigiPos, MyTelkomsel, Landing Page, Others' }
+        ];
+        function ihSrcCtpInfo(v) { return IH_SRC_CTP.find(x => String(x.v) === String(v)); }
+
         function ihRenderSources() {
-            const src = ihCalcSources();
-            const ids = Object.keys(src).map(Number).sort((x, y) => ihTot(src[y][4]) + ihTot(src[y][0]) - ihTot(src[x][4]) - ihTot(src[x][0]));
-            document.getElementById('ihSrcBoxes').innerHTML = ids.map(id => {
-                const g = src[id];
-                const boxes = [1, 2, 3].filter(c => ihTot(g[c]) > 0).map(c => ihStatBox(IH_CTP[c].name, g[c], { accent: IH_CTP[c].color }));
-                if (ihTot(g[4]) > 0) boxes.push(ihStatBox('Total Assisted', g[4], { accent: IH_CTP[0].color }));
-                if (ihTot(g[0]) > 0) boxes.push(ihStatBox('Di luar Assisted', g[0], { muted: true, note: 'DigiPos, MyTelkomsel, Landing Page, Others' }));
-                return `<div class="card p-4 sm:p-5">
-                    <div class="flex items-baseline justify-between gap-2 mb-3">
-                        <h3 class="text-lg font-bold">${ihEsc(IH.labels.src[id] || '(source kosong)')}</h3>
-                        <span class="text-sm text-[var(--muted)]">${ihEsc(ihPeriodTxt())}${ihState.people ? ' · People (CS)' : ''}</span>
+            const L = IH.labels;
+            const selSrc = ihState.srcSel, selCtp = ihState.srcCtp, selPer = ihState.srcPeriod;
+            const monthOk = m => selPer === 'all' || m === +selPer;
+            const src = ihCalcSources(monthOk);
+            const srcIds = Object.keys(src).map(Number).sort((x, y) => (L.src[x] || '').localeCompare(L.src[y] || ''));
+
+            // dropdown
+            const elS = document.getElementById('ihSrcSel'), elP = document.getElementById('ihSrcPeriod'), elC = document.getElementById('ihSrcCtp');
+            elS.innerHTML = '<option value="0">Semua source</option>' + srcIds.map(id => `<option value="${id}">${ihEsc(L.src[id] || '(kosong)')}</option>`).join('');
+            elS.value = srcIds.includes(selSrc) ? selSrc : 0;
+            elP.innerHTML = `<option value="all">${IH_MONTHS[IH.months[0] - 1]}–${IH_MONTHS[IH.months[IH.months.length - 1] - 1]} (kumulatif)</option>` +
+                IH.months.map(m => `<option value="${m}">${IH_MONTHS_LONG[m - 1]} ${IH.year}</option>`).join('');
+            elP.value = selPer;
+            elC.innerHTML = IH_SRC_CTP.map(x => `<option value="${x.v}">${x.name}</option>`).join('');
+            elC.value = String(selCtp);
+
+            const pick = (ids, slot) => ids.reduce((acc, id) => ihAdd(acc, src[id][slot]), ihNew());
+            const ids = selSrc ? srcIds.filter(id => id === selSrc) : srcIds;
+            const srcName = selSrc ? (L.src[selSrc] || '(kosong)') : 'Semua source';
+            const perName = selPer === 'all' ? `${IH_MONTHS[IH.months[0] - 1]}–${IH_MONTHS[IH.months[IH.months.length - 1] - 1]} ${IH.year}` : `${IH_MONTHS_LONG[+selPer - 1]} ${IH.year}`;
+            const ctpInfo = ihSrcCtpInfo(selCtp);
+            let main, boxes = [], breakdownTitle = '';
+
+            if (selCtp === 'all') {
+                // 1 source (atau semua) → kotak per CTP
+                main = ihStatBox(`${ihEsc(srcName)} · Total Assisted`, pick(ids, 4), { accent: '#13265c' });
+                boxes = [1, 2, 3, 0].map(c => ({ c, o: pick(ids, c) })).filter(x => ihTot(x.o) > 0)
+                    .map(x => { const info = ihSrcCtpInfo(x.c); return ihStatBox(info.name, x.o, { accent: info.color, muted: x.c === 0, note: info.note, compact: true }); });
+                breakdownTitle = `Rincian per CTP — ${ihEsc(srcName)}`;
+            } else {
+                const slot = +selCtp;
+                main = ihStatBox(`${ihEsc(srcName)} · ${ctpInfo.name}`, pick(ids, slot), { accent: ctpInfo.color, note: ctpInfo.note });
+                if (!selSrc) {
+                    boxes = srcIds.map(id => ({ id, o: src[id][slot] })).filter(x => ihTot(x.o) > 0)
+                        .map(x => ihStatBox(ihEsc(L.src[x.id] || '(kosong)'), x.o, { accent: ctpInfo.color, compact: true }));
+                    breakdownTitle = `Rincian per source — ${ctpInfo.name}`;
+                }
+            }
+
+            // tren per bulan untuk pilihan source + CTP (abaikan dropdown periode)
+            const a = IH.a, byM = {};
+            const slotSel = selCtp === 'all' ? 4 : +selCtp;
+            for (let i = 0; i < IH.n; i++) {
+                const s = a.nps[i];
+                if (!s || !ihBasisOk(i) || !a.month[i]) continue;
+                if (selSrc && a.src[i] !== selSrc) continue;
+                const c = a.ctp[i];
+                const ok = slotSel === 4 ? c >= 1 : c === slotSel;
+                if (!ok) continue;
+                (byM[a.month[i]] || (byM[a.month[i]] = ihNew()))[s]++;
+            }
+            const rows = IH.months.filter(m => byM[m]).map(m => ({ label: ihMonthLbl(m), o: byM[m], sel: selPer !== 'all' && m === +selPer }));
+            const tot = rows.reduce((acc, r) => ihAdd(acc, r.o), ihNew());
+            if (rows.length) rows.push({ label: 'Total', o: tot, cls: 'total' });
+
+            document.getElementById('ihSrcBoxes').innerHTML = `
+                <p class="text-sm text-[var(--muted)]">${ihEsc(srcName)} · ${ctpInfo.name} · ${perName}${ihState.people ? ' · People (CS)' : ''}</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div class="space-y-3">
+                        ${main}
+                        ${boxes.length ? `<h4 class="font-semibold text-sm pt-2">${breakdownTitle}</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-3">${boxes.join('')}</div>` : ''}
+                        ${!boxes.length && selCtp !== 'all' && selSrc ? '<p class="text-sm text-[var(--muted)]">Pilih “Semua source” untuk membandingkan dyandra, ivr, dan saltik untuk CTP ini.</p>' : ''}
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">${boxes.join('')}</div>
+                    <div>
+                        <h4 class="font-semibold text-sm mb-2">Per bulan — ${ihEsc(srcName)} · ${slotSel === 4 ? 'Total Assisted' : ctpInfo.name}</h4>
+                        <div class="overflow-x-auto">${rows.length ? ihCountTable(rows, { compact: true }) : '<p class="text-sm text-[var(--muted)]">Tidak ada responden untuk pilihan ini.</p>'}</div>
+                    </div>
                 </div>`;
-            }).join('') || '<p class="text-sm text-[var(--muted)]">Tidak ada data.</p>';
         }
 
         // ---------- 4. Journey per CTP ----------
@@ -2971,6 +3053,29 @@ self.onmessage = async (e) => {
             ids.forEach(id => geo[id].forEach((o, c) => ihAdd(tot[c], o)));
             const arrow = k => key === k ? (dir < 0 ? ' ↓' : ' ↑') : '';
             const lvlName = level === 'area' ? 'Area' : level === 'region' ? 'Region' : 'Branch';
+            const gc = ihState.geoCtp;
+            document.getElementById('ihGeoCtp').value = String(gc);
+            const scope0 = [ihState.geoArea ? L.area[ihState.geoArea] : '', level !== 'area' && ihState.geoRegion ? L.region[ihState.geoRegion] : ''].filter(Boolean).join(' · ') || 'Nasional';
+            if (gc >= 0) {
+                const cName = gc === 0 ? 'Assisted (CC + GraPARI + E-Care)' : IH_CTP[gc].name;
+                const idsC = ids.filter(id => ihTot(geo[id][gc]) > 0);
+                const h = `<tr><th><button class="font-semibold" onclick="ihGeoSort('name')">${lvlName}${arrow('name')}</button></th>
+                    <th>Detractor</th><th>Passive</th><th>Promotor</th>
+                    <th><button class="font-semibold" onclick="ihGeoSort('n${gc}')">Total Responden${arrow('n' + gc)}</button></th>
+                    <th>% Promotor</th><th>% Detractor</th>
+                    <th><button class="font-semibold" onclick="ihGeoSort('t${gc}')">tNPS${arrow('t' + gc)}</button></th><th class="min-w-[140px]"></th></tr>`;
+                const r = (name, o, cls = '') => { const t = ihTot(o), vv = ihNps(o); return `<tr class="${cls}"><td>${ihEsc(name)}</td>
+                    <td class="tabular">${ihFmt(o[3])}</td><td class="tabular">${ihFmt(o[2])}</td><td class="tabular">${ihFmt(o[1])}</td>
+                    <td class="tabular font-semibold">${ihFmt(t)}</td><td class="tabular">${t ? ihPct(o[1] / t * 100, 1) : '–'}</td>
+                    <td class="tabular">${t ? ihPct(o[3] / t * 100, 1) : '–'}</td><td>${ihChip(vv)}</td>
+                    <td><div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${Math.max(0, Math.min(100, vv || 0))}%;background:${IH_CTP[gc].color}"></div></div></td></tr>`; };
+                const b = idsC.map(id => r(lab[id] || `(${lvlName.toLowerCase()} kosong)`, geo[id][gc])).join('') + (idsC.length ? r('Total', tot[gc], 'total') : '');
+                document.getElementById('ihGeoTable').innerHTML = idsC.length
+                    ? `<p class="text-sm text-[var(--muted)] mb-3">${cName} · ${idsC.length} ${lvlName.toLowerCase()} · ${ihEsc(scope0)} · ${ihEsc(ihPeriodTxt())}${ihState.people ? ' · People (CS)' : ''}</p>
+                       <table class="ih-table">${h}${b}</table>`
+                    : '<p class="text-sm text-[var(--muted)]">Tidak ada responden untuk pilihan ini.</p>';
+                return;
+            }
             const head = `<tr><th><button class="font-semibold" onclick="ihGeoSort('name')">${lvlName}${arrow('name')}</button></th>
                 ${IH_CTP.map(c => `<th><button class="font-semibold" onclick="ihGeoSort('t${c.id}')">${c.id === 0 ? 'Assisted' : c.name} tNPS${arrow('t' + c.id)}</button>
                     <button class="font-normal opacity-80 ml-1" onclick="ihGeoSort('n${c.id}')" title="Urutkan menurut jumlah responden">n${arrow('n' + c.id)}</button></th>`).join('')}</tr>`;
