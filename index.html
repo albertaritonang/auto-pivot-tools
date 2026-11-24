@@ -127,10 +127,6 @@
                         <button id="ihBasisPeople" aria-pressed="false" onclick="ihSet({people:true})">People (CS)</button>
                     </div>
                 </div>
-                <div id="ihPeopleDefWrap" class="hidden">
-                    <label class="ctl-label" for="ihPeopleDef">Definisi People</label>
-                    <select id="ihPeopleDef" class="ctl w-[230px]" onchange="ihSet({peopleDef:this.value})"></select>
-                </div>
                 <div id="ihFileChip" class="hidden text-sm text-[var(--muted)] md:pb-2">
                     <span class="font-semibold text-[var(--ink)]" id="ihFileName"></span>
                     <span id="ihFileMeta"></span>
@@ -283,6 +279,10 @@
                             <select id="ihMitra" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({mitra:+this.value, unit:0, cat:null})"></select></div>
                         <div><label class="ctl-label" for="ihUnit">GraPARI</label>
                             <select id="ihUnit" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({unit:+this.value, cat:null})"></select></div>
+                        <div id="ihPeopleDefWrap" class="hidden">
+                    <label class="ctl-label" for="ihPeopleDef">Definisi People GraPARI</label>
+                    <select id="ihPeopleDef" class="ctl w-[250px]" onchange="ihSet({peopleDef:this.value})"></select>
+                </div>
                         <div><label class="ctl-label" for="ihTarget">Target tNPS (%)</label>
                             <input id="ihTarget" type="number" step="1" class="ctl w-24 tabular" onchange="ihSet({target:+this.value || 0})"></div>
                         <div><label class="ctl-label" for="ihMinN">Min. responden</label>
@@ -833,12 +833,13 @@ self.onmessage = async (e) => {
 
         // GraPARI TOMO / MOMO (selalu semua responden + People)
         const bm = {};
+        const bmCs = (opt.bmPeopleP1 && a.csB) ? a.csB : a.cs;
         [1, 2].forEach(model => {
             const B = { total: N(), cs: N(), byM: {}, byMcs: {}, units: {}, mitra: {} };
             for (let i = 0; i < n; i++) {
                 const s = a.nps[i];
                 if (a.ctp[i] !== 2 || a.bm[i] !== model || !s) continue;
-                const m = a.month[i], cs = a.cs[i];
+                const m = a.month[i], cs = bmCs[i];
                 if (m) { (B.byM[m] || (B.byM[m] = N()))[s]++; if (cs) (B.byMcs[m] || (B.byMcs[m] = N()))[s]++; }
                 if (!monthOk(m)) continue;
                 B.total[s]++; if (cs) B.cs[s]++;
@@ -1179,7 +1180,7 @@ self.onmessage = async (e) => {
                 valAxisLabelFormatCode: '0"%"', valAxisMaxVal: 100, valGridLine: { color: 'E6E6E6', size: 0.75 }, catGridLine: { style: 'none' }, valAxisLineShow: false,
                 showTitle: true, title: 'tNPS per bulan', titleFontFace: FONT, titleFontSize: 13, titleColor: INK2
             });
-            T(s, `Sumber: survei tNPS ${NM} · ${ds.grapariNote || 'GraPARI (unit_type2)'} · Bisnis Model dari file/master`, 0.5, 6.88, 9, 0.24, { fontSize: 10, color: MUTED });
+            T(s, `Sumber: survei tNPS ${NM} · ${ds.grapariNote || 'GraPARI (unit_type2)'} · Bisnis Model dari file/master${ds.bmPeopleNote ? ' · People = ' + ds.bmPeopleNote : ''}`, 0.5, 6.88, 9, 0.24, { fontSize: 10, color: MUTED });
         }
 
         /* 17–18. Per model: kategori + peringkat */
@@ -1326,8 +1327,7 @@ self.onmessage = async (e) => {
             }
             sel.value = ihState.peopleDef;
             const d = defs.find(x => x.key === ihState.peopleDef) || defs[0];
-            ds.peopleNote = d.note;
-            if (IH && IH.csA) IH.a.cs = ihState.peopleDef === 'p1' ? IH.a.csB : IH.csA;
+            ds.bmPeopleNote = d.note;
         }
 
         // Dipanggil saat ganti mode (IndiHome ↔ Mobile)
@@ -1961,7 +1961,10 @@ self.onmessage = async (e) => {
         const IH_CAT = { good: { name: 'Baik', color: 'var(--good)', chip: 'chip-good' }, mid: { name: 'On-Target', color: 'var(--mid)', chip: 'chip-mid' },
                          bad: { name: 'Kurang', color: 'var(--bad)', chip: 'chip-bad' }, na: { name: 'Sampel kecil', color: '#c3c9d6', chip: 'chip-na' } };
 
+        // People khusus GraPARI TOMO/MOMO: Mobile bisa pakai predef_1 (csB) atau predef_2 (cs)
+        const ihBmCsArr = () => (ihState.peopleDef === 'p1' && IH.a.csB && DS().peopleDefs) ? IH.a.csB : IH.a.cs;
         function ihRenderBm() {
+            const bmCs = ihBmCsArr();
             const a = IH.a, L = IH.labels, model = ihState.model;
             const modelName = model === 1 ? 'TOMO' : 'MOMO';
             document.getElementById('ihBmTomo').setAttribute('aria-pressed', String(model === 1));
@@ -2022,7 +2025,7 @@ self.onmessage = async (e) => {
                     u.n++;
                 }
                 if (!inScope(i)) continue;
-                const m = a.month[i], cs = a.cs[i];
+                const m = a.month[i], cs = bmCs[i];
                 (byM[m] || (byM[m] = ihNew()))[s]++;
                 if (cs) (byMcs[m] || (byMcs[m] = ihNew()))[s]++;
                 const uid = a.unit[i];
@@ -2208,6 +2211,7 @@ self.onmessage = async (e) => {
             });
             ihState.gran = saveGran;
             const a = IH.a, L = IH.labels;
+            const bmCs = ihBmCsArr();
             [1, 2].forEach(model => {
                 const name = model === 1 ? 'TOMO' : 'MOMO';
                 const byM = {}, units = {};
@@ -2215,10 +2219,10 @@ self.onmessage = async (e) => {
                     const s = a.nps[i];
                     if (a.ctp[i] !== 2 || a.bm[i] !== model || !s) continue;
                     const m = a.month[i];
-                    const bm = byM[m] || (byM[m] = { o: ihNew(), cs: ihNew() }); bm.o[s]++; if (a.cs[i]) bm.cs[s]++;
+                    const bm = byM[m] || (byM[m] = { o: ihNew(), cs: ihNew() }); bm.o[s]++; if (bmCs[i]) bm.cs[s]++;
                     if (!ihMonthOk(m)) continue;
                     const u = units[a.unit[i]] || (units[a.unit[i]] = { o: ihNew(), cs: ihNew(), area: IH.uArea[a.unit[i]], region: IH.uRegion[a.unit[i]] });
-                    u.o[s]++; if (a.cs[i]) u.cs[s]++;
+                    u.o[s]++; if (bmCs[i]) u.cs[s]++;
                 }
                 const aoaM = [['Bulan', 'Detractor', 'Passive', 'Promotor', 'Total Responden', 'tNPS (%)', 'tNPS People (%)', 'Responden People']];
                 IH.months.filter(m => byM[m]).forEach(m => { const x = byM[m]; aoaM.push([ihMonthLbl(m), x.o[3], x.o[2], x.o[1], ihTot(x.o), r2(ihNps(x.o)), r2(ihNps(x.cs)), ihTot(x.cs)]); });
@@ -2260,7 +2264,7 @@ self.onmessage = async (e) => {
             try {
                 await new Promise(r => setTimeout(r, 30));
                 const now = new Date();
-                const D = ihPptData(IH, { ds: DS(), period: ihState.period, people: ihState.people, target: ihState.target, minN: ihState.minN,
+                const D = ihPptData(IH, { ds: DS(), bmPeopleP1: !!(DS().peopleDefs && ihState.peopleDef === 'p1'), period: ihState.period, people: ihState.people, target: ihState.target, minN: ihState.minN,
                                           generated: `${IH_MONTHS_LONG[now.getMonth()]} ${now.getFullYear()}` });
                 const pres = ihPptBuild(PptxGenJS, D, IH_PPT_ASSETS);
                 const buf = await pres.write({ outputType: 'arraybuffer' });
