@@ -265,15 +265,17 @@
                   <div class="card overflow-hidden">
                     <div class="px-5 sm:px-6 py-4 border-b border-[var(--line)] flex flex-col xl:flex-row xl:flex-wrap xl:items-end gap-4">
                         <div class="seg self-start whitespace-nowrap" role="group" aria-label="Bisnis model">
-                            <button id="ihBmTomo" aria-pressed="true" onclick="ihSet({model:1, area:0, region:0, mitra:0, cat:null})">GraPARI TOMO</button>
-                            <button id="ihBmMomo" aria-pressed="false" onclick="ihSet({model:2, area:0, region:0, mitra:0, cat:null})">GraPARI MOMO</button>
+                            <button id="ihBmTomo" aria-pressed="true" onclick="ihSet({model:1, area:0, region:0, mitra:0, unit:0, cat:null})">GraPARI TOMO</button>
+                            <button id="ihBmMomo" aria-pressed="false" onclick="ihSet({model:2, area:0, region:0, mitra:0, unit:0, cat:null})">GraPARI MOMO</button>
                         </div>
                         <div><label class="ctl-label" for="ihArea">Area</label>
-                            <select id="ihArea" class="ctl min-w-[150px]" onchange="ihSet({area:+this.value, region:0, cat:null})"></select></div>
+                            <select id="ihArea" class="ctl min-w-[150px]" onchange="ihSet({area:+this.value, region:0, unit:0, cat:null})"></select></div>
                         <div><label class="ctl-label" for="ihRegion">Region</label>
-                            <select id="ihRegion" class="ctl min-w-[180px]" onchange="ihSet({region:+this.value, cat:null})"></select></div>
+                            <select id="ihRegion" class="ctl min-w-[180px]" onchange="ihSet({region:+this.value, unit:0, cat:null})"></select></div>
                         <div><label class="ctl-label" for="ihMitra">Mitra</label>
-                            <select id="ihMitra" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({mitra:+this.value, cat:null})"></select></div>
+                            <select id="ihMitra" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({mitra:+this.value, unit:0, cat:null})"></select></div>
+                        <div><label class="ctl-label" for="ihUnit">GraPARI</label>
+                            <select id="ihUnit" class="ctl min-w-[220px] max-w-[300px]" onchange="ihSet({unit:+this.value, cat:null})"></select></div>
                         <div><label class="ctl-label" for="ihTarget">Target tNPS (%)</label>
                             <input id="ihTarget" type="number" step="1" class="ctl w-24 tabular" onchange="ihSet({target:+this.value || 0})"></div>
                         <div><label class="ctl-label" for="ihMinN">Min. responden</label>
@@ -2545,7 +2547,7 @@ self.onmessage = async (e) => {
         const ihState = { period: 'all', gran: 'month', people: false, model: 1, area: 0, region: 0, summary: false,
                           target: 45, minN: 30, search: '', cat: null, sort: { key: 'tnps', dir: -1 }, expanded: new Set(),
                           mitra: 0, locCtp: 1, journeyCtp: 0, geo: 'area', geoArea: 0, geoRegion: 0, geoSearch: '',
-                          geoSort: { key: 'n0', dir: -1 }, geoCtp: -1, srcSel: 0, srcCtp: 'all', srcPeriod: 'all' };
+                          geoSort: { key: 'n0', dir: -1 }, geoCtp: -1, unit: 0, srcSel: 0, srcCtp: 'all', srcPeriod: 'all' };
         try {
             const p = JSON.parse(localStorage.getItem(IH_PREF_KEY) || '{}');
             if (typeof p.target === 'number') ihState.target = p.target;
@@ -3111,11 +3113,14 @@ self.onmessage = async (e) => {
             if (document.getElementById('ihSearch').value !== ihState.search) document.getElementById('ihSearch').value = ihState.search;
 
             // Opsi area & region (dari baris GraPARI model ini)
-            const areaCnt = {}, regCnt = {}, mitraCnt = {};
+            const areaCnt = {}, regCnt = {}, mitraCnt = {}, unitCnt = {};
             for (let i = 0; i < IH.n; i++) {
                 if (a.ctp[i] !== 2 || a.bm[i] !== model) continue;
                 const um = IH.uArea[a.unit[i]], ur = IH.uRegion[a.unit[i]];
-                if ((!ihState.area || um === ihState.area) && (!ihState.region || ur === ihState.region)) mitraCnt[a.mitra[i]] = 1;
+                if ((!ihState.area || um === ihState.area) && (!ihState.region || ur === ihState.region)) {
+                    mitraCnt[a.mitra[i]] = 1;
+                    if (a.nps[i] && (!ihState.mitra || a.mitra[i] === ihState.mitra)) unitCnt[a.unit[i]] = (unitCnt[a.unit[i]] || 0) + 1;
+                }
                 const ua = IH.uArea[a.unit[i]];
                 areaCnt[ua] = 1;
                 if (!ihState.area || ua === ihState.area) regCnt[IH.uRegion[a.unit[i]]] = 1;
@@ -3133,15 +3138,22 @@ self.onmessage = async (e) => {
             if (ihState.mitra && !mitras.includes(ihState.mitra)) ihState.mitra = 0;
             document.getElementById('ihMitra').innerHTML = `<option value="0">Semua Mitra (${mitras.length})</option>` + mitras.map(x => `<option value="${x}">${ihEsc(L.mitra[x])}</option>`).join('');
             document.getElementById('ihMitra').value = ihState.mitra;
+            const unitIds = Object.keys(unitCnt).map(Number).sort((x, y) => (L.unit[x] || '').localeCompare(L.unit[y] || '', 'id'));
+            if (ihState.unit && !unitIds.includes(ihState.unit)) ihState.unit = 0;
+            document.getElementById('ihUnit').innerHTML = `<option value="0">Semua GraPARI (${unitIds.length})</option>` +
+                unitIds.map(x => `<option value="${x}">${ihEsc(L.unit[x] || '(tanpa nama)')}</option>`).join('');
+            document.getElementById('ihUnit').value = ihState.unit;
+            if (ihState.unit) ihState.expanded.add(ihState.unit);
 
             // Agregasi scope
             const inScope = i => a.ctp[i] === 2 && a.bm[i] === model && a.nps[i]
                 && (!ihState.mitra || a.mitra[i] === ihState.mitra)
+                && (!ihState.unit || a.unit[i] === ihState.unit)
                 && (!ihState.area || IH.uArea[a.unit[i]] === ihState.area) && (!ihState.region || IH.uRegion[a.unit[i]] === ihState.region);
             const tot = ihNew(), totCs = ihNew(), byM = {}, byMcs = {};
             const units = {};   // unit -> {o, cs, byM, area:{}, region:{}}
             const groups = {};  // area/region -> {o, cs, units:Set}
-            const level = ihState.region ? 'unit' : ihState.area ? 'region' : 'area';
+            const level = (ihState.region || ihState.unit) ? 'unit' : ihState.area ? 'region' : 'area';
             const unmapped = {};
             for (let i = 0; i < IH.n; i++) {
                 const s = a.nps[i];
@@ -3183,19 +3195,23 @@ self.onmessage = async (e) => {
             }
 
             // Breadcrumb
-            const crumbs = [`<span class="crumb" ${ihState.area ? 'role="button" tabindex="0" onclick="ihSet({area:0,region:0,cat:null})"' : ''}>Nasional</span>`];
-            if (ihState.area) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb" ${ihState.region ? 'role="button" tabindex="0" onclick="ihSet({region:0,cat:null})"' : ''}>${ihEsc(L.area[ihState.area])}</span>`);
+            const crumbs = [`<span class="crumb" ${ihState.area || ihState.unit ? 'role="button" tabindex="0" onclick="ihSet({area:0,region:0,unit:0,cat:null})"' : ''}>Nasional</span>`];
+            if (ihState.area) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb" ${ihState.region || ihState.unit ? 'role="button" tabindex="0" onclick="ihSet({region:0,unit:0,cat:null})"' : ''}>${ihEsc(L.area[ihState.area])}</span>`);
             if (ihState.region) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb">${ihEsc(L.region[ihState.region])}</span>`);
             if (ihState.mitra) crumbs.push(`<span class="crumb" style="background:#e6eefc;color:#1d4fb8" role="button" tabindex="0" onclick="ihSet({mitra:0,cat:null})" title="Hapus filter mitra">Mitra: ${ihEsc(L.mitra[ihState.mitra])} ✕</span>`);
+            if (ihState.unit) crumbs.push(`<span class="text-[var(--muted)]">›</span><span class="crumb" style="background:#13265c;color:#fff" role="button" tabindex="0" onclick="ihSet({unit:0})" title="Kembali ke semua GraPARI">${ihEsc(L.unit[ihState.unit] || '(tanpa nama)')} ✕</span>`);
             document.getElementById('ihCrumbs').innerHTML = crumbs.join('');
-            const scopeName = (ihState.region ? L.region[ihState.region] : ihState.area ? L.area[ihState.area] : 'Nasional') + (ihState.mitra ? ` · ${L.mitra[ihState.mitra]}` : '');
+            const scopeName = ihState.unit ? (L.unit[ihState.unit] || '(tanpa nama)')
+                : (ihState.region ? L.region[ihState.region] : ihState.area ? L.area[ihState.area] : 'Nasional') + (ihState.mitra ? ` · ${L.mitra[ihState.mitra]}` : '');
 
             // KPI
             const v = ihNps(tot), vcs = ihNps(totCs);
             document.getElementById('ihBmTnps').textContent = ihPct(v);
             document.getElementById('ihBmTnpsSub').innerHTML = `${modelName} · ${ihEsc(periodTxt)} · ${ihFmt(ihTot(tot))} responden<br>People (CS): <b class="text-[var(--ink)]">${ihPct(vcs)}</b> dari ${ihFmt(ihTot(totCs))} responden`;
             document.getElementById('ihBmUnits').textContent = ihFmt(activeUnits.length);
-            document.getElementById('ihBmUnitsSub').textContent = `GraPARI ${modelName} di ${scopeName} yang punya responden`;
+            document.getElementById('ihBmUnitsSub').textContent = ihState.unit
+                ? `${L.mitra[IH.uMitra[ihState.unit]] || 'Mitra –'} · ${[L.area[IH.uArea[ihState.unit]], L.region[IH.uRegion[ihState.unit]]].filter(Boolean).join(' · ')}`
+                : `GraPARI ${modelName} di ${scopeName} yang punya responden`;
 
             // Distribusi kategori
             const dist = { good: [], mid: [], bad: [], na: [] };
@@ -3261,7 +3277,7 @@ self.onmessage = async (e) => {
             items.sort((x, y) => { const p = val(x), r = val(y); return (typeof p === 'string' ? p.localeCompare(r, 'id') : p - r) * dir; });
 
             const title = ihState.cat ? `GraPARI ${modelName} kategori ${IH_CAT[ihState.cat].name} — ${scopeName}`
-                : level === 'area' ? 'Area dalam Nasional' : level === 'region' ? `Region dalam ${scopeName}` : `GraPARI dalam ${scopeName}`;
+                : level === 'area' ? 'Area dalam Nasional' : level === 'region' ? `Region dalam ${scopeName}` : ihState.unit ? `Detail ${scopeName}` : `GraPARI dalam ${scopeName}`;
             document.getElementById('ihListTitle').textContent = title;
             document.getElementById('ihCatNote').innerHTML = ihState.cat
                 ? `<button class="mb-3 text-sm crumb" onclick="ihSet({cat:null})">Hapus filter kategori ✕</button>` : '';
