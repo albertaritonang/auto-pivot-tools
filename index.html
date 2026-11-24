@@ -122,18 +122,22 @@
                 </div>
                 <div>
                     <span class="ctl-label">Basis responden</span>
-                    <div class="seg" role="group" aria-label="Basis responden">
+                    <div class="seg whitespace-nowrap" role="group" aria-label="Basis responden">
                         <button id="ihBasisAll" aria-pressed="true" onclick="ihSet({people:false})">Semua responden</button>
                         <button id="ihBasisPeople" aria-pressed="false" onclick="ihSet({people:true})">People (CS)</button>
                     </div>
+                </div>
+                <div id="ihPeopleDefWrap" class="hidden">
+                    <label class="ctl-label" for="ihPeopleDef">Definisi People</label>
+                    <select id="ihPeopleDef" class="ctl w-[230px]" onchange="ihSet({peopleDef:this.value})"></select>
                 </div>
                 <div id="ihFileChip" class="hidden text-sm text-[var(--muted)] md:pb-2">
                     <span class="font-semibold text-[var(--ink)]" id="ihFileName"></span>
                     <span id="ihFileMeta"></span>
                 </div>
                 <div class="md:ml-auto flex gap-2">
-                    <button id="ihPptBtn" onclick="ihExportPpt()" class="hidden px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60">Download PPT</button>
-                    <button id="ihExportBtn" onclick="ihExport()" class="hidden px-4 py-2.5 rounded-xl bg-[var(--navy-deep)] text-white text-sm font-semibold hover:opacity-90">Download rekap (.xlsx)</button>
+                    <button id="ihPptBtn" onclick="ihExportPpt()" class="hidden whitespace-nowrap px-4 py-2.5 rounded-xl bg-[var(--red)] text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60">Download PPT</button>
+                    <button id="ihExportBtn" onclick="ihExport()" class="hidden whitespace-nowrap px-4 py-2.5 rounded-xl bg-[var(--navy-deep)] text-white text-sm font-semibold hover:opacity-90">Download rekap (.xlsx)</button>
                 </div>
             </div>
             <nav id="ihNav" class="hidden max-w-[1400px] mx-auto px-4 sm:px-7 pb-2 flex gap-1 overflow-x-auto" aria-label="Topik">
@@ -379,7 +383,7 @@ function createStore() {
     let cap = 1 << 19, n = 0;
     const spec = { month: Uint8Array, week: Uint8Array, ctp: Uint8Array, nps: Uint8Array, cs: Uint8Array, bm: Uint8Array,
         site: Uint8Array, src: Uint8Array, unit: Uint32Array, area: Uint16Array, region: Uint16Array, u2: Uint16Array,
-        branch: Uint16Array, journey: Uint16Array, mitra: Uint16Array };
+        branch: Uint16Array, journey: Uint16Array, mitra: Uint16Array, csB: Uint8Array };
     const a = {};
     for (const k in spec) a[k] = new spec[k](cap);
     return {
@@ -473,6 +477,7 @@ const MOBILE_CTP = { callcenter: 1, call_center: 1, gerai: 2, grapari: 2, grapar
 const REGIONAL_CODE = { 1: 'Sumbagut', 2: 'Sumbagteng', 3: 'Sumbagsel', 6: 'Jabar', 7: 'Jateng', 8: 'Jatim', 9: 'Balinusra', 10: 'Kalimantan',
     11: 'Sulawesi', 12: 'Puma', 13: 'Jakarta Banten', 14: 'Jakarta Banten', 15: 'Eastern Jabotabek', 16: 'Jakarta Banten' };
 const PEOPLE_PREDEF2 = ['petugas layanan', 'service officer'];
+const PEOPLE_PREDEF1 = new Set(['pelayanan pelanggan', 'customer service']);
 function regionFromCode(raw) {
     const t = (raw || '').trim();
     if (!t || /^(null|#n\/a|n\/a|-)$/i.test(t)) return '';
@@ -488,7 +493,7 @@ function normArea(raw) {
     return t;
 }
 const WANT_MOBILE = {
-    unitType: ['unit_type'], msisdn: ['msisdn'], predef2: ['predef_2', 'predef 2'], regionCode: ['regional'],
+    unitType: ['unit_type'], msisdn: ['msisdn'], predef2: ['predef_2', 'predef 2'], predef1: ['predef_1', 'predef 1'], regionCode: ['regional'],
     region: ['new regional', 'new_regional'], branch: ['city_kabupaten', 'city kabupaten', 'kota_kabupaten'],
     date: ['survey_date', 'event_date', 'tanggal', 'date']
 };
@@ -547,12 +552,13 @@ function makeIngestor(mode) {
                 const mv = MASTER[unitLow.trim().replace(/\s+/g, ' ')];
                 if (mv) bm = mv === 'TOMO' ? 1 : mv === 'MOMO' ? 2 : 0;
             }
-            let ctp, cs, regionRaw;
+            let ctp, cs, csB = 0, regionRaw;
             if (mobile) {
                 const ut = g('unitType').trim().toLowerCase().replace(/[\s\-]+/g, '_');
                 ctp = MOBILE_CTP[ut] || 0;
                 const p2 = g('predef2').toLowerCase();
                 cs = PEOPLE_PREDEF2.some(k => p2.includes(k)) ? 1 : 0;
+                csB = PEOPLE_PREDEF1.has(g('predef1').trim().toLowerCase().replace(/\s+/g, ' ')) ? 1 : 0;
                 regionRaw = regionFromCode(g('region'));
                 if (!regionRaw || /^0+$/.test(regionRaw)) regionRaw = regionFromCode(g('regionCode'));
             } else {
@@ -562,7 +568,7 @@ function makeIngestor(mode) {
             }
             if (mobile && !bm && ctp !== 2) bm = 0;
             store.push({
-                month, week, nps, ctp, cs,
+                month, week, nps, ctp, cs, csB,
                 bm,
                 site: (unitLow.includes('bandung') || unitLow.includes('bdg')) ? 1 : (unitLow.includes('semarang') || unitLow.includes('smg')) ? 2 : 0,
                 src: dicts.src.id(g('source')),
@@ -1273,6 +1279,10 @@ self.onmessage = async (e) => {
                 lok3: { 1: 'E-Care Bandung', 2: 'E-Care Semarang', 0: 'E-Care lainnya' },
                 outside: 'MyGraPARI, online_care, unit kosong, dll.',
                 peopleNote: 'predef_2 berisi “petugas layanan” atau “service officer”',
+                peopleDefs: [
+                    { key: 'p2', label: 'predef_2 · Petugas layanan / Service officer', note: 'predef_2 berisi “petugas layanan” atau “service officer”' },
+                    { key: 'p1', label: 'predef_1 · Pelayanan Pelanggan / Customer Service', note: 'predef_1 = “Pelayanan Pelanggan” atau “Customer Service”' }
+                ],
                 assistedNote: 'Assisted = CC + GraPARI (grapari, gerai, grapari_lite) + E-Care (webservice) · responden = baris ber-msisdn', regionNote: 'region dari new regional', grapariNote: 'GraPARI (grapari, gerai, grapari_lite)',
                 t: {
                     nav_lokasi: 'Lokasi CC & E-Care', nav_wilayah: 'Area, Region & Kota/Kab',
@@ -1304,10 +1314,28 @@ self.onmessage = async (e) => {
             document.getElementById('ihNavSource').classList.toggle('hidden', !ds.hasSource);
         }
 
+        // Definisi People (Mobile): tukar array cs yang dipakai semua perhitungan
+        function ihApplyPeopleDef() {
+            const ds = DS(), sel = document.getElementById('ihPeopleDef'), wrap = document.getElementById('ihPeopleDefWrap');
+            const defs = ds.peopleDefs;
+            wrap.classList.toggle('hidden', !defs);
+            if (!defs) return;
+            if (!sel.options.length || sel.dataset.mode !== ds.key) {
+                sel.innerHTML = defs.map(d => `<option value="${d.key}">${d.label}</option>`).join('');
+                sel.dataset.mode = ds.key;
+            }
+            sel.value = ihState.peopleDef;
+            const d = defs.find(x => x.key === ihState.peopleDef) || defs[0];
+            ds.peopleNote = d.note;
+            if (IH && IH.csA) IH.a.cs = ihState.peopleDef === 'p1' ? IH.a.csB : IH.csA;
+        }
+
         // Dipanggil saat ganti mode (IndiHome ↔ Mobile)
         function ihShowMode() {
             ihApplyDs();
             ihLoadPrefs();
+            IH = IH_STORE[currentMode];
+            ihApplyPeopleDef();
             IH = IH_STORE[currentMode];
             Object.assign(ihState, { period: 'all', area: 0, region: 0, mitra: 0, unit: 0, cat: null, search: '', geoArea: 0, geoRegion: 0, geoSearch: '', srcSel: 0 });
             ihState.expanded.clear();
@@ -1337,11 +1365,12 @@ self.onmessage = async (e) => {
                           mitra: 0, locCtp: 1, journeyCtp: 0, geo: 'area', geoArea: 0, geoRegion: 0, geoSearch: '',
                           geoSort: { key: 'n0', dir: -1 }, geoCtp: -1, unit: 0, srcSel: 0, srcCtp: 'all', srcPeriod: 'all' };
         function ihLoadPrefs() {
-            ihState.target = DS().defTarget; ihState.minN = 30;
+            ihState.target = DS().defTarget; ihState.minN = 30; ihState.peopleDef = 'p2';
             try {
                 const p = JSON.parse(localStorage.getItem(IH_PREF_KEY + '_' + currentMode) || '{}');
                 if (typeof p.target === 'number') ihState.target = p.target;
                 if (typeof p.minN === 'number') ihState.minN = p.minN;
+                if (p.peopleDef === 'p1' || p.peopleDef === 'p2') ihState.peopleDef = p.peopleDef;
             } catch (e) {}
         }
 
@@ -1355,12 +1384,13 @@ self.onmessage = async (e) => {
         const ihMonthLbl = m => `${IH_MONTHS[m - 1] || m}'${String(IH ? IH.year : 2026).slice(2)}`;
 
         function ihSavePrefs() {
-            try { localStorage.setItem(IH_PREF_KEY + '_' + currentMode, JSON.stringify({ target: ihState.target, minN: ihState.minN })); } catch (e) {}
+            try { localStorage.setItem(IH_PREF_KEY + '_' + currentMode, JSON.stringify({ target: ihState.target, minN: ihState.minN, peopleDef: ihState.peopleDef })); } catch (e) {}
         }
 
         function ihSet(patch) {
             Object.assign(ihState, patch);
-            if ('target' in patch || 'minN' in patch) ihSavePrefs();
+            if ('target' in patch || 'minN' in patch || 'peopleDef' in patch) ihSavePrefs();
+            if ('peopleDef' in patch) ihApplyPeopleDef();
             if ('model' in patch || 'area' in patch || 'region' in patch) ihState.expanded.clear();
             if (IH) ihRender();
         }
@@ -1437,7 +1467,7 @@ self.onmessage = async (e) => {
             const years = Object.entries(d.stats.years).sort((x, y) => y[1] - x[1]);
             const monthSet = new Set(), weekSet = new Set();
             for (let i = 0; i < d.n; i++) { if (a.month[i]) monthSet.add(a.month[i]); if (a.week[i]) weekSet.add(a.week[i]); }
-            const ihx = { a, n: d.n, labels: d.labels, stats: d.stats, year: years.length ? +years[0][0] : 2026, mode, fileName: file.name,
+            const ihx = { a, csA: a.cs, n: d.n, labels: d.labels, stats: d.stats, year: years.length ? +years[0][0] : 2026, mode, fileName: file.name,
                    months: [...monthSet].sort((x, y) => x - y), weeks: [...weekSet].sort((x, y) => x - y), ms: d.ms, idx: d.idx };
 
 
@@ -1483,6 +1513,7 @@ self.onmessage = async (e) => {
             IH_STORE[mode] = ihx;
             if (currentMode !== mode) return;   // user sudah pindah mode; data tetap tersimpan
             IH = ihx;
+            ihApplyPeopleDef();
             ihFillPeriod();
             ihFillFileChip();
             document.getElementById('ihNav').classList.remove('hidden');
